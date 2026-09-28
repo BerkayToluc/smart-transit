@@ -1,0 +1,9 @@
+node_modules/
+venv/
+env/
+__pycache__/
+.env
+.idea/
+gtfs_data/
+guzergah.csv
+hat_guzergahlari.geojson
