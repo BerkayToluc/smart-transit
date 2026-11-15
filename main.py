@@ -41,7 +41,11 @@ if not DATABASE_URL:
         "kopyalayıp doldurun."
     )
 
-engine = create_engine(DATABASE_URL)
+# Neon boşta kalan bağlantıları ve (ücretsiz planda) veritabanını uyutuyor; havuzdaki
+# bağlantı kapanmışsa "SSL connection has been closed unexpectedly" hatası alınıyordu.
+# pool_pre_ping: bağlantı her kullanımdan önce yoklanır, ölüyse yenisi açılır.
+# pool_recycle: 5 dakikadan eski bağlantılar baştan açılır.
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=300)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
