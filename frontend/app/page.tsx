@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { GoogleMap, useJsApiLoader, Marker, Autocomplete, InfoWindow, DirectionsRenderer } from "@react-google-maps/api";
+import { apiUrl } from "@/lib/api";
 
 const containerStyle = {
   width: "100%",
@@ -139,7 +140,7 @@ export default function CanliHarita() {
   useEffect(() => {
     const hatlariCek = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/hatlar");
+        const response = await fetch(apiUrl("/api/hatlar"));
         if (response.ok) {
           const data = await response.json();
 
@@ -170,7 +171,7 @@ export default function CanliHarita() {
   const otobusleriGetir = async () => {
     if (!secilenHat) return;
     try {
-      const response = await fetch(`http://localhost:8000/api/canli-otobus/${secilenHat}`);
+      const response = await fetch(apiUrl(`/api/canli-otobus/${secilenHat}`));
       const data = await response.json();
       if (data.araclar) setOtobusler(data.araclar);
       else setOtobusler([]);
@@ -221,7 +222,7 @@ export default function CanliHarita() {
     let apiBasarili = false;
     try {
       const moovitResponse = await fetch(
-        `http://localhost:8000/api/moovit/${encodeURIComponent(secilenHat)}/${aktifDurak.durakId}/${encodeURIComponent(aktifDurak.yon)}`
+        apiUrl(`/api/moovit/${encodeURIComponent(secilenHat)}/${aktifDurak.durakId}/${encodeURIComponent(aktifDurak.yon)}`)
       );
       if (moovitResponse.ok) {
         const data = await moovitResponse.json();
@@ -335,7 +336,7 @@ export default function CanliHarita() {
         throw new Error("Lütfen adresi yazdıktan sonra açılan Google alt listesinden bir konuma tıklayın.");
       }
 
-      const durakResponse = await fetch("http://localhost:8000/api/en-yakin-durak", {
+      const durakResponse = await fetch(apiUrl("/api/en-yakin-durak"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -385,7 +386,7 @@ export default function CanliHarita() {
         );
 
         if (secilenHatObj) {
-          const duraklarRes = await fetch(`http://localhost:8000/api/duraklar/${secilenHatObj.id}`);
+          const duraklarRes = await fetch(apiUrl(`/api/duraklar/${secilenHatObj.id}`));
           if (duraklarRes.ok) {
             const duraklarData = await duraklarRes.json();
 

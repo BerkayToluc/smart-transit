@@ -1,15 +1,8 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  async rewrites() {
-    return [
-      {
-        // Ne zaman "/api/python/..." ile başlayan bir istek gelirse
-        source: '/api/python/:path*',
-        // Arka planda bunu sessizce Python sunucusuna (8000) yönlendir
-        destination: 'http://127.0.0.1:8000/api/:path*',
-      },
-    ]
-  },
-}
+import type { NextConfig } from "next";
+
+// Backend adresi ön yüzde `lib/api.ts` üzerinden (NEXT_PUBLIC_API_URL) okunur;
+// eskiden burada bulunan ve hiçbir yerde kullanılmayan "/api/python/*"
+// yönlendirmesi kaldırıldı.
+const nextConfig: NextConfig = {};
 
 export default nextConfig;
