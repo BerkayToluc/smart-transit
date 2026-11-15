@@ -4,14 +4,25 @@ import { Pool } from 'pg';
 // 🚨 NEXT.JS'İN TEMBELLİK YAPMASINI (CACHE) ENGELLEYEN SİHİRLİ KOD
 export const dynamic = 'force-dynamic';
 
-// Neon.tech veritabanı bağlantımız
-const pool = new Pool({
-  connectionString: "postgresql://neondb_owner:npg_v0PSI1MVHXlF@ep-lucky-wind-asuclpxw-pooler.c-4.eu-central-1.aws.neon.tech/neondb?sslmode=require",
-});
+// Neon.tech veritabanı bağlantısı: adres koda yazılmaz, DATABASE_URL ortam
+// değişkeninden okunur (frontend/.env.local — bkz. frontend/.env.example).
+// Havuz ilk istekte oluşturulur; böylece değişken yokken build kırılmaz.
+let pool: Pool | null = null;
+
+function getPool(): Pool {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL ortam değişkeni tanımlı değil.");
+  }
+  if (!pool) {
+    pool = new Pool({ connectionString });
+  }
+  return pool;
+}
 
 export async function GET() {
   try {
-    const client = await pool.connect();
+    const client = await getPool().connect();
 
     // Veritabanındaki hatları canlı olarak çekiyoruz (522 burada gelecek!)
     const result = await client.query('SELECT * FROM hatlar ORDER BY hat_kodu ASC');

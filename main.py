@@ -25,10 +25,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 🚨 NEON.TECH VERİTABANI
-DATABASE_URL = "postgresql://neondb_owner:npg_v0PSI1MVHXlF@ep-lucky-wind-asuclpxw-pooler.c-4.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+# 🔐 VERİTABANI (Neon.tech) — bağlantı bilgisi koda yazılmaz, ortamdan okunur.
+# Yerelde proje kökündeki .env dosyasından (bkz. .env.example), sunucuda ortam
+# değişkeninden gelir.
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:  # python-dotenv kurulu değilse yalnızca gerçek ortam değişkenleri kullanılır
+    pass
 
-engine = create_engine(DATABASE_URL)
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL ortam değişkeni tanımlı değil. .env.example dosyasını .env olarak "
+        "kopyalayıp doldurun."
+    )
+
+# Neon boşta kalan bağlantıları ve (ücretsiz planda) veritabanını uyutuyor; havuzdaki
+# bağlantı kapanmışsa "SSL connection has been closed unexpectedly" hatası alınıyordu.
+# pool_pre_ping: bağlantı her kullanımdan önce yoklanır, ölüyse yenisi açılır.
+# pool_recycle: 5 dakikadan eski bağlantılar baştan açılır.
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=300)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
