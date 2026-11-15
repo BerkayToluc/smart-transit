@@ -4,8 +4,16 @@ import re
 from sqlalchemy import create_engine, Column, Integer, String, Float
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-# 🚨 NEON.TECH VERİTABANI BAĞLANTIN
-DATABASE_URL = "postgresql://neondb_owner:npg_v0PSI1MVHXlF@ep-lucky-wind-asuclpxw-pooler.c-4.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+# 🔐 VERİTABANI (Neon.tech) — bağlantı bilgisi ortamdan okunur (bkz. .env.example)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL ortam değişkeni tanımlı değil (.env.example'a bakın).")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
