@@ -36,13 +36,26 @@ class SahteYanit:
         return False
 
 
-def sahte_portal(dosyalar, *, ilk_denemede_hata=None):
-    """CKAN package_show + dosya indirme taklidi. `dosyalar`: ad -> bayt içerik."""
+def zip_yap(ad, icerik, *, uye=None):
+    """İçinde tek dosya olan bellek içi ZIP üretir."""
+    import io
+    import zipfile
+    tampon = io.BytesIO()
+    with zipfile.ZipFile(tampon, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr(uye or f"{ad}.csv", icerik)
+    return tampon.getvalue()
+
+
+def sahte_portal(dosyalar, *, zip_dosyalar=None, ilk_denemede_hata=None):
+    """CKAN package_show + dosya indirme taklidi.
+    dosyalar: ad -> CSV bayt içerik; zip_dosyalar: ad -> ZIP bayt içerik."""
     cagrilar = []
+    zip_dosyalar = zip_dosyalar or {}
     kaynaklar = [{"name": ad, "format": "CSV", "url": f"https://x.test/{ad}.csv", "size": len(v)}
                  for ad, v in dosyalar.items()]
-    kaynaklar += [{"name": "stop_times", "format": "ZIP", "url": "https://x.test/stop_times.zip", "size": 5},
-                  {"name": "Kullanım Dokümanı", "format": "PDF", "url": "https://x.test/doc.pdf", "size": 9},
+    kaynaklar += [{"name": ad, "format": "ZIP", "url": f"https://x.test/{ad}.zip", "size": len(v)}
+                  for ad, v in zip_dosyalar.items()]
+    kaynaklar += [{"name": "Kullanım Dokümanı", "format": "PDF", "url": "https://x.test/doc.pdf", "size": 9},
                   {"name": "bilinmeyen", "format": "CSV", "url": "https://x.test/b.csv", "size": 1}]
     sayac = {"n": 0}
 
@@ -54,8 +67,8 @@ def sahte_portal(dosyalar, *, ilk_denemede_hata=None):
         if ilk_denemede_hata and sayac["n"] == 0:
             sayac["n"] += 1
             raise ilk_denemede_hata
-        ad = os.path.basename(url)[:-4]
-        return SahteYanit(icerik=dosyalar[ad])
+        ad, uzanti = os.path.basename(url).rsplit(".", 1)
+        return SahteYanit(icerik=(zip_dosyalar if uzanti == "zip" else dosyalar)[ad])
     return http_get, cagrilar
 
 
@@ -65,8 +78,17 @@ DOSYALAR = {"routes": b"route_id;route_type\n1;3\n", "stops": b"stop_id\n1\n", "
 def test_kaynak_listesi_yalnizca_gtfs_csv():
     http_get, _ = sahte_portal(DOSYALAR)
     liste = build.kaynak_listesi("iett-gtfs-verisi", http_get=http_get)
-    assert [k["ad"] for k in liste] == ["routes", "stops", "trips"]    # ZIP, PDF ve bilinmeyen ad yok
-    assert all(k["url"].endswith(".csv") for k in liste)
+    assert [k["ad"] for k in liste] == ["routes", "stops", "trips"]    # PDF ve bilinmeyen ad yok
+    assert all(k["url"].endswith(".csv") and k["bicim"] == "csv" for k in liste)
+
+
+def test_kaynak_listesi_zip_csvye_tercih_edilir():
+    # İETT: stop_times hem CSV (Excel'de kırpılmış) hem ZIP (eksiksiz) olarak var
+    http_get, _ = sahte_portal({**DOSYALAR, "stop_times": b"KIRPILMIS"},
+                               zip_dosyalar={"stop_times": zip_yap("stop_times", b"TAM")})
+    secim = {k["ad"]: k for k in build.kaynak_listesi("iett-gtfs-verisi", http_get=http_get)}
+    assert secim["stop_times"]["bicim"] == "zip" and secim["stop_times"]["url"].endswith(".zip")
+    assert secim["routes"]["bicim"] == "csv"
 
 
 def test_kaynak_listesi_basarisiz_yanit():
@@ -87,6 +109,62 @@ def test_indir_dosyalari_yazar_ve_tekrarda_atlar(tmp_path):
     onceki = len(cagrilar)
     assert build.indir("iett", str(tmp_path), http_get=http_get, log=mesajlar.append) == []
     assert all(c.endswith("package_show") for c in cagrilar[onceki:])
+
+
+def test_indir_zipten_acar_ve_kirpilmis_csvyi_degistirir(tmp_path):
+    tam = b"trip_id,stop_id\n" + b"1,2\n" * 50
+    http_get, cagrilar = sahte_portal({**DOSYALAR, "stop_times": b"KIRPILMIS"},
+                                      zip_dosyalar={"stop_times": zip_yap("stop_times", tam)})
+    (tmp_path / "stop_times.csv").write_bytes(b"ESKI KIRPILMIS DOSYA")        # önceki (hatalı) indirme
+    mesajlar = []
+    build.indir("iett", str(tmp_path), http_get=http_get, log=mesajlar.append)
+    assert (tmp_path / "stop_times.csv").read_bytes() == tam                  # ZIP'teki tam dosya
+    assert (tmp_path / "stop_times.zip").exists() and not list(tmp_path.glob("*.part"))
+    assert any("içinden stop_times.csv açılıyor" in m for m in mesajlar)
+    assert not any(c.endswith("stop_times.csv") for c in cagrilar)            # CSV hiç indirilmedi
+    # ikinci çalıştırma: ZIP boyutu aynı ve CSV var -> yeniden indirilmez
+    onceki = len(cagrilar)
+    build.indir("iett", str(tmp_path), http_get=http_get, log=mesajlar.append)
+    assert all(c.endswith("package_show") for c in cagrilar[onceki:])
+
+
+@pytest.mark.parametrize("uye", ["stop_times.txt", "klasor/StopTimes/stop_times.csv", "tek_dosya.dat"])
+def test_zipten_acma_uye_adi_varyantlari(tmp_path, uye):
+    http_get, _ = sahte_portal(DOSYALAR, zip_dosyalar={"stop_times": zip_yap("stop_times", b"a,b\n1,2\n", uye=uye)})
+    build.indir("iett", str(tmp_path), http_get=http_get, log=lambda _m: None)
+    assert (tmp_path / "stop_times.csv").read_bytes() == b"a,b\n1,2\n"
+
+
+def test_zipte_beklenen_dosya_yoksa_hata(tmp_path):
+    import io
+    import zipfile
+    tampon = io.BytesIO()
+    with zipfile.ZipFile(tampon, "w") as z:
+        z.writestr("a.csv", b"1")
+        z.writestr("b.csv", b"2")                                             # birden çok, hiçbiri stop_times değil
+    http_get, _ = sahte_portal(DOSYALAR, zip_dosyalar={"stop_times": tampon.getvalue()})
+    with pytest.raises(RuntimeError, match="bulunamadı"):
+        build.indir("iett", str(tmp_path), http_get=http_get, log=lambda _m: None, deneme=1)
+
+
+def test_bozuk_zip_tekrar_denenir_sonra_hata_verir(tmp_path, monkeypatch):
+    import zipfile
+    monkeypatch.setattr(build.time, "sleep", lambda _s: None)
+    http_get, _ = sahte_portal(DOSYALAR, zip_dosyalar={"stop_times": b"BU BIR ZIP DEGIL"})
+    mesajlar = []
+    with pytest.raises(zipfile.BadZipFile):
+        build.indir("iett", str(tmp_path), http_get=http_get, log=mesajlar.append, deneme=2)
+    assert any("tekrar deneniyor" in m for m in mesajlar)
+    assert not (tmp_path / "stop_times.csv").exists()
+
+
+def test_indir_excel_sinirinda_dosya_uyarir(tmp_path, monkeypatch):
+    monkeypatch.setattr(build, "EXCEL_SATIR_SINIRI", 3)
+    icerik = b"trip_id\n1\n2\n3\n"                                        # 3 veri satırı = sınır
+    http_get, _ = sahte_portal({**DOSYALAR, "stop_times": icerik})
+    mesajlar = []
+    build.indir("iett", str(tmp_path), http_get=http_get, log=mesajlar.append)
+    assert any("UYARI" in m and "Excel" in m for m in mesajlar)
 
 
 def test_indir_hata_olunca_tekrar_dener(tmp_path, monkeypatch):

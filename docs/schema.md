@@ -82,6 +82,7 @@ python scripts/build_gtfs.py hepsi iett ibb --hedef sqlite:///gtfs_data/gtfs.db 
 ```
 - Beslemeler: `iett` (otobüs + metrobüs, `gtfs_data/iett`), `ibb` (çok modlu, `gtfs_data/multimodal`).
 - İndirme, portalın CKAN API'siyle (`package_show`) dosya adreslerini bulur; adresler koda yazılı değildir.
+  Aynı dosya hem CSV hem ZIP ise **ZIP tercih edilir** ve içinden CSV açılır (İETT `stop_times.csv` kırpılmış).
   Boyutu portalla aynı olan dosyalar atlanır; kesilen indirmeler tekrar denenir.
 - **`--hedef` verilmezse** `.env`'deki `DATABASE_URL` (Neon) kullanılır ve **`--evet`** istenir.
   İETT durak saatleri çok büyüktür; önce yerel SQLite dosyasına yükleyip `rapor`daki `Boyut:` satırına bakın.
@@ -95,9 +96,16 @@ python scripts/build_gtfs.py hepsi iett ibb --hedef sqlite:///gtfs_data/gtfs.db 
   rota motoru (#12) bellek içi yapıları açılışta bu tablolardan kurar.
 
 **Ölçek denemesi** (gerçek İETT `routes/stops/trips` dosyalarının eski sürümü + sentetik `stop_times`):
-9261 hat, 135.144 sefer, 15.387 durak, 405.432 durak saati yaklaşık **10 sn** ve **60 MB** SQLite dosyası.
-Gerçek `stop_times` yaklaşık iki kat büyük olduğundan tam İETT için kabaca 100–150 MB beklenir (tahmin;
-ölçüm için `rapor` kullanın). Neon ücretsiz planının sınırı 0,5 GB'dır.
+9261 hat, 135.144 sefer, 15.387 durak, 405.432 durak saati yaklaşık **10 sn** ve **60 MB** SQLite dosyası
+(durak saati başına kabaca 100 bayt).
+
+**Boyut tahmini (doğrulanmadı):** Portaldaki `stop_times.csv` kırpılmış olduğundan (bkz.
+`docs/veri-kaynaklari.md`) eksiksiz İETT verisi milyonlarca durak saati içerir (~135 bin sefer × onlarca durak).
+Yukarıdaki orana göre bu, **yarım gigabayt civarı** bir veritabanı demektir ve **Neon ücretsiz planının
+0,5 GB sınırına sığmayabilir**. Gerçek rakam ZIP'ten yüklemeden sonra `rapor`daki `Boyut:` satırıyla
+öğrenilecek. Sığmazsa seçenekler (karar #12'de): (a) veriyi uygulamayla birlikte salt-okunur bir SQLite
+dosyası olarak tutmak, (b) durak saatlerini hat/sefer başına sıkıştırılmış satırlarda saklamak,
+(c) ücretli plan. Rota motoru zaten verileri açılışta belleğe kuracağı için veritabanı yalnızca kaynaktır.
 
 ## Planlama kuralları (`app/gtfs/rules.py`)
 - `expand_frequency_starts(start, end, headway)`: `[start, end)` penceresindeki sefer başlangıçları.
