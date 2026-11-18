@@ -49,14 +49,19 @@ def _turistik_vapur(hat: dict) -> bool:
     return bool(_TURISTIK.search(metin))
 
 
-# İETT: otobüs + metrobüs. Tüm hatlar route_type=3; metrobüs hatları hat koduyla ayrılacak
-# (kurallar veriye bakılarak #7/#9'da eklenecek). Isimlerde UTF-8 çift kodlama bozulması var.
+# İETT: otobüs + metrobüs. Tüm hatlar route_type=3; metrobüs hatları kısa adla ayrılır:
+# gerçek veride "34" ile başlayan tüm hatlar metrobüstür (34, 34A, 34AS, 34B, 34BZ, 34C, 34G, 34T,
+# 34U, 34Z) ve bu kalıba uyan başka hat yoktur. Adında "METROBÜS" geçen yüzlerce hat metrobüse
+# bağlanan normal otobüslerdir. route_type'ı boş olan satırlar bozuk (sütunları kaymış) satırlardır
+# ve yüklenmez. İsimlerde UTF-8 çift kodlama bozulması var.
 IETT = FeedConfig(
     feed_id="iett",
     name="İETT GTFS (İBB Açık Veri Portalı)",
     data_date=date(2026, 4, 21),
     source_note="iett-gtfs-verisi; tarih portaldaki son güncelleme tarihidir.",
     fix_mojibake=True,
+    mode_rules=ModeRules(name_modes=((r"^34[A-Z]*$", "metrobus"),)),
+    exclude_modes=frozenset({"other"}),
 )
 
 # Çok modlu besleme: Metro İstanbul, Marmaray (TCDD), Şehir Hatları, İDO, Turyol, Dentur,

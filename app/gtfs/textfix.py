@@ -9,15 +9,26 @@ erişilebilir kalır.
 # 🔤 METİN/KOORDİNAT TEMİZLEME YARDIMCILARI (TEK VE GÜNCEL SÜRÜM)
 # =====================================================================
 
-_MOJIBAKE_ESLESTIRME = [
-    ("Ã‡", "Ç"), ("Ã§", "ç"),
-    ("Äž", "Ğ"), ("ÄŸ", "ğ"),
-    ("Ä±", "ı"), ("Ä°", "İ"),
-    ("Ã–", "Ö"), ("Ã¶", "ö"),
-    ("Åž", "Ş"), ("ÅŸ", "ş"),
-    ("Ãœ", "Ü"), ("Ã¼", "ü"),
-    ("Ã¢", "â"), ("Ã®", "î"), ("Ã»", "û"),
-]
+def _mojibake_tablosu():
+    """Türkçe harflerin UTF-8 baytlarının YANLIŞ okunmuş hallerini üretir.
+
+    Kaynak verideki bozulma iki türlü: Windows-1252 okuması ("Åž" = Ş) ve Latin-1 okuması
+    ("Å\x9e" = Ş; 0x80-0x9F baytları kontrol karakteri olarak kalır). İkisi de aynı dosyada
+    karışık görülebiliyor, o yüzden ikisi için de eşleme üretilir.
+    """
+    ciftler = []
+    for harf in "ÇçĞğİıÖöŞşÜüâîû":
+        for kodlama in ("cp1252", "latin-1"):
+            try:
+                bozuk = harf.encode("utf-8").decode(kodlama)
+            except UnicodeDecodeError:
+                continue
+            if bozuk != harf and (bozuk, harf) not in ciftler:
+                ciftler.append((bozuk, harf))
+    return ciftler
+
+
+_MOJIBAKE_ESLESTIRME = _mojibake_tablosu()
 
 
 def _mojibake_duzelt(metin: str) -> str:
@@ -30,9 +41,11 @@ def _mojibake_duzelt(metin: str) -> str:
         return metin
     for bozuk, dogru in _MOJIBAKE_ESLESTIRME:
         metin = metin.replace(bozuk, dogru)
-    # 🩹 Partneri kaynak veride ZATEN KAYBOLMUŞ, tek başına "yetim" kalmış "Ä"
-    # karakterleri için en olası aday "Ğ" (Türkçe'de en sık rastlanan durum).
-    metin = metin.replace("Ä", "Ğ")
+    # Bozuk "bölünmez boşluk" (C2 A0): "Â\xa0" -> boşluk
+    metin = metin.replace("Â\xa0", " ").replace("\xa0", " ")
+    # 🩹 Partneri kaynak veride ZATEN KAYBOLMUŞ, tek başına "yetim" kalmış karakterler:
+    # "Ä" için en olası aday "Ğ", "Å" için "Ş" (gerçek veride hepsi Ş: SÖĞÜTLÜÇEŞME, YEŞİLTEPE ...).
+    metin = metin.replace("Ä", "Ğ").replace("Å", "Ş")
     return metin
 
 

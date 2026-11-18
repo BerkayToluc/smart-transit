@@ -138,3 +138,16 @@ def test_kumulatif_mesafe():
 
 def test_kumulatif_mesafe_tek_durak():
     assert main._rota_kumulatif_mesafe([_durak(41.0, 29.0)]) == [0.0]
+
+
+# --- veritabanı adresi ----------------------------------------------------------------
+@pytest.mark.parametrize("girdi, beklenen", [
+    ("postgresql://u:p@host/db?sslmode=require", "postgresql+psycopg2://u:p@host/db?sslmode=require"),
+    ("postgres://u:p@host/db", "postgresql+psycopg2://u:p@host/db"),
+    ("postgresql+psycopg://u:p@host/db", "postgresql+psycopg://u:p@host/db"),   # sürücü açık: dokunma
+    ("sqlite:///x.db", "sqlite:///x.db"),
+    ("sqlite://", "sqlite://"),
+])
+def test_normalize_database_url(girdi, beklenen):
+    from app.db import normalize_database_url
+    assert normalize_database_url(girdi) == beklenen

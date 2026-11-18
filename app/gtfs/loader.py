@@ -16,7 +16,7 @@ Davranış:
 import os
 from typing import Callable, Dict, Iterable, List, Optional, Set
 
-from sqlalchemy import delete, insert, select
+from sqlalchemy import delete, func, insert, select
 from sqlalchemy.orm import Session
 
 from app.gtfs import reader
@@ -28,22 +28,45 @@ from app.gtfs.models import (
 from app.gtfs.modes import classify_mode
 
 BATCH = 5000
+EXCEL_SATIR_SINIRI = 1_048_575   # Excel'in bir sayfaya sığdırdığı veri satırı sayısı (başlık hariç)
 
 
-def _toplu_ekle(session: Session, model, satirlar: Iterable[dict], batch: int = BATCH) -> int:
-    """Satırları `batch`'lik gruplar halinde ekler, eklenen satır sayısını döndürür."""
+def _ekleme_ifadesi(session: Session, model, yoksay_cakisma: bool):
+    """Gerekirse `ON CONFLICT DO NOTHING` ile (SQLite ve PostgreSQL) ekleme ifadesi döndürür."""
+    if yoksay_cakisma:
+        diyalekt = session.get_bind().dialect.name
+        if diyalekt == "postgresql":
+            from sqlalchemy.dialects.postgresql import insert as pg_insert
+            return pg_insert(model).on_conflict_do_nothing()
+        if diyalekt == "sqlite":
+            from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+            return sqlite_insert(model).on_conflict_do_nothing()
+    return insert(model)
+
+
+def _toplu_ekle(session: Session, model, satirlar: Iterable[dict], batch: int = BATCH,
+                yoksay_cakisma: bool = False) -> int:
+    """Satırları `batch`'lik gruplar halinde ekler; DENENEN satır sayısını döndürür.
+    `yoksay_cakisma=True` ise aynı anahtarlı tekrar satırlar sessizce atlanır."""
+    ifade = _ekleme_ifadesi(session, model, yoksay_cakisma)
     toplam = 0
     grup: List[dict] = []
     for s in satirlar:
         grup.append(s)
         if len(grup) >= batch:
-            session.execute(insert(model), grup)
+            session.execute(ifade, grup)
             toplam += len(grup)
             grup = []
     if grup:
-        session.execute(insert(model), grup)
+        session.execute(ifade, grup)
         toplam += len(grup)
     return toplam
+
+
+def _veri_satiri_say(yol: str) -> int:
+    """Dosyadaki veri satırı sayısı (başlık hariç); büyük dosyalar için ikili okuma."""
+    with open(yol, "rb") as f:
+        return max(sum(1 for _ in f) - 1, 0)
 
 
 def _beslemeyi_sil(session: Session, feed_id: str) -> None:
@@ -66,6 +89,10 @@ def load_feed(session: Session, feed_dir: str, config: FeedConfig, *,
     for zorunlu in ("routes", "trips", "stops", "stop_times"):
         if not os.path.exists(yol(zorunlu)):
             raise FileNotFoundError(f"Zorunlu GTFS dosyası yok: {yol(zorunlu)}")
+    if _veri_satiri_say(yol("stop_times")) == EXCEL_SATIR_SINIRI:
+        raise ValueError(
+            f"stop_times.csv tam olarak {EXCEL_SATIR_SINIRI} veri satırı: bu, dosyanın Excel'de "
+            "açılıp kaydedilirken kırpıldığının işaretidir. Lütfen dosyayı orijinal haliyle indirin.")
 
     P = config.prefixed
     metin = lambda v: reader.temizle_metin(v, fix_mojibake=config.fix_mojibake)
@@ -161,9 +188,13 @@ def load_feed(session: Session, feed_dir: str, config: FeedConfig, *,
             lat, lon = reader.parse_lat(r.get("stop_lat")), reader.parse_lon(r.get("stop_lon"))
             tum_duraklar[sid] = (r, lat, lon)
         secilen: Set[str] = set()
+        bulunamayan = 0
         for sid in gerekli_duraklar:
             kayit = tum_duraklar.get(sid)
-            if kayit is None or kayit[1] is None or kayit[2] is None:
+            if kayit is None:
+                bulunamayan += 1
+                continue
+            if kayit[1] is None or kayit[2] is None:
                 gecersiz_koordinat += 1
                 continue
             secilen.add(sid)
@@ -186,6 +217,7 @@ def load_feed(session: Session, feed_dir: str, config: FeedConfig, *,
             })
         ozet["stop"] = _toplu_ekle(session, GtfsStop, durak_satirlari)
         ozet["stop_invalid_coordinates"] = gecersiz_koordinat
+        ozet["stop_not_found"] = bulunamayan
 
         # --- 2. geçiş: durak saatleri ---
         log("stop_times 2. geçiş (ekleniyor)...")
@@ -209,7 +241,12 @@ def load_feed(session: Session, feed_dir: str, config: FeedConfig, *,
                     "pickup_type": reader.parse_int(r.get("pickup_type"), 0) or 0,
                     "drop_off_type": reader.parse_int(r.get("drop_off_type"), 0) or 0,
                 }
-        ozet["stop_time"] = _toplu_ekle(session, GtfsStopTime, saat_satirlari())
+        denenen = _toplu_ekle(session, GtfsStopTime, saat_satirlari(), yoksay_cakisma=True)
+        ozet["stop_time"] = session.execute(
+            select(func.count()).select_from(GtfsStopTime)
+            .where(GtfsStopTime.trip_id.in_(select(GtfsTrip.id).where(GtfsTrip.feed_id == config.feed_id)))
+        ).scalar_one()
+        ozet["stop_time_duplicate"] = denenen - ozet["stop_time"]       # aynı (sefer, sıra) tekrarları
         ozet["stop_time_unknown_stop"] = bilinmeyen
 
         # --- aralıklı seferler ---

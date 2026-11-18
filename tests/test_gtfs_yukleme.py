@@ -5,36 +5,18 @@
     gece yarısını aşan sefer, aralıklı seferler, geçersiz koordinatlı durak, üst istasyon;
   * "iett": UTF-8, ';' ayraçlı, isimlerde çift kodlama bozulması, bozuk koordinatlar.
 """
-import csv
 from datetime import date
 
 import pytest
 from sqlalchemy import func, inspect, select
 
 import main
-from app.db import Base
 from app.gtfs import loader
 from app.gtfs.feeds import IBB_MULTIMODAL, IETT, FeedConfig
+from tests.conftest import yaz
 from app.gtfs.models import (
     GtfsAgency, GtfsCalendar, GtfsFeed, GtfsFrequency, GtfsRoute, GtfsStop, GtfsStopTime, GtfsTrip,
 )
-
-
-def yaz(yol, satirlar, *, kodlama="utf-8", ayrac=","):
-    with open(yol, "w", encoding=kodlama, newline="") as f:
-        csv.writer(f, delimiter=ayrac).writerows(satirlar)
-
-
-@pytest.fixture(scope="module", autouse=True)
-def tablolar():
-    Base.metadata.create_all(bind=main.engine)
-
-
-@pytest.fixture
-def oturum():
-    s = main.SessionLocal()
-    yield s
-    s.close()
 
 
 @pytest.fixture
@@ -275,3 +257,33 @@ def test_isteğe_bagli_dosyalar_olmadan_yuklenir(oturum, iett_klasoru):
     os.remove(os.path.join(iett_klasoru, "calendar.csv"))     # calendar/frequencies/transfers isteğe bağlı
     ozet = loader.load_feed(oturum, iett_klasoru, FeedConfig(feed_id="iett2", name="x", fix_mojibake=True))
     assert ozet["calendar"] == 0 and ozet["frequency"] == 0 and ozet["route"] == 1
+
+
+# --- gerçek verideki kusurlar ---------------------------------------------------------------
+def test_kusurlu_iett_yukleme(oturum, iett_kusurlu):
+    ozet = loader.load_feed(oturum, iett_kusurlu, IETT)
+    assert ozet["route"] == 2 and ozet["route_excluded"] == 1       # KM41 elenir, boş route_id atlanır
+    assert ozet["trip"] == 2
+    assert oturum.get(GtfsRoute, "iett:r1").mode == "metrobus"
+    assert oturum.get(GtfsRoute, "iett:r2").mode == "bus"
+    assert oturum.get(GtfsRoute, "iett:r3") is None
+    assert (ozet["stop"], ozet["stop_invalid_coordinates"], ozet["stop_not_found"]) == (2, 1, 1)
+    assert oturum.get(GtfsStop, "iett:s2").name == "SÖĞÜTLÜÇEŞME"
+    assert oturum.get(GtfsStop, "iett:s2").lat == pytest.approx(41.0)
+    assert oturum.get(GtfsStop, "iett:s3") is None                   # kaymış satır yüklenmez
+    # t1: 2 satır (tekrar atlandı), t2: yalnızca s1 (s3 bozuk, s9 yok)
+    assert ozet["stop_time"] == 3
+    assert ozet["stop_time_duplicate"] == 1
+    assert ozet["stop_time_unknown_stop"] == 2
+
+
+def test_excel_kirpmasi_tespit_edilir(oturum, iett_kusurlu, monkeypatch):
+    # dosya tam Excel sınırı kadar veri satırı içeriyorsa (burada sınırı 7'ye indirdik) reddedilir
+    monkeypatch.setattr(loader, "EXCEL_SATIR_SINIRI", 7)
+    with pytest.raises(ValueError, match="Excel"):
+        loader.load_feed(oturum, iett_kusurlu, IETT)
+
+
+def test_excel_siniri_altinda_sorun_yok(oturum, iett_kusurlu):
+    assert loader.EXCEL_SATIR_SINIRI == 1_048_575
+    loader.load_feed(oturum, iett_kusurlu, IETT)
