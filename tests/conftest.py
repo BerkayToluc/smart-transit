@@ -20,6 +20,14 @@ import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 import main  # noqa: E402
+from sqlalchemy import event  # noqa: E402
+
+
+# SQLite varsayılan olarak yabancı anahtarları denetlemez; PostgreSQL (Neon) denetler.
+# Yükleme sırası hatalarını testte yakalamak için SQLite'ta da açıyoruz.
+@event.listens_for(main.engine, "connect")
+def _sqlite_fk_ac(dbapi_baglanti, _kayit):
+    dbapi_baglanti.execute("PRAGMA foreign_keys=ON")
 
 
 # --- Sahte İETT servisi -------------------------------------------------------

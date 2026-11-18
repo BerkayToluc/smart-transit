@@ -7,6 +7,7 @@
   app/nearest.py     /api/en-yakin-durak
   app/gtfs_admin.py  /api/admin/* ve GTFS metin/koordinat yardımcıları
   app/utils.py       ortak yardımcılar
+  app/gtfs/          çok modlu GTFS şeması, okuyucu ve yükleyici (docs/schema.md)
 
 Aşağıdaki yeniden dışa aktarımlar (`__all__`) eski kullanım için korunur:
 `from main import engine, SessionLocal, Hat, Durak, ...` yazan betikler
@@ -20,6 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text  # noqa: F401  (eski betikler `from main import text` kullanıyor)
 
 from app import catalog, gtfs_admin, live, nearest
+from app.gtfs import models as _gtfs_models  # noqa: F401  (gtfs_* tablolarının açılışta oluşması için)
 from app.db import (  # noqa: F401
     Base, DATABASE_URL, Durak, Guzergah, Hat, OtobusLive, SessionLocal, engine, get_db,
 )
