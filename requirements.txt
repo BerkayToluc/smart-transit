@@ -1,0 +1,10 @@
+# SmartTransit backend (FastAPI) bağımlılıkları
+fastapi>=0.110
+uvicorn>=0.29
+sqlalchemy>=2.0
+psycopg2-binary>=2.9
+cachetools>=5.3
+ijson>=3.2
+requests>=2.31
+pydantic>=2.5
+python-dotenv>=1.0

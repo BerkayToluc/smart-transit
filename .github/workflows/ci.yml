@@ -21,17 +21,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          # requirements.txt eklenince (#3) `cache: pip` açılabilir
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
 
       - name: Bağımlılıkları kur
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          else
-            pip install fastapi uvicorn sqlalchemy psycopg2-binary cachetools ijson requests pydantic python-dotenv
-          fi
-          pip install pytest httpx ruff
+          pip install -r requirements-dev.txt
 
       - name: Sözdizimi kontrolü
         run: python -m compileall -q -x 'node_modules|frontend' .
@@ -40,12 +36,7 @@ jobs:
         run: ruff check --select E9,F63,F7,F82 --exclude frontend .
 
       - name: Testler
-        run: |
-          if [ -d tests ]; then
-            pytest -q
-          else
-            echo "tests/ klasörü henüz yok, pytest atlandı"
-          fi
+        run: pytest -q
 
   frontend:
     name: Frontend (Next.js)
