@@ -108,27 +108,6 @@ def get_db():
         db.close()
 
 
-# =====================================================================
-# 🚀 (ESKİ/KULLANILMIYOR) — otomatik_kurulum, gtfs_aktar ile değiştirildi.
-# main.py'de sadece referans/geçmiş olsun diye duruyor, artık çağırmıyoruz.
-# =====================================================================
-def yola_durak_diz(db, hat_id, durak_isimleri, yon_adi, baslangic_idx, bitis_idx, lat1, lon1, lat2, lon2,
-                   baslangic_sira):
-    secilen_duraklar = durak_isimleri[baslangic_idx:bitis_idx]
-    adet = len(secilen_duraklar)
-    if adet == 0: return baslangic_sira
-    step_lat = (lat2 - lat1) / adet
-    step_lon = (lon2 - lon1) / adet
-    for i, isim in enumerate(secilen_duraklar):
-        d_lat = lat1 + (step_lat * i)
-        d_lon = lon1 + (step_lon * i)
-        db.add(Durak(hat_id=hat_id, durak_adi=isim, latitude=d_lat, longitude=d_lon, sira_no=baslangic_sira + i,
-                     yon=yon_adi))
-    return baslangic_sira + adet
-
-
-# =====================================================================
-
 @app.get("/")
 def ana_sayfa():
     return {"mesaj": "SmartTransit API Tıkır Tıkır Çalışıyor"}
