@@ -243,3 +243,21 @@ def test_komut_satiri_hedefsiz_yukleme_onay_ister(iett_kusurlu):
 def test_komut_satiri_hatalari():
     assert calistir("yukle", "yok", "--hedef", "sqlite://").returncode == 2
     assert calistir("yukle", "iett", "ibb", "--klasor", "x", "--hedef", "sqlite://").returncode == 2
+
+
+# --- rapor: isim kalitesi kontrolü ----------------------------------------------------------------
+def test_rapor_temiz_isimlerde_sorun_bildirmez(oturum, iett_kusurlu):
+    loader.load_feed(oturum, iett_kusurlu, IETT)                  # bozuk kodlama düzeltilerek yüklenir
+    u = build.rapor(oturum, "iett")["uyarilar"]
+    assert (u["supheli_karakter_durak"], u["supheli_karakter_hat"], u["adsiz_durak"]) == (0, 0, 0)
+    assert "bozuk karakter şüphesi yok" in build.rapor_metni(build.rapor(oturum, "iett"))
+
+
+def test_rapor_duzeltilmemis_bozuk_karakteri_yakalar(oturum, iett_kusurlu):
+    from app.gtfs.feeds import FeedConfig
+    # aynı veri, ama bozuk kodlama düzeltmesi KAPALI: "SÖĞÜTLÜÇEÅ\x9eME" düzeltilmeden yüklenir
+    loader.load_feed(oturum, iett_kusurlu, FeedConfig(feed_id="kontrol", name="x", fix_mojibake=False))
+    r = build.rapor(oturum, "kontrol")
+    assert r["uyarilar"]["supheli_karakter_durak"] == 1
+    assert "SÖĞÜTLÜÇEÅ" in r["uyarilar"]["supheli_ornekler"][0]
+    assert "bozuk karakter şüphesi: 1 durak" in build.rapor_metni(r)

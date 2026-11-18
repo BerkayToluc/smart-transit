@@ -90,8 +90,9 @@ python scripts/build_gtfs.py hepsi iett ibb --hedef sqlite:///gtfs_data/gtfs.db 
   `stop_invalid_coordinates` (koordinatı bozuk), `stop_not_found` (`stops`'ta olmayan), `stop_time`,
   `stop_time_duplicate` (aynı sefer/sıra tekrarı, atlanır), `stop_time_unknown_stop`, `frequency`.
 - `stop_times.csv` tam olarak 1.048.575 veri satırıysa (Excel sınırı) dosya kırpılmış sayılır ve yükleme reddedilir.
-- `rapor`: mod bazında hat/sefer sayıları, günsüz hizmetler, durak saati olmayan seferler ve (Postgres'te
-  tablo bazında, SQLite'ta dosya) boyut.
+- `rapor`: mod bazında hat/sefer sayıları, günsüz hizmetler, durak saati olmayan seferler, **isim kalitesi
+  kontrolü** (düzeltilmemiş bozuk kodlama izi taşıyan durak/hat adları: `Å Ã Ä Â`, C1 kontrol karakterleri, `U+FFFD`)
+  ve (Postgres'te tablo bazında, SQLite'ta dosya) boyut.
 - **Çıktı biçimi kararı:** ayrı bir `graph.pkl` yerine veritabanı (SQLite dosyası ya da Neon) kullanılır;
   rota motoru (#12) bellek içi yapıları açılışta bu tablolardan kurar.
 
@@ -99,13 +100,22 @@ python scripts/build_gtfs.py hepsi iett ibb --hedef sqlite:///gtfs_data/gtfs.db 
 9261 hat, 135.144 sefer, 15.387 durak, 405.432 durak saati yaklaşık **10 sn** ve **60 MB** SQLite dosyası
 (durak saati başına kabaca 100 bayt).
 
-**Boyut tahmini (doğrulanmadı):** Portaldaki `stop_times.csv` kırpılmış olduğundan (bkz.
-`docs/veri-kaynaklari.md`) eksiksiz İETT verisi milyonlarca durak saati içerir (~135 bin sefer × onlarca durak).
-Yukarıdaki orana göre bu, **yarım gigabayt civarı** bir veritabanı demektir ve **Neon ücretsiz planının
-0,5 GB sınırına sığmayabilir**. Gerçek rakam ZIP'ten yüklemeden sonra `rapor`daki `Boyut:` satırıyla
-öğrenilecek. Sığmazsa seçenekler (karar #12'de): (a) veriyi uygulamayla birlikte salt-okunur bir SQLite
-dosyası olarak tutmak, (b) durak saatlerini hat/sefer başına sıkıştırılmış satırlarda saklamak,
-(c) ücretli plan. Rota motoru zaten verileri açılışta belleğe kuracağı için veritabanı yalnızca kaynaktır.
+**Gerçek ölçüm** (tam İETT verisi, `stop_times.zip`'ten, 18 Kasım 2026, yerel SQLite):
+| | |
+|---|---|
+| Hat / sefer / durak | 9.261 / 135.144 / 14.021 |
+| **Durak saati** | **6.143.249** (45 tekrarlı satır atlandı) |
+| Atlanan | 13 hat (route_type boş, bozuk satırlar); bozuk koordinat 0; `stops`'ta olmayan durak 0 |
+| Modlar (hat) | bus 9.148, metrobus 113 (10 hat adı, yön/varyantlarıyla); sefer: bus 120.224, metrobus 14.920 |
+| **Dosya boyutu** | **568,6 MB** (durak saati başına ~93 bayt) |
+
+**Sonuç:** Tam İETT `stop_times` **Neon ücretsiz planının 0,5 GB sınırına sığmaz** (yalnızca bu tablo bile
+sınırın üstünde). Bu yüzden:
+- Yükleme yerel SQLite dosyasına yapılır (`--hedef sqlite:///gtfs_data/gtfs.db`); dosya repoya girmez (`gtfs_data/`).
+- Rota motoru (#12) verileri açılışta **belleğe** kurar; veritabanı yalnızca kaynaktır. Bellek için 6,1 milyon
+  satır Python nesneleri yerine **sıkı diziler** (`array`/`numpy`) olarak tutulmalıdır (nesne olarak yüzlerce MB).
+- Canlı sunucuya taşıma (barındırma) için seçenekler (#31): veriyi salt-okunur dosya olarak sunucuya koymak,
+  durak saatlerini sefer başına sıkıştırılmış satırlarda saklamak ya da ücretli veritabanı planı.
 
 ## Planlama kuralları (`app/gtfs/rules.py`)
 - `expand_frequency_starts(start, end, headway)`: `[start, end)` penceresindeki sefer başlangıçları.
