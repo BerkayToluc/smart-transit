@@ -6,6 +6,7 @@ koda sabit yazılmaz, böylece portaldaki kaynak kimlikleri değişse de çalı�
 NOT: Portal bulut sunucularından açılmıyor; bu işlemler yerel makinede çalıştırılmalıdır.
 """
 import os
+import re
 import shutil
 import time
 import zipfile
@@ -23,6 +24,9 @@ from app.gtfs.models import (
 )
 
 PORTAL = "https://data.ibb.gov.tr"
+# Düzeltilmemiş bozuk kodlamanın izleri: Å/Ã/Ä/Â (UTF-8'in yanlış okunması), C1 kontrol karakterleri,
+# U+FFFD (çözülemeyen bayt). Gerçek Türkçe metinde bunlar neredeyse hiç görülmez.
+SUPHELI_KARAKTER = re.compile("[ÅÃÄÂ\x80-\x9f\ufffd]")
 GTFS_DOSYALARI = ("agency", "calendar", "calendar_dates", "routes", "stops", "stop_times", "trips",
                   "frequencies", "shapes", "transfers")
 
@@ -148,6 +152,12 @@ def rapor(session: Session, feed_id: str) -> dict:
         select(func.count()).select_from(GtfsCalendar).where(
             GtfsCalendar.feed_id == feed_id, ~GtfsCalendar.monday, ~GtfsCalendar.tuesday, ~GtfsCalendar.wednesday,
             ~GtfsCalendar.thursday, ~GtfsCalendar.friday, ~GtfsCalendar.saturday, ~GtfsCalendar.sunday)).scalar_one()
+    durak_adlari = session.execute(select(GtfsStop.name).where(GtfsStop.feed_id == feed_id)).scalars().all()
+    hat_adlari = session.execute(
+        select(GtfsRoute.short_name, GtfsRoute.long_name).where(GtfsRoute.feed_id == feed_id)).all()
+    supheli_durak = [n for n in durak_adlari if SUPHELI_KARAKTER.search(n or "")]
+    supheli_hat = [f"{k or ''} {u or ''}".strip() for k, u in hat_adlari
+                   if SUPHELI_KARAKTER.search(f"{k or ''} {u or ''}")]
     return {
         "feed_id": feed_id, "yuklu": True, "ad": feed.name, "veri_tarihi": feed.data_date,
         "yuklenme": feed.imported_at, "kaynak_notu": feed.source_note,
@@ -161,6 +171,10 @@ def rapor(session: Session, feed_id: str) -> dict:
             "saatsiz_sefer": session.execute(
                 select(func.count()).select_from(GtfsTrip).where(
                     GtfsTrip.feed_id == feed_id, GtfsTrip.id.not_in(saatli_seferler))).scalar_one(),
+            "supheli_karakter_durak": len(supheli_durak),
+            "supheli_karakter_hat": len(supheli_hat),
+            "supheli_ornekler": (supheli_durak + supheli_hat)[:3],
+            "adsiz_durak": sum(1 for n in durak_adlari if not n or n == "?"),
         },
     }
 
@@ -179,6 +193,13 @@ def rapor_metni(r: dict) -> str:
         sat.append(f"  ! {u['gunsuz_hizmet']} hizmetin hiçbir günü işaretli değil (planlamada çalışmaz)")
     if u["saatsiz_sefer"]:
         sat.append(f"  ! {u['saatsiz_sefer']} seferin durak saati yok (aralıklı şablon olabilir)")
+    if u["supheli_karakter_durak"] or u["supheli_karakter_hat"]:
+        sat.append(f"  ! bozuk karakter şüphesi: {u['supheli_karakter_durak']} durak, {u['supheli_karakter_hat']} hat adı "
+                   f"(örnek: {u['supheli_ornekler']})")
+    else:
+        sat.append("  isim kontrolü: bozuk karakter şüphesi yok")
+    if u["adsiz_durak"]:
+        sat.append(f"  ! {u['adsiz_durak']} durağın adı boş")
     return "\n".join(sat)
 
 

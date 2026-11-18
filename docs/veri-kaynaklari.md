@@ -36,7 +36,8 @@ ve **bir daha güncellenmeyeceğini** söylüyor.
   eksiksiz dosya milyonlarca satırdır, kırpılmış CSV ise yalnızca küçük bir kısmını kapsar. Yükleyici bu
   durumu (tam sınırda satır sayısı) reddeder. **ZIP sürümü tercih edilir** (`scripts/build_gtfs.py indir`
   ZIP'i indirip içinden CSV'yi açar); ZIP'in tam dosya olduğu, boyutundan (sıkıştırma oranından) çıkarılan
-  bir tahmindir ve ilk çalıştırmada satır sayısı raporuyla doğrulanacaktır.
+  bir tahmindi ve **doğrulandı**: ZIP'ten açılan dosya **6.143.249 durak saati** içeriyor (kırpılmış CSV 1.048.575);
+  45 satır aynı (sefer, sıra) çiftini tekrarlıyor (yükleyici bunları atlar).
 - Repodaki `routes/stops/trips.csv` bu verinin **eski bir sürümü** (boyutlar daha küçük).
 - Bozulma: `;` ayraçlı, isimlerde UTF-8 çift kodlama bozulması (`KADIKÃ–Y`), koordinatlarda
   nokta bozulması (`410.191.700.005.564`). Düzeltme yardımcıları `app/gtfs_admin.py` içinde.
