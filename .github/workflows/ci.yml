@@ -36,12 +36,7 @@ jobs:
         run: ruff check --select E9,F63,F7,F82 --exclude frontend .
 
       - name: Testler
-        run: |
-          if [ -d tests ]; then
-            pytest -q
-          else
-            echo "tests/ klasörü henüz yok, pytest atlandı"
-          fi
+        run: pytest -q
 
   frontend:
     name: Frontend (Next.js)

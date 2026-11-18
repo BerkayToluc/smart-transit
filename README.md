@@ -12,7 +12,8 @@ tramvay, metrobüs ve vapuru birleştiren aktarmalı rota planlayıcı (yol hari
 | `frontend/` | Next.js arayüzü (harita, hat arama, yaklaşan araçlar) |
 | `routes.csv`, `stops.csv`, `trips.csv` | İETT GTFS verisinin bir kısmı (`;` ile ayrılmış, karakterleri bozuk, bkz. `main.py` içindeki düzeltme yardımcıları) |
 | `gtfs_*.py`, `hat_ekleyici.py`, `veri_yukle.py` | Tek seferlik veri yükleme betikleri (aşağıdaki uyarıya bakın) |
-| `test_api.py`, `rontgen.py` | İETT servislerini yoklamak için deneme betikleri, gerçek test değil |
+| `tests/` | Otomatik testler (`pytest`). Gerçek veritabanına ve İETT'ye dokunmaz |
+| `scripts/` | İETT servislerini / veri dosyalarını yoklamak için deneme betikleri (test değil); kök klasörden çalıştırın, örn. `python scripts/iett_servis_yokla.py` |
 
 ## Gereksinimler
 - Python 3.12 veya üzeri
@@ -65,6 +66,11 @@ Tarayıcıda <http://localhost:3000> adresini açın. Backend adresi varsayılan
 ```bash
 pip install -r requirements-dev.txt
 ```
+```bash
+pytest
+```
+Testler geçici bir SQLite veritabanı ve sahte İETT yanıtı kullanır; `.env` dosyanıza veya
+canlı veritabanına dokunmaz.
 ```bash
 ruff check --select E9,F63,F7,F82 .
 ```
