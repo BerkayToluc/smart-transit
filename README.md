@@ -8,7 +8,13 @@ tramvay, metrobüs ve vapuru birleştiren aktarmalı rota planlayıcı (yol hari
 
 | Klasör / dosya | Ne işe yarıyor |
 |---|---|
-| `main.py` | FastAPI backend: hat/durak listesi, İETT canlı araç konumu, varış tahmini (ETA), GTFS aktarım uç noktaları |
+| `main.py` | FastAPI uygulamasının giriş noktası (`uvicorn main:app`): router'ları bağlar. Eski betikler için `Hat`, `Durak`, `SessionLocal` gibi adları yeniden dışa aktarır |
+| `app/db.py` | Veritabanı bağlantısı, modeller (`Hat`, `Durak`, `Guzergah`, ...), `get_db` |
+| `app/catalog.py` | `/`, `/api/hatlar`, `/api/duraklar`, `/api/guzergah` |
+| `app/live.py` | İETT canlı araç konumu ve durak bazlı varış tahmini (`/api/canli-otobus`, `/api/moovit`) |
+| `app/nearest.py` | `/api/en-yakin-durak` |
+| `app/gtfs_admin.py` | GTFS aktarım uç noktaları (`/api/admin/*`) ve metin/koordinat düzeltme yardımcıları |
+| `app/utils.py` | Ortak yardımcılar (mesafe hesabı) |
 | `frontend/` | Next.js arayüzü (harita, hat arama, yaklaşan araçlar) |
 | `routes.csv`, `stops.csv`, `trips.csv` | İETT GTFS verisinin bir kısmı (`;` ile ayrılmış, karakterleri bozuk, bkz. `main.py` içindeki düzeltme yardımcıları) |
 | `gtfs_*.py`, `hat_ekleyici.py`, `veri_yukle.py` | Tek seferlik veri yükleme betikleri (aşağıdaki uyarıya bakın) |
