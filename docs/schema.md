@@ -72,6 +72,33 @@ with SessionLocal() as oturum:
   koordinatlı duraklar ve onlara ait saat satırları atlanır; sayıları özette görünür.
 - Tüm yükleme tek işlemde yapılır; hata olursa hiçbir şey değişmez.
 
+## Derleme betiği (`scripts/build_gtfs.py`)
+Portal bulut sunucularından açılmadığı için **yerel makinede**, proje kök klasöründen çalıştırılır:
+```bash
+python scripts/build_gtfs.py indir iett ibb                                  # gtfs_data/ altına indir
+python scripts/build_gtfs.py yukle iett ibb --hedef sqlite:///gtfs_data/gtfs.db
+python scripts/build_gtfs.py rapor iett ibb --hedef sqlite:///gtfs_data/gtfs.db
+python scripts/build_gtfs.py hepsi iett ibb --hedef sqlite:///gtfs_data/gtfs.db   # üçü birden
+```
+- Beslemeler: `iett` (otobüs + metrobüs, `gtfs_data/iett`), `ibb` (çok modlu, `gtfs_data/multimodal`).
+- İndirme, portalın CKAN API'siyle (`package_show`) dosya adreslerini bulur; adresler koda yazılı değildir.
+  Boyutu portalla aynı olan dosyalar atlanır; kesilen indirmeler tekrar denenir.
+- **`--hedef` verilmezse** `.env`'deki `DATABASE_URL` (Neon) kullanılır ve **`--evet`** istenir.
+  İETT durak saatleri çok büyüktür; önce yerel SQLite dosyasına yükleyip `rapor`daki `Boyut:` satırına bakın.
+- Yükleme, besleme başına bir sayım özeti basar: `route`, `route_excluded`, `trip`, `stop`,
+  `stop_invalid_coordinates` (koordinatı bozuk), `stop_not_found` (`stops`'ta olmayan), `stop_time`,
+  `stop_time_duplicate` (aynı sefer/sıra tekrarı, atlanır), `stop_time_unknown_stop`, `frequency`.
+- `stop_times.csv` tam olarak 1.048.575 veri satırıysa (Excel sınırı) dosya kırpılmış sayılır ve yükleme reddedilir.
+- `rapor`: mod bazında hat/sefer sayıları, günsüz hizmetler, durak saati olmayan seferler ve (Postgres'te
+  tablo bazında, SQLite'ta dosya) boyut.
+- **Çıktı biçimi kararı:** ayrı bir `graph.pkl` yerine veritabanı (SQLite dosyası ya da Neon) kullanılır;
+  rota motoru (#12) bellek içi yapıları açılışta bu tablolardan kurar.
+
+**Ölçek denemesi** (gerçek İETT `routes/stops/trips` dosyalarının eski sürümü + sentetik `stop_times`):
+9261 hat, 135.144 sefer, 15.387 durak, 405.432 durak saati yaklaşık **10 sn** ve **60 MB** SQLite dosyası.
+Gerçek `stop_times` yaklaşık iki kat büyük olduğundan tam İETT için kabaca 100–150 MB beklenir (tahmin;
+ölçüm için `rapor` kullanın). Neon ücretsiz planının sınırı 0,5 GB'dır.
+
 ## Planlama kuralları (`app/gtfs/rules.py`)
 - `expand_frequency_starts(start, end, headway)`: `[start, end)` penceresindeki sefer başlangıçları.
   Aralık pencereden uzunsa yalnızca pencere başında tek sefer çıkar.

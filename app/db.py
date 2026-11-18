@@ -21,11 +21,24 @@ if not DATABASE_URL:
         "kopyalayıp doldurun."
     )
 
+def normalize_database_url(url: str) -> str:
+    """"postgresql://" adresini psycopg2 sürücüsüne sabitler.
+
+    SQLAlchemy 2.1'den itibaren sürücüsüz "postgresql://" adresi varsayılan olarak psycopg (v3)
+    sürücüsünü arar; bu proje psycopg2 kullanır (requirements.txt). Sürücü açıkça yazılmışsa
+    ("postgresql+psycopg://...") ve SQLite gibi diğer adreslere dokunulmaz.
+    """
+    for onek in ("postgres://", "postgresql://"):
+        if url.startswith(onek):
+            return "postgresql+psycopg2://" + url[len(onek):]
+    return url
+
+
 # Neon boşta kalan bağlantıları ve (ücretsiz planda) veritabanını uyutuyor; havuzdaki
 # bağlantı kapanmışsa "SSL connection has been closed unexpectedly" hatası alınıyordu.
 # pool_pre_ping: bağlantı her kullanımdan önce yoklanır, ölüyse yenisi açılır.
 # pool_recycle: 5 dakikadan eski bağlantılar baştan açılır.
-engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=300)
+engine = create_engine(normalize_database_url(DATABASE_URL), pool_pre_ping=True, pool_recycle=300)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

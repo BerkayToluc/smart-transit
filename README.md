@@ -21,7 +21,7 @@ tramvay, metrobüs ve vapuru birleştiren aktarmalı rota planlayıcı (yol hari
 | `routes.csv`, `stops.csv`, `trips.csv` | İETT GTFS verisinin bir kısmı (`;` ile ayrılmış, karakterleri bozuk, bkz. `main.py` içindeki düzeltme yardımcıları) |
 | `gtfs_*.py`, `hat_ekleyici.py`, `veri_yukle.py` | Tek seferlik veri yükleme betikleri (aşağıdaki uyarıya bakın) |
 | `tests/` | Otomatik testler (`pytest`). Gerçek veritabanına ve İETT'ye dokunmaz |
-| `scripts/` | İETT servislerini / veri dosyalarını yoklamak için deneme betikleri (test değil); kök klasörden çalıştırın, örn. `python scripts/iett_servis_yokla.py` |
+| `scripts/` | `build_gtfs.py` (GTFS indirme/yükleme/rapor) ve İETT servislerini yoklamak için deneme betikleri (test değil); kök klasörden çalıştırın |
 
 ## Gereksinimler
 - Python 3.12 veya üzeri
@@ -86,6 +86,14 @@ ruff check --select E9,F63,F7,F82 .
 cd frontend && npm run build
 ```
 Aynı kontrolleri GitHub Actions (`.github/workflows/ci.yml`) her push ve pull request'te çalıştırır.
+
+## Toplu taşıma verisini indirme ve yükleme
+İBB Açık Veri Portalı'ndan GTFS verisini indirip yüklemek için (**kendi bilgisayarınızda**, portal bulut
+sunucularından açılmıyor; ayrıntı: `docs/schema.md`):
+```bash
+python scripts/build_gtfs.py hepsi iett ibb --hedef sqlite:///gtfs_data/gtfs.db
+```
+`--hedef` yazmazsanız `.env`'deki canlı veritabanı kullanılır ve `--evet` istenir.
 
 ## Veri yükleme betikleri hakkında uyarı
 `gtfs_yukle.py` ve `veri_yukle.py`, çalıştırıldığında `DATABASE_URL`'in gösterdiği veritabanında

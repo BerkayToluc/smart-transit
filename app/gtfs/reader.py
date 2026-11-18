@@ -94,6 +94,9 @@ def parse_coord(ham: Optional[str], *, sinir: float) -> Optional[float]:
     İETT'deki bozuk biçim ('410.191.700.005.564') düzeltilir. Çözülemezse None."""
     if ham is None or not str(ham).strip():
         return None
+    if "e" in str(ham).lower():
+        # "4,12E+14" gibi bilimsel gösterim Excel bozulmasıdır; hassasiyet kaybolmuş, güvenilmez
+        return None
     try:
         v = float(str(ham).strip().replace(",", "."))
         if abs(v) <= sinir:
@@ -116,4 +119,6 @@ def parse_lon(ham):
 
 def temizle_metin(metin: Optional[str], *, fix_mojibake: bool) -> str:
     metin = (metin or "").strip()
-    return _mojibake_duzelt(metin) if fix_mojibake else metin
+    if fix_mojibake:
+        metin = _mojibake_duzelt(metin)
+    return " ".join(metin.split())     # art arda boşlukları tek boşluğa indir

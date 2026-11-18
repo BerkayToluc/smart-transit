@@ -34,7 +34,20 @@ ve **bir daha güncellenmeyeceğini** söylüyor.
 - Repodaki `routes/stops/trips.csv` bu verinin **eski bir sürümü** (boyutlar daha küçük).
 - Bozulma: `;` ayraçlı, isimlerde UTF-8 çift kodlama bozulması (`KADIKÃ–Y`), koordinatlarda
   nokta bozulması (`410.191.700.005.564`). Düzeltme yardımcıları `app/gtfs_admin.py` içinde.
-- Hatların hepsi `route_type=3`. Metrobüs (34, 34A ... ) ayrı tipte değil, **hat koduyla** ayrılacak.
+- Hatların hepsi `route_type=3`. Metrobüs ayrı tipte değil, **hat kısa adıyla** ayrılır: repodaki gerçek veride
+  `34` ile başlayan tüm hatlar metrobüstür (**34, 34A, 34AS, 34B, 34BZ, 34C, 34G, 34T, 34U, 34Z**) ve bu
+  kalıba uyan başka hat yoktur (kural: `^34[A-Z]*$`, `app/gtfs/feeds.py`). Adında "METROBÜS" geçen yüzlerce
+  hat ise metrobüse **bağlanan normal otobüslerdir** ve `bus` kalır. Bir hattın yön/varyantları ayrı
+  `route_id` satırlarıdır (ör. `34` için 20 satır).
+- Gerçek veride görülen kusurlar (hepsi `app/gtfs/` tarafından ele alınır):
+  - **Bozuk karakterler iki türlü:** Windows-1252 okuması (`Åž` = Ş) ve Latin-1 okuması (`Å\x9e` = Ş;
+    0x9E/0x9F kontrol karakteri olarak kalmış). Düzeltme tablosu ikisini de kapsar; partneri kaybolmuş
+    yetim `Å` -> Ş, `Ä` -> Ğ olur. Düzeltmeden sonra routes/stops/trips'te beklenmeyen karakter kalmadı.
+  - **Kaymış sütunlu bozuk satırlar:** 18 hat satırında `route_type` boş (5'inde `route_id` de boş);
+    bunlar yüklenmez. 3 durak satırının enlem alanında metin (`direction: GİDİŞ`) ve boylamında Excel
+    bilimsel gösterimi (`4,12E+14`) var; bilimsel gösterim koordinat sayılmaz, bu duraklar atlanır
+    (`stop_invalid_coordinates`).
+  - `route_desc`/`route_code` alanlarında hat açıklamaları var (ör. kampüs ring hatları).
 
 ### `public-transport-gtfs-data` (çok modlu)
 - Dosyalar: `agency`, `calendar`, `frequencies`, `routes`, `shapes`, `stop_times`, `stops`, `trips`.

@@ -225,3 +225,43 @@ def test_takvim_nesne_ve_gecersiz_gun():
     assert service_runs_on_weekday(SimpleNamespace(**HAFTA_ICI), 2) is True
     with pytest.raises(ValueError):
         service_runs_on_weekday(HAFTA_ICI, 7)
+
+
+# --- gerçek verideki bozulma kalıpları (docs/veri-kaynaklari.md) -----------------------
+@pytest.mark.parametrize("bozuk, dogru", [
+    ("SÃ–ÄžÃœTLÃœÃ‡EÅžME", "SÖĞÜTLÜÇEŞME"),          # Windows-1252 okuması
+    ("SÖĞÜTLÜÇEÅ\x9eME", "SÖĞÜTLÜÇEŞME"),             # Latin-1 okuması (0x9E kontrol karakteri)
+    ("ÇAĞDAÅ\x9eKENT", "ÇAĞDAŞKENT"),
+    ("ERGÃœVAN", "ERGÜVAN"),
+    ("EÄ\x9eÄ°TÄ°M", "EĞİTİM"),                         # Ğ de aynı biçimde bozulmuş
+    ("GÜMÜÅYAKA", "GÜMÜŞYAKA"),                        # partneri kaybolmuş yetim "Å" -> Ş
+    ("KARAÄ", "KARAĞ"),                                # yetim "Ä" -> Ğ
+    ("ÅEHİT Â\xa0İBRAHİM", "ŞEHİT  İBRAHİM"),    # bozuk bölünmez boşluk
+])
+def test_mojibake_gercek_bozulmalar(bozuk, dogru):
+    from app.gtfs.textfix import _mojibake_duzelt
+    assert _mojibake_duzelt(bozuk) == dogru
+
+
+def test_temizle_metin_bosluklari_sadelestirir():
+    assert reader.temizle_metin("ŞEHİT Â\xa0İBRAHİM  YILMAZ", fix_mojibake=True) == "ŞEHİT İBRAHİM YILMAZ"
+    assert reader.temizle_metin("  A   B ", fix_mojibake=False) == "A B"
+
+
+@pytest.mark.parametrize("ham", ["4,12E+14", "4.10E+13", "2,83E+14"])
+def test_bilimsel_gosterim_koordinat_degildir(ham):
+    # Excel bozulması: hassasiyet kaybolmuş; "41.214" gibi sahte bir değere ÇEVRİLMEMELİ
+    assert reader.parse_lat(ham) is None and reader.parse_lon(ham) is None
+
+
+@pytest.mark.parametrize("ad, mod", [
+    ("34", "metrobus"), ("34A", "metrobus"), ("34AS", "metrobus"), ("34BZ", "metrobus"),
+    ("34Z", "metrobus"), ("34T", "metrobus"),
+    ("340", "bus"), ("500T", "bus"), ("11", "bus"), ("134", "bus"), ("M34", "bus"),
+])
+def test_iett_metrobus_kurali(ad, mod):
+    assert classify_mode(3, agency_id="1", short_name=ad, rules=IETT.mode_rules) == mod
+
+
+def test_iett_tipsiz_hatlar_elenir():
+    assert "other" in IETT.exclude_modes
