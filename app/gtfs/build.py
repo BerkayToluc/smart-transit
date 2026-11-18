@@ -6,7 +6,9 @@ koda sabit yazılmaz, böylece portaldaki kaynak kimlikleri değişse de çalı�
 NOT: Portal bulut sunucularından açılmıyor; bu işlemler yerel makinede çalıştırılmalıdır.
 """
 import os
+import shutil
 import time
+import zipfile
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
 
@@ -15,6 +17,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from app.gtfs.feeds import IBB_MULTIMODAL, IETT, FeedConfig
+from app.gtfs.loader import EXCEL_SATIR_SINIRI, _veri_satiri_say
 from app.gtfs.models import (
     GtfsAgency, GtfsCalendar, GtfsFeed, GtfsFrequency, GtfsRoute, GtfsStop, GtfsStopTime, GtfsTrip,
 )
@@ -39,8 +42,11 @@ BESLEMELER: Dict[str, BeslemeKaynagi] = {
 
 # ---------------------------------------------------------------- indirme
 def kaynak_listesi(paket: str, *, http_get: Callable = requests.get, portal: str = PORTAL) -> List[dict]:
-    """Veri setindeki indirilecek GTFS CSV dosyalarını döndürür: [{ad, url, boyut}, ...].
-    Aynı adlı hem CSV hem ZIP kaynağı varsa (İETT stop_times) yalnızca CSV alınır."""
+    """Veri setindeki indirilecek GTFS dosyalarını döndürür: [{ad, url, boyut, bicim}, ...].
+
+    Aynı dosya hem CSV hem ZIP olarak varsa **ZIP tercih edilir**: İETT'nin portaldaki
+    `stop_times.csv` dosyası Excel'de kırpılmıştır (tam 1.048.575 satır), ZIP sürümü ise
+    eksiksizdir (docs/veri-kaynaklari.md)."""
     yanit = http_get(f"{portal}/api/3/action/package_show", params={"id": paket}, timeout=60,
                      headers={"User-Agent": "SmartTransit/1.0"})
     yanit.raise_for_status()
@@ -50,8 +56,12 @@ def kaynak_listesi(paket: str, *, http_get: Callable = requests.get, portal: str
     secilen: Dict[str, dict] = {}
     for k in veri["result"].get("resources", []):
         ad = (k.get("name") or "").strip().lower()
-        if (k.get("format") or "").upper() == "CSV" and ad in GTFS_DOSYALARI and k.get("url"):
-            secilen[ad] = {"ad": ad, "url": k["url"], "boyut": k.get("size")}
+        bicim = (k.get("format") or "").upper()
+        if ad not in GTFS_DOSYALARI or not k.get("url") or bicim not in ("CSV", "ZIP"):
+            continue
+        if ad in secilen and not (bicim == "ZIP" and secilen[ad]["bicim"] == "csv"):
+            continue
+        secilen[ad] = {"ad": ad, "url": k["url"], "boyut": k.get("size"), "bicim": bicim.lower()}
     return [secilen[a] for a in GTFS_DOSYALARI if a in secilen]
 
 
@@ -67,23 +77,45 @@ def indir(besleme: str, klasor: Optional[str] = None, *, http_get: Callable = re
         raise RuntimeError(f"'{kaynak.paket}' içinde indirilecek GTFS CSV dosyası bulunamadı")
     indirilen = []
     for d in dosyalar:
-        yol = os.path.join(hedef, f"{d['ad']}.csv")
+        csv_yol = os.path.join(hedef, f"{d['ad']}.csv")
+        indirme_yolu = os.path.join(hedef, f"{d['ad']}.zip") if d["bicim"] == "zip" else csv_yol
         boyut = int(d["boyut"]) if d.get("boyut") else None
-        if boyut and os.path.exists(yol) and os.path.getsize(yol) == boyut:
-            log(f"  {d['ad']}.csv zaten var ({boyut:,} B), atlandı")
+        if boyut and os.path.exists(indirme_yolu) and os.path.getsize(indirme_yolu) == boyut \
+                and os.path.exists(csv_yol):
+            log(f"  {d['ad']}.{d['bicim']} zaten var ({boyut:,} B), atlandı")
             continue
         for sira in range(1, deneme + 1):
             try:
-                log(f"  {d['ad']}.csv indiriliyor...")
-                _dosya_indir(d["url"], yol, http_get)
+                log(f"  {d['ad']}.{d['bicim']} indiriliyor...")
+                _dosya_indir(d["url"], indirme_yolu, http_get)
+                if d["bicim"] == "zip":
+                    log(f"  {d['ad']}.zip içinden {d['ad']}.csv açılıyor...")
+                    _zipten_ac(indirme_yolu, d["ad"], csv_yol)
                 break
-            except (requests.RequestException, OSError) as hata:
+            except (requests.RequestException, OSError, zipfile.BadZipFile) as hata:
                 if sira == deneme:
                     raise
                 log(f"    hata ({hata}); {sira}/{deneme}. deneme, tekrar deneniyor")
                 time.sleep(2 * sira)
-        indirilen.append(yol)
+        indirilen.append(csv_yol)
+        if d["ad"] == "stop_times" and _veri_satiri_say(csv_yol) == EXCEL_SATIR_SINIRI:
+            log(f"  ! UYARI: {csv_yol} tam {EXCEL_SATIR_SINIRI:,} veri satırı; Excel'de kırpılmış olabilir")
     return indirilen
+
+
+def _zipten_ac(zip_yol: str, ad: str, hedef_csv: str) -> None:
+    """ZIP içindeki `<ad>.csv` (ya da `.txt`) dosyasını diske akıtarak açar."""
+    with zipfile.ZipFile(zip_yol) as z:
+        uyeler = [i for i in z.infolist() if not i.is_dir()]
+        adaylar = [i for i in uyeler if os.path.basename(i.filename).lower() in (f"{ad}.csv", f"{ad}.txt")]
+        if not adaylar and len(uyeler) == 1:
+            adaylar = uyeler
+        if not adaylar:
+            raise RuntimeError(f"{zip_yol} içinde {ad}.csv bulunamadı (içerik: {[u.filename for u in uyeler]})")
+        gecici = hedef_csv + ".part"
+        with z.open(adaylar[0]) as kaynak, open(gecici, "wb") as hedef:
+            shutil.copyfileobj(kaynak, hedef, length=1024 * 1024)
+    os.replace(gecici, hedef_csv)
 
 
 def _dosya_indir(url: str, yol: str, http_get: Callable) -> None:

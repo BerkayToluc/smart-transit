@@ -30,7 +30,13 @@ ve **bir daha güncellenmeyeceğini** söylüyor.
 
 ### `iett-gtfs-verisi` (otobüs + metrobüs)
 - Dosyalar: `agency`, `calendar`, `routes` (~0,8 MB), `stops` (~1,5 MB), `trips` (~5,8 MB),
-  `stop_times` (~26 MB; ayrıca ZIP). `shapes` ve `frequencies` **yok**.
+  `stop_times` (CSV ~26 MB ve ayrıca **ZIP ~22,7 MB**). `shapes` ve `frequencies` **yok**.
+- **`stop_times.csv` portalda KIRPILMIŞ:** yerel çalıştırmada dosya **tam 1.048.575 veri satırı** çıktı
+  (Excel'in bir sayfaya sığdırdığı sınır). İETT'nin ~135 bin seferi var; her sefer onlarca durak içerdiğinden
+  eksiksiz dosya milyonlarca satırdır, kırpılmış CSV ise yalnızca küçük bir kısmını kapsar. Yükleyici bu
+  durumu (tam sınırda satır sayısı) reddeder. **ZIP sürümü tercih edilir** (`scripts/build_gtfs.py indir`
+  ZIP'i indirip içinden CSV'yi açar); ZIP'in tam dosya olduğu, boyutundan (sıkıştırma oranından) çıkarılan
+  bir tahmindir ve ilk çalıştırmada satır sayısı raporuyla doğrulanacaktır.
 - Repodaki `routes/stops/trips.csv` bu verinin **eski bir sürümü** (boyutlar daha küçük).
 - Bozulma: `;` ayraçlı, isimlerde UTF-8 çift kodlama bozulması (`KADIKÃ–Y`), koordinatlarda
   nokta bozulması (`410.191.700.005.564`). Düzeltme yardımcıları `app/gtfs_admin.py` içinde.

@@ -92,7 +92,8 @@ def load_feed(session: Session, feed_dir: str, config: FeedConfig, *,
     if _veri_satiri_say(yol("stop_times")) == EXCEL_SATIR_SINIRI:
         raise ValueError(
             f"stop_times.csv tam olarak {EXCEL_SATIR_SINIRI} veri satırı: bu, dosyanın Excel'de "
-            "açılıp kaydedilirken kırpıldığının işaretidir. Lütfen dosyayı orijinal haliyle indirin.")
+            "açılıp kaydedilirken kırpıldığının işaretidir. Lütfen dosyayı orijinal haliyle indirin "
+            "(İETT için portaldaki stop_times.ZIP sürümü eksiksizdir: `scripts/build_gtfs.py indir` onu kullanır).")
 
     P = config.prefixed
     metin = lambda v: reader.temizle_metin(v, fix_mojibake=config.fix_mojibake)
