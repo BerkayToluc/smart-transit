@@ -15,6 +15,8 @@ tramvay, metrobüs ve vapuru birleştiren aktarmalı rota planlayıcı (yol hari
 | `app/nearest.py` | `/api/en-yakin-durak` |
 | `app/gtfs_admin.py` | GTFS aktarım uç noktaları (`/api/admin/*`) ve metin/koordinat düzeltme yardımcıları |
 | `app/utils.py` | Ortak yardımcılar (mesafe hesabı) |
+| `app/gtfs/` | Çok modlu GTFS şeması (`gtfs_*` tabloları), okuyucu, mod eşleme, yükleyici ve planlama kuralları; bkz. `docs/schema.md` |
+| `docs/` | Veri kaynakları (`veri-kaynaklari.md`) ve şema (`schema.md`) |
 | `frontend/` | Next.js arayüzü (harita, hat arama, yaklaşan araçlar) |
 | `routes.csv`, `stops.csv`, `trips.csv` | İETT GTFS verisinin bir kısmı (`;` ile ayrılmış, karakterleri bozuk, bkz. `main.py` içindeki düzeltme yardımcıları) |
 | `gtfs_*.py`, `hat_ekleyici.py`, `veri_yukle.py` | Tek seferlik veri yükleme betikleri (aşağıdaki uyarıya bakın) |
