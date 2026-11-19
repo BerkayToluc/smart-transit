@@ -210,6 +210,23 @@ def test_farkli_beslemelerin_istasyonlari_icin_genis_yaricap(oturum):
     assert ozet["kume"] == 0                                                   # kümeleme hâlâ yalnız ≤120 m
 
 
+def test_ayni_besleme_farkli_hatlar_genis_yaricapla_baglanir(oturum):
+    # M2 Taksim ↔ F1 Taksim: aynı beslemede (ibb) ama ortak hat yok
+    m = kur(oturum, "ibb", "m", "Taksim", "metro", 0, 0)
+    f = kur(oturum, "ibb", "f", "Taksim", "funicular", 300, 0)
+    ozet = transfers.uret(oturum, tanim=BOS)
+    assert kenar(oturum, m, f).min_transfer_secs == transfers.yurume_suresi_sn(300) and kenar(oturum, f, m) is not None
+    assert ozet["kume"] == 0
+
+
+def test_ayni_besleme_ayni_hat_ardisik_duraklar_baglanmaz(oturum):
+    # aynı hattın iki durağı (ortak hat var): 300 m ötede olsa da aktarma kenarı olmaz
+    a = kur(oturum, "ibb", "a", "A", "metro", 0, 0)
+    b = kur(oturum, "ibb", "b", "B", "metro", 300, 0)
+    transfers.uret(oturum, tanim=BOS)
+    assert kenar(oturum, a, b) is None
+
+
 def test_genis_yaricap_ayni_besleme_ve_otobus_icin_gecerli_degil(oturum):
     a = kur(oturum, "metro", "a", "A", "metro", 0, 0)
     b = kur(oturum, "metro", "b", "B", "metro", 300, 0)                        # aynı besleme ardışık istasyonlar
