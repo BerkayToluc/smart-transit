@@ -139,6 +139,9 @@ def load_feed(session: Session, feed_dir: str, config: FeedConfig, *,
         for r in reader.iter_rows(yol("routes")):
             if not r.get("route_id"):
                 continue
+            if (r.get("agency_id") or None) in config.exclude_agencies:
+                elenen_hat += 1
+                continue
             tip = reader.parse_int(r.get("route_type"))
             kisa = metin(r.get("route_short_name"))
             uzun = metin(r.get("route_long_name"))

@@ -155,6 +155,27 @@ Yürüme süresi kuş uçuşu mesafeyle tutmaz (Yenikapı, Üsküdar gibi derin 
 (istasyon çifti + dakika). Her Marmaray istasyonu için yakın durak adayları koordinatla
 listelenip onaylanacak.
 
+### Uygulama (#9)
+- Çizelge **elle tanımlı**: kurallar `data/marmaray.json` dosyasındadır ("Halkalı → Gebze, 05:58'den 22:58'e
+  her 15 dakikada bir" gibi). `app/gtfs/manual.py` bunları GTFS dosyalarına çevirir, aynı yükleyici
+  (`scripts/build_gtfs.py yukle marmaray`) veritabanına alır. İndirme gerekmez.
+- **Kalıplar:** Halkalı→Gebze, Gebze→Halkalı (43 istasyon), Ataköy→Pendik, Pendik→Ataköy (25 istasyon),
+  Pendik→Zeytinburnu (22 istasyon, akşam). Hizmetler: `her_gun` ve `cuma_cumartesi_gecesi` (gece yarısından
+  sonraki seferler, ör. 25:28 = ertesi gün 01:28).
+- **İstasyon konumları ve süreleri** 2019 TCDD GTFS'inden alındı (Halkalı→Gebze 111,5 dk). **Doğrulama:** üretilen
+  istasyon süreleri, TCDD'nin 2026 tarifesindeki her istasyon saatiyle karşılaştırıldı (4 kalıp, 58 istasyon saati):
+  ortalama fark 1 dakikadan az, en kötü fark ~3 dakika (resmi saatler dakikaya yuvarlanmış). Test olarak kayıtlıdır.
+- **Ters yönde** aynı süreler kullanılır (simetrik varsayım).
+- **Son sefer sorunu:** gerçek tarifeler aralık ızgarasına oturmaz (ör. 06:09'dan her 8 dk, son tren 21:54; ızgara
+  21:53'e denk gelir). İlk ve son sefer **tam** korunur; ızgaranın son noktası son seferden `aralık/2`'den yakınsa
+  son seferle değiştirilir (art arda iki tren çıkmasın), uzaksa son sefer ayrıca eklenir.
+- **Varsayımlar (doğrulanmadı):** Pendik→Zeytinburnu akşam kalıbının sıklığı tabloda yok, 8 dk alındı ve
+  `20:50` ilk sefer sayıldı ("20:50'den sonra kalkan trenler"); `exact_times=0` (saatler yaklaşık).
+- **Portaldaki 2019 TCDD hatları (`ibb` beslemesinde agency 4) artık YÜKLENMEZ** (`exclude_agencies`), yeni
+  tanımla çakışmasınlar.
+- **Güncelleme:** TCDD tarifeyi değiştirirse `data/marmaray.json` içindeki `ilk`/`son`/`aralik_dk` değerleri ve
+  `besleme.veri_tarihi` güncellenir; `python scripts/build_gtfs.py yukle marmaray` yeniden çalıştırılır.
+
 ## Karara bağlanmış / ertelenmiş konular
 - Marmaray için **ayrı mod/rozet**: şimdilik **yok** (normal raylı hat gibi davranır), sonra bakılacak.
 - Arayüzde **veri tarihi gösterimi**: şimdilik **yok**, sonra bakılacak.

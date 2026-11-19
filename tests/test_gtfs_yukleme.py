@@ -48,7 +48,7 @@ def ibb_klasoru(tmp_path):
     yaz(d / "trips.csv", [
         ["route_id", "service_id", "trip_id", "trip_headsign", "direction_id", "shape_id"],
         ["r2", "100", "t1", "HACIOSMAN", 0, "sh1"], ["r2", "100", "t2", "HACIOSMAN", 0, ""],
-        ["r1", "100", "t3", "GEBZE", 0, ""], ["r3", "100", "t4", "EMİNÖNÜ", 0, ""],
+        ["r6", "100", "t3", "GEBZE", 0, ""], ["r3", "100", "t4", "EMİNÖNÜ", 0, ""],
         ["r4", "100", "t5", "TUR", 0, ""], ["r5", "100", "t6", "ŞİŞLİ", 0, ""],
     ], kodlama=k)
     yaz(d / "stop_times.csv", [
@@ -125,8 +125,8 @@ def test_ibb_yukleme_sayilari(oturum, ibb_klasoru):
     ozet = loader.load_feed(oturum, ibb_klasoru, IBB_MULTIMODAL)
     assert ozet["agency"] == 4
     assert ozet["calendar"] == 2
-    assert ozet["route"] == 4                      # Marmaray, M2, KDK-EMN, T1
-    assert ozet["route_excluded"] == 3             # turistik vapur, minibüs, tipsiz
+    assert ozet["route"] == 3                      # M2, KDK-EMN, T1
+    assert ozet["route_excluded"] == 4             # TCDD (Marmaray), turistik vapur, minibüs, tipsiz
     assert ozet["trip"] == 4                       # t1..t4 (t5, t6 elenen hatların)
     assert ozet["stop"] == 6                       # s1 s2 s3 P1 s4 s5 (s6 geçersiz, s7-s9 kullanılmıyor)
     assert ozet["stop_invalid_coordinates"] == 1
@@ -140,9 +140,10 @@ def test_ibb_yukleme_sayilari(oturum, ibb_klasoru):
 def test_ibb_modlar_ve_onekli_kimlikler(oturum, ibb_klasoru):
     loader.load_feed(oturum, ibb_klasoru, IBB_MULTIMODAL)
     modlar = {r.id: r.mode for r in oturum.scalars(select(GtfsRoute).where(GtfsRoute.feed_id == "ibb"))}
-    assert modlar == {"ibb:r1": "rail", "ibb:r2": "metro", "ibb:r3": "ferry", "ibb:r6": "tram"}
-    assert oturum.get(GtfsRoute, "ibb:r1").route_type == 1     # ham tip korunur (Marmaray "metro" geliyordu)
+    assert modlar == {"ibb:r2": "metro", "ibb:r3": "ferry", "ibb:r6": "tram"}
+    assert oturum.get(GtfsRoute, "ibb:r2").route_type == 1     # ham tip korunur
     assert oturum.get(GtfsRoute, "ibb:r2").agency_id == "ibb:11"
+    assert oturum.get(GtfsRoute, "ibb:r1") is None             # TCDD (Marmaray 2019) hatları yüklenmez
     assert oturum.get(GtfsRoute, "ibb:r4") is None             # turistik vapur yok
     assert oturum.get(GtfsRoute, "ibb:r5") is None             # minibüs yok
 
@@ -200,11 +201,11 @@ def test_iett_bozuk_kodlama_ve_koordinatlar_duzelir(oturum, iett_klasoru):
 
 
 def test_cakisan_kimlikler_iki_besleme_birlikte(oturum, ibb_klasoru, iett_klasoru):
-    # İki beslemede de "r1", "s1", "t1" ham kimlikleri var; önek sayesinde karışmaz.
+    # İki beslemede de "s1" ve "t1" ham kimlikleri var; önek sayesinde karışmaz.
     loader.load_feed(oturum, ibb_klasoru, IBB_MULTIMODAL)
     loader.load_feed(oturum, iett_klasoru, IETT)
-    assert oturum.get(GtfsRoute, "ibb:r1").long_name == "GEBZE-HALKALI"
-    assert oturum.get(GtfsRoute, "iett:r1").long_name == "KADIKÖY - KİRAZLITEPE"
+    assert oturum.get(GtfsTrip, "ibb:t1").headsign == "HACIOSMAN"
+    assert oturum.get(GtfsTrip, "iett:t1").headsign == "KİRAZLITEPE"
     assert oturum.get(GtfsStop, "ibb:s1").name == "Yenikapı"
     assert oturum.get(GtfsStop, "iett:s1").name == "RIFAT ILGAZ CADDESİ"
     assert say(oturum, GtfsStop, feed_id="ibb") == 6 and say(oturum, GtfsStop, feed_id="iett") == 2
