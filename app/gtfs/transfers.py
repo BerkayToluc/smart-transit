@@ -4,8 +4,9 @@ Aktarmalı rota motoru (RAPTOR) farklı hatların/modların duraklarının aynı
 bilmek zorundadır. Bu modül, yüklenmiş tüm beslemelerin duraklarına bakıp iki şey üretir:
 
 1. **Yürüme kenarları** (`gtfs_transfer`, `source="auto"`): birbirine `yaricap` metreden (varsayılan 150)
-   yakın her durak çifti için iki yönlü kenar; ayrıca FARKLI beslemelerin istasyon türü durakları
-   (metro, Marmaray, vapur iskelesi ...) için `istasyon_yaricap` (varsayılan 600 m). Süre = mesafe × 1.3
+   yakın her durak çifti için iki yönlü kenar; ayrıca istasyon türü duraklar
+   (metro, Marmaray, vapur iskelesi ...) için `istasyon_yaricap` (varsayılan 600 m; farklı beslemelerde her zaman,
+   aynı beslemede yalnız ortak hat yoksa). Süre = mesafe × 1.3
    (kuş uçuşu düzeltmesi) / 4.8 km/s.
 2. **İstasyon kümeleri**: metro, tramvay, füniküler, teleferik, raylı, metrobüs ve vapur durakları
    birbirine yakınsa tek bir üst istasyon (`location_type=1`, besleme `kume`, kimlik `kume:...`) altında
@@ -205,16 +206,22 @@ def temizle(session: Session) -> None:
     session.execute(delete(GtfsFeed).where(GtfsFeed.id == KUME_BESLEME))
 
 
-def durak_modlari(session: Session) -> Dict[str, set]:
-    """Durak -> o durağa uğrayan istasyon türü modlar. Yalnız otobüs dışı seferler taranır (hızlı)."""
+def durak_mod_ve_hatlari(session: Session) -> Tuple[Dict[str, set], Dict[str, set]]:
+    """Durak -> uğrayan istasyon türü modlar ve hat kimlikleri. Yalnız otobüs dışı seferler taranır (hızlı)."""
     modlar: Dict[str, set] = defaultdict(set)
-    q = (select(GtfsStopTime.stop_id, GtfsRoute.mode)
+    hatlar: Dict[str, set] = defaultdict(set)
+    q = (select(GtfsStopTime.stop_id, GtfsRoute.mode, GtfsRoute.id)
          .join(GtfsTrip, GtfsStopTime.trip_id == GtfsTrip.id)
          .join(GtfsRoute, GtfsTrip.route_id == GtfsRoute.id)
          .where(GtfsRoute.mode.in_(sorted(ISTASYON_MODLARI))).distinct())
-    for stop_id, mod in session.execute(q):
+    for stop_id, mod, rid in session.execute(q):
         modlar[stop_id].add(mod)
-    return modlar
+        hatlar[stop_id].add(rid)
+    return modlar, hatlar
+
+
+def durak_modlari(session: Session) -> Dict[str, set]:
+    return durak_mod_ve_hatlari(session)[0]
 
 
 def uret(session: Session, *, yaricap_m: float = VARSAYILAN_YARICAP_M,
@@ -225,12 +232,12 @@ def uret(session: Session, *, yaricap_m: float = VARSAYILAN_YARICAP_M,
     tanim = tanim if tanim is not None else tanim_oku()
     temizle(session)
     session.flush()
-    modlar = durak_modlari(session)
+    modlar, hatlar = durak_mod_ve_hatlari(session)
     satirlar = session.execute(
         select(GtfsStop.id, GtfsStop.feed_id, GtfsStop.name, GtfsStop.lat, GtfsStop.lon)
         .where(GtfsStop.location_type == 0).order_by(GtfsStop.id)).all()
     duraklar = [{"id": s.id, "feed": s.feed_id, "name": s.name, "lat": s.lat, "lon": s.lon,
-                 "modlar": modlar.get(s.id, set())} for s in satirlar]
+                 "modlar": modlar.get(s.id, set()), "hatlar": hatlar.get(s.id, set())} for s in satirlar]
     log(f"{len(duraklar)} durak okundu")
 
     # 1) istasyon kümeleri
@@ -280,15 +287,17 @@ def uret(session: Session, *, yaricap_m: float = VARSAYILAN_YARICAP_M,
                     sn, elle_sayi = max(sn, elle[0]), elle_sayi + 1
             kenarlar.append({"feed_id": None, "from_stop_id": d["id"], "to_stop_id": e["id"],
                              "transfer_type": 2, "min_transfer_secs": sn, "source": "auto"})
-    # istasyon türü duraklar için geniş yarıçap: yalnız FARKLI beslemeler ve 150 m'den uzak çiftler
-    # (yakın çiftler yukarıda zaten eklendi; aynı beslemenin ardışık durakları birbirine bağlanmaz)
+    # istasyon türü duraklar için geniş yarıçap: 150 m'den uzak çiftler; farklı beslemeler her zaman, aynı
+    # beslemede yalnız ORTAK HAT YOKSA (ör. M2 Taksim ↔ F1 Taksim); ardışık duraklar birbirine bağlanmaz
     if len(ist) > 1 and istasyon_yaricap_m > yaricap_m:
         ig = _Izgara(ist, istasyon_yaricap_m)
         for i, d in enumerate(ist):
             for j, m in ig.komsular(i, istasyon_yaricap_m):
                 e = ist[j]
-                if m <= yaricap_m or d["feed"] == e["feed"]:
+                if m <= yaricap_m:
                     continue
+                if d["feed"] == e["feed"] and d["hatlar"] & e["hatlar"]:
+                    continue        # aynı beslemede ortak hat varsa ardışık duraktır, aktarma değil
                 kenarlar.append({"feed_id": None, "from_stop_id": d["id"], "to_stop_id": e["id"],
                                  "transfer_type": 2, "min_transfer_secs": yurume_suresi_sn(m), "source": "auto"})
     _toplu_ekle(session, GtfsTransfer, kenarlar)
