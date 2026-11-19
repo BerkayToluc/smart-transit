@@ -287,6 +287,30 @@ python scripts/build_gtfs.py saatler vapur --hedef sqlite:///gtfs_data/gtfs.db
 
 Güncelleme: kurum yeni tarife yayımlarsa `data/vapur.json` ve `besleme.veri_tarihi` güncellenir.
 
+## Aktarma noktaları (#11)
+
+`python scripts/build_gtfs.py aktarma --hedef sqlite:///gtfs_data/gtfs.db` (`app/gtfs/transfers.py`) yüklü tüm
+beslemelerin duraklarından:
+- **Yürüme kenarları** (`gtfs_transfer`, `source=auto`, `transfer_type=2`): ≤150 m çiftler (tüm durak türleri) ve
+  **farklı beslemelerin istasyon türü durakları için ≤600 m**. Süre = mesafe × 1.3 / 4.8 km/s (yukarı yuvarlanır).
+  Geniş yarıçap **gerçek veri ölçümünden** geldi: Marmaray Üsküdar ↔ iskele 236 m, Bostancı 262 m, Sirkeci ↔ Eminönü
+  542 m, Maltepe 504 m; yalnız 150 m kuralı bu aktarmaları kaçırırdı. Aynı beslemenin ardışık istasyonları ve otobüs
+  durakları geniş yarıçapa girmez.
+- **İstasyon kümeleri:** metro, tramvay, füniküler, teleferik, Marmaray, metrobüs ve vapur durakları ≤120 m ise tek
+  üst istasyon altında toplanır (`gtfs_stop`, `location_type=1`, besleme `kume`, kimlik `kume:ad-xxxxxx`; üyelerin
+  `parent_station` alanı dolar). Küme çapı ≤300 m (zincirleme birleşme yok). Otobüs durakları kümelenmez.
+- **Aynı isim hiçbir zaman birleştirme nedeni değildir** (yalnız mesafe); isim yalnız küme etiketi seçer.
+- **Küme içi aktarma** en az 120 sn; bilinen büyük noktalar için süreler `data/aktarma.json`'dan (**varsayım**,
+  doğrulanmadı): Yenikapı 8, Mecidiyeköy 8, Ayrılık Çeşmesi 6, Üsküdar/Kadıköy/Taksim/Sirkeci/Zincirlikuyu 5,
+  Karaköy/Kabataş 4 dk.
+- **Yeniden üretim:** her çalışmada önceki otomatik kayıtlar silinip yeniden hesaplanır (idempotent). Bir besleme
+  yeniden yüklenirse (`_beslemeyi_sil` o beslemenin duraklarına bağlı otomatik kenarları da siler) `aktarma`
+  komutu yeniden çalıştırılmalıdır.
+- **Rapor:** komut kenar/küme sayısını, besleme çiftlerine göre kenarları ve `data/aktarma.json`'daki 10 büyük
+  noktayı (Yenikapı, Üsküdar, Kadıköy, Mecidiyeköy, Zincirlikuyu, Taksim, Sirkeci-Eminönü, Karaköy, Kabataş, Ayrılık
+  Çeşmesi) için bulunan durakları/modları ve kaç bağlı gruba bölündüklerini basar (`OK` = beklenen tüm modlar var ve
+  tek grup).
+
 ## Karara bağlanmış / ertelenmiş konular
 - Marmaray için **ayrı mod/rozet**: şimdilik **yok** (normal raylı hat gibi davranır), sonra bakılacak.
 - Arayüzde **veri tarihi gösterimi**: şimdilik **yok**, sonra bakılacak.

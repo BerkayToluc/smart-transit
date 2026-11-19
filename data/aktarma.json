@@ -1,0 +1,190 @@
+{
+ "aciklama": "Bilinen büyük aktarma noktaları. 'sureler': küme içi en az aktarma süresi (dk) — VARSAYIMDIR, doğrulanmadı. 'bilinen_noktalar': `aktarma` raporunun kontrol ettiği konumlar (yaklaşık koordinat, geniş yarıçap).",
+ "sureler": [
+  {
+   "ad": "Yenikapı",
+   "enlem": 41.0048,
+   "boylam": 28.95,
+   "yaricap_m": 400,
+   "sure_dk": 8,
+   "kaynak": "varsayım"
+  },
+  {
+   "ad": "Üsküdar",
+   "enlem": 41.0258,
+   "boylam": 29.015,
+   "yaricap_m": 300,
+   "sure_dk": 5,
+   "kaynak": "varsayım"
+  },
+  {
+   "ad": "Kadıköy",
+   "enlem": 40.9925,
+   "boylam": 29.0226,
+   "yaricap_m": 400,
+   "sure_dk": 5,
+   "kaynak": "varsayım"
+  },
+  {
+   "ad": "Mecidiyeköy",
+   "enlem": 41.0675,
+   "boylam": 28.996,
+   "yaricap_m": 400,
+   "sure_dk": 8,
+   "kaynak": "varsayım"
+  },
+  {
+   "ad": "Zincirlikuyu",
+   "enlem": 41.0669,
+   "boylam": 29.017,
+   "yaricap_m": 300,
+   "sure_dk": 5,
+   "kaynak": "varsayım"
+  },
+  {
+   "ad": "Taksim",
+   "enlem": 41.037,
+   "boylam": 28.985,
+   "yaricap_m": 250,
+   "sure_dk": 5,
+   "kaynak": "varsayım"
+  },
+  {
+   "ad": "Sirkeci - Eminönü",
+   "enlem": 41.015,
+   "boylam": 28.976,
+   "yaricap_m": 400,
+   "sure_dk": 5,
+   "kaynak": "varsayım"
+  },
+  {
+   "ad": "Karaköy",
+   "enlem": 41.0222,
+   "boylam": 28.9772,
+   "yaricap_m": 250,
+   "sure_dk": 4,
+   "kaynak": "varsayım"
+  },
+  {
+   "ad": "Kabataş",
+   "enlem": 41.0332,
+   "boylam": 28.9942,
+   "yaricap_m": 250,
+   "sure_dk": 4,
+   "kaynak": "varsayım"
+  },
+  {
+   "ad": "Ayrılık Çeşmesi",
+   "enlem": 41.0001,
+   "boylam": 29.0301,
+   "yaricap_m": 300,
+   "sure_dk": 6,
+   "kaynak": "varsayım"
+  }
+ ],
+ "bilinen_noktalar": [
+  {
+   "ad": "Yenikapı",
+   "enlem": 41.0048,
+   "boylam": 28.95,
+   "yaricap_m": 400,
+   "beklenen_modlar": [
+    "metro",
+    "rail"
+   ]
+  },
+  {
+   "ad": "Üsküdar",
+   "enlem": 41.0258,
+   "boylam": 29.015,
+   "yaricap_m": 300,
+   "beklenen_modlar": [
+    "metro",
+    "rail",
+    "ferry"
+   ]
+  },
+  {
+   "ad": "Kadıköy",
+   "enlem": 40.9925,
+   "boylam": 29.0226,
+   "yaricap_m": 400,
+   "beklenen_modlar": [
+    "metro",
+    "ferry"
+   ]
+  },
+  {
+   "ad": "Mecidiyeköy",
+   "enlem": 41.0675,
+   "boylam": 28.996,
+   "yaricap_m": 400,
+   "beklenen_modlar": [
+    "metro",
+    "metrobus"
+   ]
+  },
+  {
+   "ad": "Zincirlikuyu",
+   "enlem": 41.0669,
+   "boylam": 29.017,
+   "yaricap_m": 300,
+   "beklenen_modlar": [
+    "metrobus"
+   ]
+  },
+  {
+   "ad": "Taksim",
+   "enlem": 41.037,
+   "boylam": 28.985,
+   "yaricap_m": 300,
+   "beklenen_modlar": [
+    "metro",
+    "funicular"
+   ]
+  },
+  {
+   "ad": "Sirkeci - Eminönü",
+   "enlem": 41.015,
+   "boylam": 28.976,
+   "yaricap_m": 400,
+   "beklenen_modlar": [
+    "rail",
+    "tram",
+    "ferry"
+   ]
+  },
+  {
+   "ad": "Karaköy",
+   "enlem": 41.0222,
+   "boylam": 28.9772,
+   "yaricap_m": 300,
+   "beklenen_modlar": [
+    "tram",
+    "funicular",
+    "ferry"
+   ]
+  },
+  {
+   "ad": "Kabataş",
+   "enlem": 41.0332,
+   "boylam": 28.9942,
+   "yaricap_m": 300,
+   "beklenen_modlar": [
+    "tram",
+    "funicular",
+    "ferry"
+   ]
+  },
+  {
+   "ad": "Ayrılık Çeşmesi",
+   "enlem": 41.0001,
+   "boylam": 29.0301,
+   "yaricap_m": 300,
+   "beklenen_modlar": [
+    "metro",
+    "rail"
+   ]
+  }
+ ]
+}

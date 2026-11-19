@@ -73,6 +73,11 @@ def _beslemeyi_sil(session: Session, feed_id: str) -> None:
     """Bir beslemenin tüm kayıtlarını bağımlılık sırasıyla siler."""
     trip_idler = select(GtfsTrip.id).where(GtfsTrip.feed_id == feed_id)
     session.execute(delete(GtfsStopTime).where(GtfsStopTime.trip_id.in_(trip_idler)))
+    # Otomatik aktarma kenarları (#11) beslemeler arası olabilir (feed_id boş); bu beslemenin duraklarına
+    # bağlı olanlar, duraklarla birlikte silinmeli (PostgreSQL yabancı anahtarı yoksa siler/hata verir).
+    stop_idler = select(GtfsStop.id).where(GtfsStop.feed_id == feed_id)
+    session.execute(delete(GtfsTransfer).where(GtfsTransfer.from_stop_id.in_(stop_idler)))
+    session.execute(delete(GtfsTransfer).where(GtfsTransfer.to_stop_id.in_(stop_idler)))
     for model in (GtfsFrequency, GtfsTransfer, GtfsTrip, GtfsCalendarDate, GtfsCalendar,
                   GtfsRoute, GtfsStop, GtfsAgency):
         session.execute(delete(model).where(model.feed_id == feed_id))
