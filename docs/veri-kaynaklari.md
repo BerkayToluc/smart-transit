@@ -234,6 +234,15 @@ Moovit/Google de vapur saatlerini işletmecinin tarifesinden alır; İBB'nin 201
 - **Resmî tatiller:** takvim yalnız hafta günü bilir; tatil gününe denk gelen hafta içi günü hafta içi tarifesiyle
   çalışır (tatil tarifesi için `calendar_dates` desteği ileri bir iş).
 
+### Adalar ve Bostancı hatları (sayfa 12-18)
+Bu sayfalarda tablolar **satır = sefer** biçimindedir (başlık sütunları: iskeleler, "-" = o iskeleye uğramaz), yani
+eşleştirme gerekmez; süreler kitapçıktaki saatlerin kendisidir. Hatlar: Kabataş–Adalar (Eminönü/Kadıköy/Kınalıada/
+Burgazada/Heybeliada/Büyükada/Bostancı), Adalar–Beşiktaş, Maltepe–Adalar (`*` = Pazar/tatil yapılmaz → `pzt_cmt`),
+Bostancı–Adalar ring (Bostancı iki kez geçer), Bostancı–Moda–Karaköy–Kabataş ve Büyükada–Sedef Adası.
+Parantezli saatler (Bostancı–Kabataş hattı) durak sırasının tersine denk gelir (ör. Kabataş (19:20) sonra Karaköy
+(19:35)); duraklar saate göre sıralanır. 24:00'ı aşan seferler 24-26 olarak yazılır. Sayfa 12-13'te gece tarifesi
+notu: 00:30-05:30 arası iki kat ücret (planlayıcıda ücret hesabı #26).
+
 ### Varsayımlar (kitapçıkta yok, doğrulanmadı)
 - **Yolculuk süreleri:** Kitapçıkta kalkış saati var, süre yok. Eşleşen zincirlerde süreler saatlerin kendisinden
   gelir (Kadıköy→Karaköy 20-30, Karaköy→Eminönü ~10 dk). Eşleşmeyen dönüş seferlerinde varsayım: Eminönü→Kadıköy 25,
@@ -247,9 +256,9 @@ Moovit/Google de vapur saatlerini işletmecinin tarifesinden alır; İBB'nin 201
   hatlarda kullanılacak.
 
 ### Kapsam ve eksikler
-Şimdilik kitapçığın 4-9. sayfaları: Kadıköy–Karaköy–Eminönü, Üsküdar–Karaköy–Eminönü, Kadıköy–Beşiktaş (+gece),
-Kadıköy–Kabataş, Kadıköy–Üsküdar–Ortaköy ve Ortaköy–Üsküdar–Kadıköy (**450 sefer**). Sıradakiler: Adalar (sayfa
-12-18), Boğaz (20-28), Haliç/Eyüp (29-32), diğer hatlar (33-37). Turyol/Dentur/İDO kitapçıkta yok ve kapsam dışı.
+Şimdilik kitapçığın 4-9. sayfaları (**450 sefer**): Kadıköy–Karaköy–Eminönü, Üsküdar–Karaköy–Eminönü, Kadıköy–Beşiktaş (+gece),
+Kadıköy–Kabataş, Kadıköy–Üsküdar–Ortaköy ve Ortaköy–Üsküdar–Kadıköy, ayrıca Adalar/Bostancı hatları (sayfa 12-18; **160 sefer**, toplam 610). Sıradakiler: Boğaz (20-28),
+Haliç/Eyüp (29-32), diğer hatlar (33-37); Tuzla–Pendik–Büyükada (İDO iskeleleri, KML'de yok) bekliyor. Turyol/Dentur/İDO kitapçıkta yok ve kapsam dışı.
 
 ### Uygulama (#10)
 `app/gtfs/vapur.py` dosyayı doğrular ve GTFS'e çevirir (`route_type=4`, her sefer ayrı GTFS seferi, frekans yok,
