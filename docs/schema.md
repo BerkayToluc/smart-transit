@@ -80,7 +80,8 @@ python scripts/build_gtfs.py yukle iett ibb --hedef sqlite:///gtfs_data/gtfs.db
 python scripts/build_gtfs.py rapor iett ibb --hedef sqlite:///gtfs_data/gtfs.db
 python scripts/build_gtfs.py hepsi iett ibb --hedef sqlite:///gtfs_data/gtfs.db   # üçü birden
 ```
-- Beslemeler: `iett` (otobüs + metrobüs, `gtfs_data/iett`), `ibb` (çok modlu, `gtfs_data/multimodal`).
+- Beslemeler: `iett` (otobüs + metrobüs, `gtfs_data/iett`), `ibb` (çok modlu: metro, tramvay, füniküler, vapur;
+  `gtfs_data/multimodal`), `marmaray` (elle tanımlı, aşağıya bakın).
 - İndirme, portalın CKAN API'siyle (`package_show`) dosya adreslerini bulur; adresler koda yazılı değildir.
   Aynı dosya hem CSV hem ZIP ise **ZIP tercih edilir** ve içinden CSV açılır (İETT `stop_times.csv` kırpılmış).
   Boyutu portalla aynı olan dosyalar atlanır; kesilen indirmeler tekrar denenir.
@@ -116,6 +117,32 @@ sınırın üstünde). Bu yüzden:
   satır Python nesneleri yerine **sıkı diziler** (`array`/`numpy`) olarak tutulmalıdır (nesne olarak yüzlerce MB).
 - Canlı sunucuya taşıma (barındırma) için seçenekler (#31): veriyi salt-okunur dosya olarak sunucuya koymak,
   durak saatlerini sefer başına sıkıştırılmış satırlarda saklamak ya da ücretli veritabanı planı.
+
+## Elle tanımlı beslemeler (`app/gtfs/manual.py`, `data/marmaray.json`)
+Veri portalda yoksa ya da eskiyse (Marmaray) çizelge **kurallardan** üretilir; seferler tek tek yazılmaz:
+```json
+{"id": "halkali_gebze", "hat": "ana", "yon": 0, "baslik": "Gebze", "nereden": "halkali", "nereye": "gebze",
+ "seferler": [{"hizmet": "her_gun",
+               "araliklar": [{"ilk": "05:58", "son": "22:58", "aralik_dk": 15},
+                             {"ilk": "23:28", "son": "23:28", "aralik_dk": 30}]}]}
+```
+- `istasyonlar`: sıralı liste (`id`, `ad`, `enlem`, `boylam`, `ofset_sn` = ilk istasyondan itibaren saniye).
+  Bir kalıp `nereden`–`nereye` arasındaki istasyonları kullanır; ters yönde süreler simetriktir.
+- `hizmetler`: haftanın günleri (Pazartesi..Pazar için 0/1). 24:00 sonrası saatler (`25:28`) yazılabilir.
+- `araliklar`: "ilk ... son ... her X dakikada bir". İlk ve son sefer tam korunur (bkz. `kalkis_pencereleri`).
+- Üretim her kalıp × hizmet için **şablon sefer** (saatleri 00:00:00'dan başlar) ve `frequencies` satırları yazar;
+  gerçek seferlere açma planlama aşamasında yapılır. Tanım yüklenmeden önce doğrulanır (tüm hatalar birlikte bildirilir).
+- Komut: `python scripts/build_gtfs.py yukle marmaray --hedef sqlite:///gtfs_data/gtfs.db` (dosyalar `gtfs_data/marmaray/`
+  altına üretilir, indirme yoktur).
+
+## Hat özeti (`scripts/build_gtfs.py hatlar`)
+```bash
+python scripts/build_gtfs.py hatlar ibb marmaray --hedef sqlite:///gtfs_data/gtfs.db
+python scripts/build_gtfs.py hatlar ibb --modlar metro tram --hedef sqlite:///gtfs_data/gtfs.db
+```
+Her hat için ilk durak → son durak, durak sayısı, yolculuk süresi (dk) ve sefer sayısı yazar; durak sırasını ve
+süreleri gerçek hayatla (örn. M2 Yenikapı–Hacıosman) karşılaştırmak için kullanılır. Temsilci sefer, hattın en çok
+durağı olan seferidir (eşitlikte gidiş yönü).
 
 ## Planlama kuralları (`app/gtfs/rules.py`)
 - `expand_frequency_starts(start, end, headway)`: `[start, end)` penceresindeki sefer başlangıçları.

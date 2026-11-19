@@ -17,6 +17,7 @@ tramvay, metrobüs ve vapuru birleştiren aktarmalı rota planlayıcı (yol hari
 | `app/utils.py` | Ortak yardımcılar (mesafe hesabı) |
 | `app/gtfs/` | Çok modlu GTFS şeması (`gtfs_*` tabloları), okuyucu, mod eşleme, yükleyici ve planlama kuralları; bkz. `docs/schema.md` |
 | `docs/` | Veri kaynakları (`veri-kaynaklari.md`) ve şema (`schema.md`) |
+| `data/` | Elle tanımlı veri (Marmaray çizelge kuralları: `marmaray.json`) |
 | `frontend/` | Next.js arayüzü (harita, hat arama, yaklaşan araçlar) |
 | `routes.csv`, `stops.csv`, `trips.csv` | İETT GTFS verisinin bir kısmı (`;` ile ayrılmış, karakterleri bozuk, bkz. `main.py` içindeki düzeltme yardımcıları) |
 | `gtfs_*.py`, `hat_ekleyici.py`, `veri_yukle.py` | Tek seferlik veri yükleme betikleri (aşağıdaki uyarıya bakın) |
@@ -91,8 +92,10 @@ Aynı kontrolleri GitHub Actions (`.github/workflows/ci.yml`) her push ve pull r
 İBB Açık Veri Portalı'ndan GTFS verisini indirip yüklemek için (**kendi bilgisayarınızda**, portal bulut
 sunucularından açılmıyor; ayrıntı: `docs/schema.md`):
 ```bash
-python scripts/build_gtfs.py hepsi iett ibb --hedef sqlite:///gtfs_data/gtfs.db
+python scripts/build_gtfs.py hepsi iett ibb marmaray --hedef sqlite:///gtfs_data/gtfs.db
+python scripts/build_gtfs.py hatlar ibb marmaray --hedef sqlite:///gtfs_data/gtfs.db   # hat/süre özeti
 ```
+Marmaray portaldan inmez: çizelgesi `data/marmaray.json`'daki kurallardan üretilir.
 `--hedef` yazmazsanız `.env`'deki canlı veritabanı kullanılır ve `--evet` istenir.
 
 ## Veri yükleme betikleri hakkında uyarı

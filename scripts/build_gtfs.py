@@ -5,9 +5,13 @@ Proje KÖK klasöründen çalıştırın (portal bulut sunucularından açılmaz
     python scripts/build_gtfs.py indir iett ibb                 # gtfs_data/ altına indir
     python scripts/build_gtfs.py yukle iett --hedef sqlite:///gtfs_data/gtfs.db
     python scripts/build_gtfs.py rapor iett --hedef sqlite:///gtfs_data/gtfs.db
-    python scripts/build_gtfs.py hepsi iett ibb --hedef sqlite:///gtfs_data/gtfs.db
+    python scripts/build_gtfs.py hepsi iett ibb marmaray --hedef sqlite:///gtfs_data/gtfs.db
+    python scripts/build_gtfs.py hatlar ibb marmaray --hedef sqlite:///gtfs_data/gtfs.db   # hat/süre özeti
 
-Beslemeler: iett (otobüs + metrobüs), ibb (çok modlu: metro, tramvay, vapur, Marmaray portal verisi).
+Beslemeler: iett (otobüs + metrobüs), ibb (çok modlu: metro, tramvay, füniküler, vapur),
+marmaray (elle tanımlı: data/marmaray.json'daki kurallardan üretilir, indirme gerekmez).
+`hatlar`: her hattın ilk/son durağı, durak sayısı ve yolculuk süresi (veriyi doğrulamak için);
+`--modlar metro tram ...` ile süzülür (varsayılan: otobüs ve minibüs dışındakiler).
 
 --hedef verilmezse .env'deki DATABASE_URL (Neon) kullanılır ve `--evet` istenir: İETT'nin
 durak saatleri yaklaşık bir milyon satırdır, ücretsiz Neon planının yer sınırına yaklaşabilir.
@@ -32,10 +36,11 @@ def _maskele(url: str) -> str:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("komut", choices=["indir", "yukle", "rapor", "hepsi"])
-    ap.add_argument("beslemeler", nargs="+", help="iett, ibb")
+    ap.add_argument("komut", choices=["indir", "yukle", "rapor", "hepsi", "hatlar"])
+    ap.add_argument("beslemeler", nargs="+", help="iett, ibb, marmaray")
     ap.add_argument("--hedef", help="veritabanı adresi (örn. sqlite:///gtfs_data/gtfs.db); yoksa .env DATABASE_URL")
     ap.add_argument("--klasor", help="yerel GTFS klasörü (yalnızca tek besleme verildiğinde)")
+    ap.add_argument("--modlar", nargs="+", help="`hatlar` için mod süzgeci (örn. metro tram ferry)")
     ap.add_argument("--evet", action="store_true", help="--hedef olmadan (.env'deki canlı veritabanına) yüklemeyi onayla")
     a = ap.parse_args(argv)
 
@@ -60,7 +65,13 @@ def main(argv=None) -> int:
             print(f"== {b}: portaldan indiriliyor -> {klasor_of(b)}")
             build.indir(b, klasor_of(b))
 
-    if a.komut in ("yukle", "hepsi", "rapor"):
+    if a.komut in ("yukle", "hepsi"):
+        for b in a.beslemeler:                 # elle tanımlı beslemelerin dosyaları her yüklemede yeniden üretilir
+            if build.BESLEMELER[b].manuel:
+                print(f"== {b}: kurallardan GTFS dosyaları üretiliyor")
+                build.manuel_uret(b, klasor_of(b))
+
+    if a.komut in ("yukle", "hepsi", "rapor", "hatlar"):
         from app.db import SessionLocal, engine
         from app.db import Base
         from app.gtfs import models  # noqa: F401
@@ -82,6 +93,13 @@ def main(argv=None) -> int:
                     ozet = load_feed(oturum, klasor_of(b), build.BESLEMELER[b].config,
                                      progress=lambda m: print("  " + m))
                     print("  özet:", ozet)
+            if a.komut == "hatlar":
+                varsayilan = [m for m in ("metrobus", "metro", "tram", "funicular", "cable_car", "rail", "ferry")]
+                for b in a.beslemeler:
+                    fid = build.BESLEMELER[b].config.feed_id
+                    print(f"[{fid}] hatlar:")
+                    print(build.hat_ozeti_metni(build.hat_ozeti(oturum, fid, a.modlar or varsayilan)))
+                return 0
             for b in a.beslemeler:
                 print(build.rapor_metni(build.rapor(oturum, build.BESLEMELER[b].config.feed_id)))
             boyutlar = build.boyut_bilgisi(oturum)

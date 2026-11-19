@@ -1,0 +1,487 @@
+{
+  "besleme": {
+    "id": "marmaray",
+    "ad": "Marmaray (TCDD, elle tanımlı)",
+    "veri_tarihi": "2026-05-05",
+    "kaynak": "TCDD Taşımacılık, Marmaray Günlük Tren Saatleri (5 Mayıs 2026). İstasyon konumları ve istasyonlar arası süreler: İBB çok modlu GTFS (TCDD, 2019), Halkalı→Gebze referans seferi."
+  },
+  "kurum": {
+    "id": "tcdd",
+    "ad": "TCDD Taşımacılık",
+    "url": "https://www.tcddtasimacilik.gov.tr/marmaray"
+  },
+  "istasyonlar": [
+    {
+      "id": "halkali",
+      "ad": "Halkalı",
+      "enlem": 41.0178427940864,
+      "boylam": 28.7664382511562,
+      "ofset_sn": 0
+    },
+    {
+      "id": "mustafa_kemal",
+      "ad": "Mustafa Kemal",
+      "enlem": 41.0062789769983,
+      "boylam": 28.7739502215087,
+      "ofset_sn": 161
+    },
+    {
+      "id": "kucukcekmece",
+      "ad": "Küçükçekmece",
+      "enlem": 40.9885301752163,
+      "boylam": 28.7729538518441,
+      "ofset_sn": 358
+    },
+    {
+      "id": "florya",
+      "ad": "Florya",
+      "enlem": 40.9729629167419,
+      "boylam": 28.7874770796778,
+      "ofset_sn": 568
+    },
+    {
+      "id": "florya_akvaryum",
+      "ad": "Florya Akvaryum",
+      "enlem": 40.9677718222994,
+      "boylam": 28.7970462624679,
+      "ofset_sn": 664
+    },
+    {
+      "id": "yesilkoy",
+      "ad": "Yeşilköy",
+      "enlem": 40.9626579916415,
+      "boylam": 28.8248828840576,
+      "ofset_sn": 880
+    },
+    {
+      "id": "yesilyurt",
+      "ad": "Yeşilyurt",
+      "enlem": 40.9654758614525,
+      "boylam": 28.8372823708532,
+      "ofset_sn": 987
+    },
+    {
+      "id": "atakoy",
+      "ad": "Ataköy",
+      "enlem": 40.9802168588159,
+      "boylam": 28.8562250170243,
+      "ofset_sn": 1204
+    },
+    {
+      "id": "bakirkoy",
+      "ad": "Bakırköy",
+      "enlem": 40.9802655959296,
+      "boylam": 28.8723187722271,
+      "ofset_sn": 1328
+    },
+    {
+      "id": "yenimahalle",
+      "ad": "Yenimahalle",
+      "enlem": 40.9817390460176,
+      "boylam": 28.8810507091285,
+      "ofset_sn": 1403
+    },
+    {
+      "id": "zeytinburnu",
+      "ad": "Zeytinburnu",
+      "enlem": 40.9858745807536,
+      "boylam": 28.9054462645074,
+      "ofset_sn": 1593
+    },
+    {
+      "id": "kazlicesme",
+      "ad": "Kazlıçeşme",
+      "enlem": 40.992686765903,
+      "boylam": 28.9168834698481,
+      "ofset_sn": 1715
+    },
+    {
+      "id": "yenikapi",
+      "ad": "Yenikapı",
+      "enlem": 41.004779309437,
+      "boylam": 28.9495799493274,
+      "ofset_sn": 1999
+    },
+    {
+      "id": "sirkeci",
+      "ad": "Sirkeci",
+      "enlem": 41.013545950893,
+      "boylam": 28.9770540249921,
+      "ofset_sn": 2220
+    },
+    {
+      "id": "uskudar",
+      "ad": "Üsküdar",
+      "enlem": 41.025756685677,
+      "boylam": 29.0137932912137,
+      "ofset_sn": 2507
+    },
+    {
+      "id": "ayrilikcesmesi",
+      "ad": "Ayrılıkçeşmesi",
+      "enlem": 41.000142555216,
+      "boylam": 29.0301410162619,
+      "ofset_sn": 2831
+    },
+    {
+      "id": "sogutlucesme",
+      "ad": "Söğütlüçeşme",
+      "enlem": 40.990902337839,
+      "boylam": 29.0376279458605,
+      "ofset_sn": 2949
+    },
+    {
+      "id": "feneryolu",
+      "ad": "Feneryolu",
+      "enlem": 40.9786961509793,
+      "boylam": 29.0490084626684,
+      "ofset_sn": 3102
+    },
+    {
+      "id": "goztepe",
+      "ad": "Göztepe",
+      "enlem": 40.9791648388466,
+      "boylam": 29.0625591735035,
+      "ofset_sn": 3212
+    },
+    {
+      "id": "erenkoy",
+      "ad": "Erenköy",
+      "enlem": 40.9714092751695,
+      "boylam": 29.0764726675955,
+      "ofset_sn": 3352
+    },
+    {
+      "id": "suadiye",
+      "ad": "Suadiye",
+      "enlem": 40.9604752408322,
+      "boylam": 29.0844186912134,
+      "ofset_sn": 3493
+    },
+    {
+      "id": "bostanci",
+      "ad": "Bostancı",
+      "enlem": 40.9538001484529,
+      "boylam": 29.0950591485625,
+      "ofset_sn": 3610
+    },
+    {
+      "id": "kucukyali",
+      "ad": "Küçükyalı",
+      "enlem": 40.9462573975736,
+      "boylam": 29.1068216034401,
+      "ofset_sn": 3736
+    },
+    {
+      "id": "idealtepe",
+      "ad": "İdealtepe",
+      "enlem": 40.9378068714961,
+      "boylam": 29.1142558579521,
+      "ofset_sn": 3855
+    },
+    {
+      "id": "sureyya_plaji",
+      "ad": "Süreyya Plajı",
+      "enlem": 40.9268299858791,
+      "boylam": 29.1242047148349,
+      "ofset_sn": 3989
+    },
+    {
+      "id": "maltepe",
+      "ad": "Maltepe",
+      "enlem": 40.9206463835831,
+      "boylam": 29.1335259970986,
+      "ofset_sn": 4089
+    },
+    {
+      "id": "cevizli",
+      "ad": "Cevizli",
+      "enlem": 40.9100151224824,
+      "boylam": 29.1560454699434,
+      "ofset_sn": 4284
+    },
+    {
+      "id": "atalar",
+      "ad": "Atalar",
+      "enlem": 40.8985880196095,
+      "boylam": 29.1694542074836,
+      "ofset_sn": 4436
+    },
+    {
+      "id": "basak",
+      "ad": "Başak",
+      "enlem": 40.8905590782827,
+      "boylam": 29.1773527136764,
+      "ofset_sn": 4541
+    },
+    {
+      "id": "kartal",
+      "ad": "Kartal",
+      "enlem": 40.8886128831676,
+      "boylam": 29.1911901410005,
+      "ofset_sn": 4672
+    },
+    {
+      "id": "yunus",
+      "ad": "Yunus",
+      "enlem": 40.8845046267267,
+      "boylam": 29.2105353314047,
+      "ofset_sn": 4829
+    },
+    {
+      "id": "pendik",
+      "ad": "Pendik",
+      "enlem": 40.8802067715332,
+      "boylam": 29.2316720558041,
+      "ofset_sn": 4995
+    },
+    {
+      "id": "kaynarca",
+      "ad": "Kaynarca",
+      "enlem": 40.8713029434192,
+      "boylam": 29.2560336339024,
+      "ofset_sn": 5200
+    },
+    {
+      "id": "tersane",
+      "ad": "Tersane",
+      "enlem": 40.8609774863764,
+      "boylam": 29.2733636213888,
+      "ofset_sn": 5366
+    },
+    {
+      "id": "guzelyali",
+      "ad": "Güzelyalı",
+      "enlem": 40.8568547122426,
+      "boylam": 29.2834955974544,
+      "ofset_sn": 5465
+    },
+    {
+      "id": "aydintepe",
+      "ad": "Aydıntepe",
+      "enlem": 40.8522885876792,
+      "boylam": 29.2931664014893,
+      "ofset_sn": 5563
+    },
+    {
+      "id": "icmeler",
+      "ad": "İçmeler",
+      "enlem": 40.8456508904887,
+      "boylam": 29.3000611746553,
+      "ofset_sn": 5654
+    },
+    {
+      "id": "tuzla",
+      "ad": "Tuzla",
+      "enlem": 40.8299524360082,
+      "boylam": 29.3223601331439,
+      "ofset_sn": 5874
+    },
+    {
+      "id": "cayirova",
+      "ad": "Çayırova",
+      "enlem": 40.8104982886506,
+      "boylam": 29.3475125745724,
+      "ofset_sn": 6143
+    },
+    {
+      "id": "fatih",
+      "ad": "Fatih",
+      "enlem": 40.8076260643992,
+      "boylam": 29.3639258834218,
+      "ofset_sn": 6272
+    },
+    {
+      "id": "osmangazi",
+      "ad": "Osmangazi",
+      "enlem": 40.7992722879167,
+      "boylam": 29.3800141019468,
+      "ofset_sn": 6420
+    },
+    {
+      "id": "darica",
+      "ad": "Darıca",
+      "enlem": 40.7914192062897,
+      "boylam": 29.3918381727911,
+      "ofset_sn": 6541
+    },
+    {
+      "id": "gebze",
+      "ad": "Gebze",
+      "enlem": 40.7842492519915,
+      "boylam": 29.4095634828195,
+      "ofset_sn": 6693
+    }
+  ],
+  "hizmetler": {
+    "her_gun": {
+      "gunler": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "aciklama": "Her gün"
+    },
+    "cuma_cumartesi_gecesi": {
+      "gunler": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "aciklama": "Cuma ve Cumartesi günlerini bağlayan geceler (24:00 sonrası seferler)"
+    }
+  },
+  "hatlar": [
+    {
+      "id": "ana",
+      "kisa_ad": "Marmaray",
+      "uzun_ad": "Halkalı - Gebze"
+    },
+    {
+      "id": "kisa",
+      "kisa_ad": "Marmaray",
+      "uzun_ad": "Ataköy - Pendik"
+    }
+  ],
+  "kaliplar": [
+    {
+      "id": "halkali_gebze",
+      "hat": "ana",
+      "yon": 0,
+      "baslik": "Gebze",
+      "nereden": "halkali",
+      "nereye": "gebze",
+      "seferler": [
+        {
+          "hizmet": "her_gun",
+          "araliklar": [
+            {
+              "ilk": "05:58",
+              "son": "22:58",
+              "aralik_dk": 15
+            },
+            {
+              "ilk": "23:28",
+              "son": "23:28",
+              "aralik_dk": 30
+            }
+          ]
+        },
+        {
+          "hizmet": "cuma_cumartesi_gecesi",
+          "araliklar": [
+            {
+              "ilk": "23:58",
+              "son": "25:28",
+              "aralik_dk": 30
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gebze_halkali",
+      "hat": "ana",
+      "yon": 1,
+      "baslik": "Halkalı",
+      "nereden": "gebze",
+      "nereye": "halkali",
+      "seferler": [
+        {
+          "hizmet": "her_gun",
+          "araliklar": [
+            {
+              "ilk": "06:05",
+              "son": "22:50",
+              "aralik_dk": 15
+            },
+            {
+              "ilk": "23:20",
+              "son": "23:20",
+              "aralik_dk": 30
+            }
+          ]
+        },
+        {
+          "hizmet": "cuma_cumartesi_gecesi",
+          "araliklar": [
+            {
+              "ilk": "23:50",
+              "son": "25:20",
+              "aralik_dk": 30
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "atakoy_pendik",
+      "hat": "kisa",
+      "yon": 0,
+      "baslik": "Pendik",
+      "nereden": "atakoy",
+      "nereye": "pendik",
+      "seferler": [
+        {
+          "hizmet": "her_gun",
+          "araliklar": [
+            {
+              "ilk": "06:09",
+              "son": "21:54",
+              "aralik_dk": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pendik_atakoy",
+      "hat": "kisa",
+      "yon": 1,
+      "baslik": "Ataköy",
+      "nereden": "pendik",
+      "nereye": "atakoy",
+      "seferler": [
+        {
+          "hizmet": "her_gun",
+          "araliklar": [
+            {
+              "ilk": "06:09",
+              "son": "20:39",
+              "aralik_dk": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pendik_zeytinburnu",
+      "hat": "kisa",
+      "yon": 1,
+      "baslik": "Zeytinburnu",
+      "nereden": "pendik",
+      "nereye": "zeytinburnu",
+      "not": "Pendik'ten 20:50'den sonra kalkan trenler Zeytinburnu'na kadar gider (son tren 22:39). Bu akşam kalıbının sıklığı tabloda yok; 8 dk varsayıldı.",
+      "seferler": [
+        {
+          "hizmet": "her_gun",
+          "araliklar": [
+            {
+              "ilk": "20:50",
+              "son": "22:39",
+              "aralik_dk": 8
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

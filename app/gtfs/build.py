@@ -17,7 +17,8 @@ import requests
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
-from app.gtfs.feeds import IBB_MULTIMODAL, IETT, FeedConfig
+from app.gtfs import manual
+from app.gtfs.feeds import IBB_MULTIMODAL, IETT, MARMARAY, FeedConfig
 from app.gtfs.loader import EXCEL_SATIR_SINIRI, _veri_satiri_say
 from app.gtfs.models import (
     GtfsAgency, GtfsCalendar, GtfsFeed, GtfsFrequency, GtfsRoute, GtfsStop, GtfsStopTime, GtfsTrip,
@@ -31,17 +32,35 @@ GTFS_DOSYALARI = ("agency", "calendar", "calendar_dates", "routes", "stops", "st
                   "frequencies", "shapes", "transfers")
 
 
+KOK = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
 @dataclass(frozen=True)
 class BeslemeKaynagi:
     config: FeedConfig
-    paket: str         # portaldaki veri seti adı (CKAN "name")
-    klasor: str        # varsayılan yerel klasör
+    paket: str                      # portaldaki veri seti adı (CKAN "name"); elle tanımlı beslemede boş
+    klasor: str                     # varsayılan yerel klasör
+    manuel: Optional[str] = None    # elle tanımlı besleme: kural dosyası (indirme yok, dosyalar üretilir)
 
 
 BESLEMELER: Dict[str, BeslemeKaynagi] = {
     "iett": BeslemeKaynagi(IETT, "iett-gtfs-verisi", os.path.join("gtfs_data", "iett")),
     "ibb": BeslemeKaynagi(IBB_MULTIMODAL, "public-transport-gtfs-data", os.path.join("gtfs_data", "multimodal")),
+    "marmaray": BeslemeKaynagi(MARMARAY, "", os.path.join("gtfs_data", "marmaray"),
+                               manuel=os.path.join(KOK, "data", "marmaray.json")),
 }
+
+
+# ---------------------------------------------------------------- elle tanımlı beslemeler
+def manuel_uret(besleme: str, klasor: Optional[str] = None, *, log: Callable[[str], None] = print) -> Dict[str, int]:
+    """Elle tanımlı beslemenin (ör. Marmaray) GTFS dosyalarını kural dosyasından üretir. Ağ gerekmez."""
+    kaynak = BESLEMELER[besleme]
+    if not kaynak.manuel:
+        raise ValueError(f"'{besleme}' elle tanımlı bir besleme değil")
+    hedef = klasor or kaynak.klasor
+    sayim = manual.gtfs_uret(manual.tanim_oku(kaynak.manuel), hedef)
+    log(f"  {kaynak.manuel} -> {hedef}: " + ", ".join(f"{a}={n}" for a, n in sayim.items()))
+    return sayim
 
 
 # ---------------------------------------------------------------- indirme
@@ -74,6 +93,9 @@ def indir(besleme: str, klasor: Optional[str] = None, *, http_get: Callable = re
     """Beslemenin GTFS dosyalarını `klasor`e indirir. Boyutu portalla aynı olan dosyalar atlanır.
     Yarım kalmış indirmeler `.part` olarak yazılıp tamamlanınca adlandırılır."""
     kaynak = BESLEMELER[besleme]
+    if kaynak.manuel:
+        manuel_uret(besleme, klasor, log=log)       # elle tanımlı: indirme yok, dosyalar üretilir
+        return []
     hedef = klasor or kaynak.klasor
     os.makedirs(hedef, exist_ok=True)
     dosyalar = kaynak_listesi(kaynak.paket, http_get=http_get, portal=portal)
@@ -200,6 +222,52 @@ def rapor_metni(r: dict) -> str:
         sat.append("  isim kontrolü: bozuk karakter şüphesi yok")
     if u["adsiz_durak"]:
         sat.append(f"  ! {u['adsiz_durak']} durağın adı boş")
+    return "\n".join(sat)
+
+
+def hat_ozeti(session: Session, feed_id: str, modlar: Optional[List[str]] = None) -> List[dict]:
+    """Seçilen modlardaki her hat için temsilci bir seferin özeti: ilk durak -> son durak, durak sayısı
+    ve yolculuk süresi (dk). Veriyi gerçek hayatla kıyaslamak (durak sırası, süre) için kullanılır.
+
+    Temsilci sefer: hattın en çok durağı olan seferi (eşitlikte gidiş yönü, direction_id=0). `sefer` hattın yüklenen sefer sayısı, `aralikli`
+    ise bunlardan kaçının `frequencies` ile tekrarlandığıdır."""
+    sorgu = select(GtfsRoute).where(GtfsRoute.feed_id == feed_id)
+    if modlar:
+        sorgu = sorgu.where(GtfsRoute.mode.in_(modlar))
+    sonuc = []
+    for hat in session.scalars(sorgu.order_by(GtfsRoute.mode, GtfsRoute.short_name, GtfsRoute.id)):
+        temsilci = session.execute(
+            select(GtfsStopTime.trip_id, func.count().label("n")).join(GtfsTrip, GtfsTrip.id == GtfsStopTime.trip_id)
+            .where(GtfsTrip.route_id == hat.id).group_by(GtfsStopTime.trip_id)
+            .order_by(func.count().desc(), func.coalesce(GtfsTrip.direction_id, 0), GtfsStopTime.trip_id).limit(1)).first()
+        sefer_sayisi = session.execute(select(func.count()).select_from(GtfsTrip).where(GtfsTrip.route_id == hat.id)).scalar_one()
+        aralikli = session.execute(
+            select(func.count(func.distinct(GtfsFrequency.trip_id))).join(GtfsTrip, GtfsTrip.id == GtfsFrequency.trip_id)
+            .where(GtfsTrip.route_id == hat.id)).scalar_one()
+        kayit = {"mod": hat.mode, "kisa_ad": hat.short_name, "uzun_ad": hat.long_name, "sefer": sefer_sayisi,
+                 "aralikli": aralikli, "ilk_durak": None, "son_durak": None, "durak_sayisi": 0, "sure_dk": None}
+        if temsilci:
+            satirlar = session.execute(
+                select(GtfsStopTime.stop_sequence, GtfsStopTime.arrival_secs, GtfsStopTime.departure_secs, GtfsStop.name)
+                .join(GtfsStop, GtfsStop.id == GtfsStopTime.stop_id).where(GtfsStopTime.trip_id == temsilci[0])
+                .order_by(GtfsStopTime.stop_sequence)).all()
+            ilk, son = satirlar[0], satirlar[-1]
+            kayit.update(ilk_durak=ilk[3], son_durak=son[3], durak_sayisi=len(satirlar))
+            if ilk[2] is not None and son[1] is not None:
+                kayit["sure_dk"] = round((son[1] - ilk[2]) / 60, 1)
+        sonuc.append(kayit)
+    return sonuc
+
+
+def hat_ozeti_metni(kayitlar: List[dict]) -> str:
+    if not kayitlar:
+        return "  (seçilen modlarda hat yok)"
+    sat = []
+    for k in kayitlar:
+        guzergah = f"{k['ilk_durak']} -> {k['son_durak']}" if k["ilk_durak"] else "(durak saati yok)"
+        sure = f"{k['sure_dk']:g} dk" if k["sure_dk"] is not None else "?"
+        sat.append(f"  {k['mod']:<9} {k['kisa_ad'] or '-':<8} {guzergah} | {k['durak_sayisi']} durak | {sure} | "
+                   f"{k['sefer']} sefer" + (f" ({k['aralikli']} aralıklı)" if k["aralikli"] else ""))
     return "\n".join(sat)
 
 
