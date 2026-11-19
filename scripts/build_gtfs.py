@@ -13,6 +13,8 @@ marmaray (elle tanımlı: data/marmaray.json'daki kurallardan üretilir, indirme
 vapur (elle tanımlı: data/vapur.json, Şehir Hatları kış tarifesi; indirme gerekmez).
 `hatlar`: her hattın ilk/son durağı, durak sayısı ve yolculuk süresi (veriyi doğrulamak için);
 `--modlar metro tram ...` ile süzülür (varsayılan: otobüs ve minibüs dışındakiler).
+`aktarma`: yüklü tüm beslemelerin duraklarından yürüme kenarları (≤150 m; farklı beslemelerin istasyon türü durakları için ≤600 m) ve istasyon kümeleri üretir
+(`python scripts/build_gtfs.py aktarma --hedef ...`); beslemeler yüklendikten SONRA ve her yeniden yüklemeden sonra çalıştırılır.
 `saatler`: hatların gerçek sefer saatleri (yön ve gün tipine göre: sefer sayısı, ilk/son sefer, en sık aralık,
 süre). `--hat KDK-EMN ...` ya da `--modlar ferry` (varsayılan) ve `--en-az-sefer 20` ile süzülür.
 
@@ -39,8 +41,11 @@ def _maskele(url: str) -> str:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("komut", choices=["indir", "yukle", "rapor", "hepsi", "hatlar", "saatler"])
-    ap.add_argument("beslemeler", nargs="+", help="iett, ibb, marmaray, vapur")
+    ap.add_argument("komut", choices=["indir", "yukle", "rapor", "hepsi", "hatlar", "saatler", "aktarma"])
+    ap.add_argument("beslemeler", nargs="*", help="iett, ibb, marmaray, vapur (`aktarma` için gerekmez)")
+    ap.add_argument("--yaricap", type=float, default=150.0, help="`aktarma`: yürüme kenarı için en çok mesafe (m)")
+    ap.add_argument("--istasyon-yaricap", type=float, default=600.0,
+                    help="`aktarma`: farklı beslemelerin istasyon türü durakları (metro, Marmaray, iskele) için en çok mesafe (m)")
     ap.add_argument("--hedef", help="veritabanı adresi (örn. sqlite:///gtfs_data/gtfs.db); yoksa .env DATABASE_URL")
     ap.add_argument("--klasor", help="yerel GTFS klasörü (yalnızca tek besleme verildiğinde)")
     ap.add_argument("--modlar", nargs="+", help="`hatlar` için mod süzgeci (örn. metro tram ferry)")
@@ -57,6 +62,8 @@ def main(argv=None) -> int:
                 os.makedirs(klasor, exist_ok=True)
 
     from app.gtfs import build                          # noqa: E402  (DATABASE_URL ayarlandıktan sonra)
+    if a.komut != "aktarma" and not a.beslemeler:
+        ap.error("en az bir besleme adı gerekli")
     bilinmeyen = [b for b in a.beslemeler if b not in build.BESLEMELER]
     if bilinmeyen:
         ap.error(f"bilinmeyen besleme(ler): {bilinmeyen}; geçerli: {sorted(build.BESLEMELER)}")
@@ -80,7 +87,7 @@ def main(argv=None) -> int:
                 print(f"== {b}: kurallardan GTFS dosyaları üretiliyor -> {klasor_of(b)}")
                 build.manuel_uret(b, klasor_of(b))
 
-    if a.komut in ("yukle", "hepsi", "rapor", "hatlar", "saatler"):
+    if a.komut in ("yukle", "hepsi", "rapor", "hatlar", "saatler", "aktarma"):
         from app.db import SessionLocal, engine
         from app.db import Base
         from app.gtfs import models  # noqa: F401
@@ -102,6 +109,14 @@ def main(argv=None) -> int:
                     ozet = load_feed(oturum, klasor_of(b), build.BESLEMELER[b].config,
                                      progress=lambda m: print("  " + m))
                     print("  özet:", ozet)
+            if a.komut == "aktarma":
+                from app.gtfs import transfers
+                print(f"== aktarma noktaları üretiliyor -> {hedef_adi} (yürüme ≤ {a.yaricap:g} m; istasyonlar arası ≤ {a.istasyon_yaricap:g} m)")
+                ozet = transfers.uret(oturum, yaricap_m=a.yaricap, istasyon_yaricap_m=a.istasyon_yaricap, log=lambda m: print("  " + m))
+                print(transfers.ozet_metni(ozet))
+                print("Bilinen büyük aktarma noktaları:")
+                print(transfers.nokta_raporu_metni(transfers.bilinen_noktalar(oturum)))
+                return 0
             if a.komut == "saatler":
                 modlar = a.modlar or (None if a.hat else ["ferry"])
                 for b in a.beslemeler:
