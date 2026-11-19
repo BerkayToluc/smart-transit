@@ -19,8 +19,8 @@ import requests
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
-from app.gtfs import manual
-from app.gtfs.feeds import IBB_MULTIMODAL, IETT, MARMARAY, FeedConfig
+from app.gtfs import manual, vapur
+from app.gtfs.feeds import IBB_MULTIMODAL, IETT, MARMARAY, VAPUR, FeedConfig
 from app.gtfs.loader import EXCEL_SATIR_SINIRI, _veri_satiri_say
 from app.gtfs.rules import expand_frequency_starts
 from app.gtfs.textfix import ascii_katla
@@ -44,7 +44,8 @@ class BeslemeKaynagi:
     config: FeedConfig
     paket: str                      # portaldaki veri seti adı (CKAN "name"); elle tanımlı beslemede boş
     klasor: str                     # varsayılan yerel klasör
-    manuel: Optional[str] = None    # elle tanımlı besleme: kural dosyası (indirme yok, dosyalar üretilir)
+    manuel: Optional[str] = None    # elle tanımlı besleme: tanım dosyası (indirme yok, dosyalar üretilir)
+    bicim: str = "kural"            # "kural": manual.py (frekans kuralları); "sefer": vapur.py (saat saat)
 
 
 BESLEMELER: Dict[str, BeslemeKaynagi] = {
@@ -52,6 +53,8 @@ BESLEMELER: Dict[str, BeslemeKaynagi] = {
     "ibb": BeslemeKaynagi(IBB_MULTIMODAL, "public-transport-gtfs-data", os.path.join("gtfs_data", "multimodal")),
     "marmaray": BeslemeKaynagi(MARMARAY, "", os.path.join("gtfs_data", "marmaray"),
                                manuel=os.path.join(KOK, "data", "marmaray.json")),
+    "vapur": BeslemeKaynagi(VAPUR, "", os.path.join("gtfs_data", "vapur"),
+                            manuel=os.path.join(KOK, "data", "vapur.json"), bicim="sefer"),
 }
 
 
@@ -62,7 +65,8 @@ def manuel_uret(besleme: str, klasor: Optional[str] = None, *, log: Callable[[st
     if not kaynak.manuel:
         raise ValueError(f"'{besleme}' elle tanımlı bir besleme değil")
     hedef = klasor or kaynak.klasor
-    sayim = manual.gtfs_uret(manual.tanim_oku(kaynak.manuel), hedef)
+    modul = vapur if kaynak.bicim == "sefer" else manual
+    sayim = modul.gtfs_uret(modul.tanim_oku(kaynak.manuel), hedef)
     log(f"  {kaynak.manuel} -> {hedef}: " + ", ".join(f"{a}={n}" for a, n in sayim.items()))
     return sayim
 

@@ -8,8 +8,9 @@ Proje KÖK klasöründen çalıştırın (portal bulut sunucularından açılmaz
     python scripts/build_gtfs.py hepsi iett ibb marmaray --hedef sqlite:///gtfs_data/gtfs.db
     python scripts/build_gtfs.py hatlar ibb marmaray --hedef sqlite:///gtfs_data/gtfs.db   # hat/süre özeti
 
-Beslemeler: iett (otobüs + metrobüs), ibb (çok modlu: metro, tramvay, füniküler, vapur),
-marmaray (elle tanımlı: data/marmaray.json'daki kurallardan üretilir, indirme gerekmez).
+Beslemeler: iett (otobüs + metrobüs), ibb (çok modlu: metro, tramvay, füniküler; 2019 vapurları yüklenmez),
+marmaray (elle tanımlı: data/marmaray.json'daki kurallardan üretilir, indirme gerekmez),
+vapur (elle tanımlı: data/vapur.json, Şehir Hatları kış tarifesi; indirme gerekmez).
 `hatlar`: her hattın ilk/son durağı, durak sayısı ve yolculuk süresi (veriyi doğrulamak için);
 `--modlar metro tram ...` ile süzülür (varsayılan: otobüs ve minibüs dışındakiler).
 `saatler`: hatların gerçek sefer saatleri (yön ve gün tipine göre: sefer sayısı, ilk/son sefer, en sık aralık,
@@ -39,7 +40,7 @@ def _maskele(url: str) -> str:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("komut", choices=["indir", "yukle", "rapor", "hepsi", "hatlar", "saatler"])
-    ap.add_argument("beslemeler", nargs="+", help="iett, ibb, marmaray")
+    ap.add_argument("beslemeler", nargs="+", help="iett, ibb, marmaray, vapur")
     ap.add_argument("--hedef", help="veritabanı adresi (örn. sqlite:///gtfs_data/gtfs.db); yoksa .env DATABASE_URL")
     ap.add_argument("--klasor", help="yerel GTFS klasörü (yalnızca tek besleme verildiğinde)")
     ap.add_argument("--modlar", nargs="+", help="`hatlar` için mod süzgeci (örn. metro tram ferry)")

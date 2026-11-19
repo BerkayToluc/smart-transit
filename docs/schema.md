@@ -80,8 +80,9 @@ python scripts/build_gtfs.py yukle iett ibb --hedef sqlite:///gtfs_data/gtfs.db
 python scripts/build_gtfs.py rapor iett ibb --hedef sqlite:///gtfs_data/gtfs.db
 python scripts/build_gtfs.py hepsi iett ibb --hedef sqlite:///gtfs_data/gtfs.db   # üçü birden
 ```
-- Beslemeler: `iett` (otobüs + metrobüs, `gtfs_data/iett`), `ibb` (çok modlu: metro, tramvay, füniküler, vapur;
-  `gtfs_data/multimodal`), `marmaray` (elle tanımlı, aşağıya bakın).
+- Beslemeler: `iett` (otobüs + metrobüs, `gtfs_data/iett`), `ibb` (çok modlu: metro, tramvay, füniküler; 2019 vapurları yüklenmez;
+  `gtfs_data/multimodal`), `marmaray` (elle tanımlı, aşağıya bakın), `vapur` (Şehir Hatları kış tarifesi, elle
+  tanımlı: `data/vapur.json`, `app/gtfs/vapur.py`).
 - İndirme, portalın CKAN API'siyle (`package_show`) dosya adreslerini bulur; adresler koda yazılı değildir.
   Aynı dosya hem CSV hem ZIP ise **ZIP tercih edilir** ve içinden CSV açılır (İETT `stop_times.csv` kırpılmış).
   Boyutu portalla aynı olan dosyalar atlanır; kesilen indirmeler tekrar denenir.
@@ -146,7 +147,7 @@ durağı olan seferidir (eşitlikte gidiş yönü).
 
 ## Sefer saatleri analizi (`scripts/build_gtfs.py saatler`)
 ```bash
-python scripts/build_gtfs.py saatler ibb --en-az-sefer 20 --hedef sqlite:///gtfs_data/gtfs.db        # vapur (varsayılan mod)
+python scripts/build_gtfs.py saatler vapur --hedef sqlite:///gtfs_data/gtfs.db                            # vapur (varsayılan mod)
 python scripts/build_gtfs.py saatler ibb --hat KDK-EMN KRK-KDK --hedef sqlite:///gtfs_data/gtfs.db   # seçili hatlar
 ```
 Her hat için, **yön ve gün tipine göre** (Pzt-Cum, Cts-Paz, ...) sefer sayısı, ilk/son kalkış, en sık aralık
