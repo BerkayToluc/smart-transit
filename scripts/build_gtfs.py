@@ -62,13 +62,17 @@ def main(argv=None) -> int:
 
     if a.komut in ("indir", "hepsi"):
         for b in a.beslemeler:
-            print(f"== {b}: portaldan indiriliyor -> {klasor_of(b)}")
-            build.indir(b, klasor_of(b))
+            if build.BESLEMELER[b].manuel:     # elle tanımlı besleme: indirme yok, kurallardan üretilir
+                print(f"== {b}: kurallardan GTFS dosyaları üretiliyor -> {klasor_of(b)}")
+                build.manuel_uret(b, klasor_of(b))
+            else:
+                print(f"== {b}: portaldan indiriliyor -> {klasor_of(b)}")
+                build.indir(b, klasor_of(b))
 
-    if a.komut in ("yukle", "hepsi"):
-        for b in a.beslemeler:                 # elle tanımlı beslemelerin dosyaları her yüklemede yeniden üretilir
+    if a.komut == "yukle":
+        for b in a.beslemeler:                 # `yukle` indirme yapmaz; elle tanımlı dosyalar yine de güncel üretilir
             if build.BESLEMELER[b].manuel:
-                print(f"== {b}: kurallardan GTFS dosyaları üretiliyor")
+                print(f"== {b}: kurallardan GTFS dosyaları üretiliyor -> {klasor_of(b)}")
                 build.manuel_uret(b, klasor_of(b))
 
     if a.komut in ("yukle", "hepsi", "rapor", "hatlar"):

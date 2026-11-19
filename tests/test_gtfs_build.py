@@ -10,6 +10,7 @@ import requests
 
 from app.gtfs import build, loader
 from app.gtfs.feeds import IETT
+from tests.conftest import yaz
 
 KOK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -261,3 +262,33 @@ def test_rapor_duzeltilmemis_bozuk_karakteri_yakalar(oturum, iett_kusurlu):
     assert r["uyarilar"]["supheli_karakter_durak"] == 1
     assert "SÖĞÜTLÜÇEÅ" in r["uyarilar"]["supheli_ornekler"][0]
     assert "bozuk karakter şüphesi: 1 durak" in build.rapor_metni(r)
+
+
+# --- rapor: saatsiz seferlerin hatları; komut satırı mesajları ---------------------------------------
+def test_rapor_saatsiz_seferlerin_hatlarini_gosterir(oturum, tmp_path):
+    d = tmp_path / "saatsiz"
+    d.mkdir()
+    yaz(d / "calendar.csv", [["service_id", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
+                              "sunday", "start_date", "end_date"], ["6", 1, 1, 1, 1, 1, 1, 1, "20260101", "20261231"]])
+    yaz(d / "routes.csv", [["route_id", "agency_id", "route_short_name", "route_long_name", "route_type"],
+                           ["r1", "1", "M99", "ÇIKMAZ - SOKAK", 1], ["r2", "1", "M98", "NORMAL - HAT", 1]])
+    yaz(d / "trips.csv", [["trip_id", "route_id", "service_id", "trip_headsign", "direction_id"],
+                          ["t1", "r1", "6", "X", 0], ["t2", "r2", "6", "Y", 0]])
+    yaz(d / "stop_times.csv", [["trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence"],
+                               ["t2", "07:00:00", "07:00:00", "s1", 1]])                    # t1'in hiç saati yok
+    yaz(d / "stops.csv", [["stop_id", "stop_name", "stop_lat", "stop_lon"], ["s1", "A", "41.0", "29.0"]])
+    from app.gtfs.feeds import FeedConfig
+    loader.load_feed(oturum, str(d), FeedConfig(feed_id="saatsiz", name="x"))
+    r = build.rapor(oturum, "saatsiz")
+    assert r["uyarilar"]["saatsiz_sefer"] == 1
+    assert r["uyarilar"]["saatsiz_sefer_hatlari"] == ["M99 (ÇIKMAZ - SOKAK)"]
+    assert "hatlar: M99 (ÇIKMAZ - SOKAK)" in build.rapor_metni(r)
+
+
+def test_komut_satiri_hepsi_elle_tanimliyi_bir_kez_uretir(tmp_path):
+    hedef = f"sqlite:///{tmp_path / 'gtfs.db'}"
+    c = calistir("hepsi", "marmaray", "--klasor", str(tmp_path / "m"), "--hedef", hedef)
+    assert c.returncode == 0, c.stderr
+    assert c.stdout.count("kurallardan GTFS dosyaları üretiliyor") == 1       # çift üretim yok
+    assert "portaldan indiriliyor" not in c.stdout                            # Marmaray indirilmez
+    assert "hat 2, sefer 7, durak 43" in c.stdout

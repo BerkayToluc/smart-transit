@@ -193,6 +193,9 @@ def rapor(session: Session, feed_id: str) -> dict:
             "saatsiz_sefer": session.execute(
                 select(func.count()).select_from(GtfsTrip).where(
                     GtfsTrip.feed_id == feed_id, GtfsTrip.id.not_in(saatli_seferler))).scalar_one(),
+            "saatsiz_sefer_hatlari": sorted({f"{k or '?'} ({u or '?'})" for k, u in session.execute(
+                select(GtfsRoute.short_name, GtfsRoute.long_name).join(GtfsTrip, GtfsTrip.route_id == GtfsRoute.id)
+                .where(GtfsTrip.feed_id == feed_id, GtfsTrip.id.not_in(saatli_seferler)).distinct().limit(5))}),
             "supheli_karakter_durak": len(supheli_durak),
             "supheli_karakter_hat": len(supheli_hat),
             "supheli_ornekler": (supheli_durak + supheli_hat)[:3],
@@ -214,7 +217,8 @@ def rapor_metni(r: dict) -> str:
     if u["gunsuz_hizmet"]:
         sat.append(f"  ! {u['gunsuz_hizmet']} hizmetin hiçbir günü işaretli değil (planlamada çalışmaz)")
     if u["saatsiz_sefer"]:
-        sat.append(f"  ! {u['saatsiz_sefer']} seferin durak saati yok (aralıklı şablon olabilir)")
+        sat.append(f"  ! {u['saatsiz_sefer']} seferin durak saati yok (aralıklı şablon olabilir); hatlar: "
+                   f"{', '.join(u['saatsiz_sefer_hatlari'])}")
     if u["supheli_karakter_durak"] or u["supheli_karakter_hat"]:
         sat.append(f"  ! bozuk karakter şüphesi: {u['supheli_karakter_durak']} durak, {u['supheli_karakter_hat']} hat adı "
                    f"(örnek: {u['supheli_ornekler']})")
