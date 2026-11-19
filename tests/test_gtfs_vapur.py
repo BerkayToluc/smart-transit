@@ -33,7 +33,9 @@ def test_dosya_gecerli_ve_kitapcik_bilgileri(tanim):
     assert tanim["besleme"]["veri_tarihi"] == "2026-09-07"
     assert {h["kisa_ad"] for h in tanim["hatlar"]} == {
         "KDK-EMN", "USK-EMN", "KDK-BSK", "KDK-BSK-GECE", "KDK-KBT", "KDK-ORT", "ORT-KDK",
-        "KBT-ADA", "ADA-BSK", "MLT-ADA", "BST-ADA-RING", "BST-KBT", "BYK-SDF"}
+        "KBT-ADA", "ADA-BSK", "MLT-ADA", "BST-ADA-RING", "BST-KBT", "BYK-SDF",
+        "RMK-EMN", "ORT-BSK-EMN", "KCK-BSK-KBT", "KCK-IST", "USK-ASY", "ASY-AHS-KCK-RING", "AKV-RKV-SRY", "AKV-USK",
+        "USK-HLC", "BSK-HLC", "CGK-KZG-BSK-KBT", "KDK-HLC", "CGK-IST-RING", "BEB-EMR", "IST-CUB", "BOGAZ"}
 
 
 def _sefer_say(tanim, hat, hizmet=None):
@@ -154,6 +156,69 @@ def test_iskele_koordinatlari_kml_den(tanim):
     assert {"maltepe", "bostanci", "moda", "sedef_adasi"} <= set(isk)
 
 
+# --- Boğaz, Haliç ve diğer hatlar (kitapçık sayfa 20-37) -------------------------------------
+def _say(tanim, hat, hizmet=None, yon=None):
+    return sum(len(g["saatler"]) for g in _grup(tanim, hat, hizmet, yon))
+
+
+def test_rumeli_kavagi_eminonu_ve_ortakoy(tanim):
+    assert _say(tanim, "rmk_emn", yon=0) == 12 and _say(tanim, "rmk_emn", yon=1) == 12
+    assert any(g["duraklar"] == ["rumeli_kavagi", "sariyer", "buyukdere", "istinye", "emirgan", "bebek", "ortakoy",
+                                 "besiktas", "eminonu"] and "07:20 07:30 07:35 08:00 08:05 08:20 08:35 08:45 09:00"
+               in g["saatler"] for g in _grup(tanim, "rmk_emn", yon=0))
+    # Ortaköy-Beşiktaş-Eminönü: kırmızı '*' seferler yalnızca Cumartesi/Pazar/tatil
+    assert _say(tanim, "ort_emn", "her_gun") == 14 and _say(tanim, "ort_emn", "hafta_sonu") == 2
+    assert any("17:25 17:35 17:50" in g["saatler"] for g in _grup(tanim, "ort_emn", "hafta_sonu"))
+
+
+def test_haliç_hatlari_ve_dipnotlar(tanim):
+    # Üsküdar-Haliç: 14 + 14 sefer; '*' (Pazar/tatil yok) 6, '**' (yalnız Pazar/tatil) 2
+    assert _say(tanim, "usk_halic") == 28
+    assert (_say(tanim, "usk_halic", "pzt_cmt"), _say(tanim, "usk_halic", "pazar_tatil")) == (6, 2)
+    assert (_say(tanim, "kdk_halic", "pzt_cmt"), _say(tanim, "kdk_halic", "pazar_tatil"), _say(tanim, "kdk_halic")) == (6, 4, 24)
+    assert _say(tanim, "bsk_halic") == 14 and _say(tanim, "bsk_halic", "pazar_tatil") == 2
+    assert any(g["duraklar"][0] == "eyupsultan" and g["duraklar"][-1] == "uskudar" and "20:45 20:50 20:55 21:00 21:05 21:10 21:15 21:25 21:40" in g["saatler"]
+               for g in _grup(tanim, "usk_halic", "pazar_tatil"))
+
+
+def test_anadolu_kavagi_hatlari(tanim):
+    assert _say(tanim, "akv_sry", yon=0) == 16 and _say(tanim, "akv_sry", yon=1) == 15
+    assert _say(tanim, "akv_sry", "pzt_cmt") == 1 and _say(tanim, "akv_sry", "pazar_tatil") == 1    # 06:40* ve 06:55**
+    assert _say(tanim, "akv_usk", yon=0) == 5 and _say(tanim, "akv_usk", yon=1) == 5
+    assert any(g["duraklar"][0] == "uskudar" and g["saatler"][0].startswith("11:35 11:50 12:00") for g in _grup(tanim, "akv_usk", yon=1))
+
+
+def test_rinler_ve_kucuk_hatlar(tanim):
+    assert _say(tanim, "asy_ring") == 37
+    # (V) = Anadolu Hisarı'nda biter: Aşiyan 20:00, Küçüksu 20:05, Anadolu Hisarı 20:10
+    assert any(g["duraklar"] == ["asiyan", "kucuksu", "anadolu_hisari"] and g["saatler"] == ["20:00 20:05 20:10"]
+               for g in _grup(tanim, "asy_ring"))
+    assert _say(tanim, "cgk_ist_ring") == 12 and _say(tanim, "cgk_ist_ring", "hafta_ici") == 1
+    assert _say(tanim, "beb_emr", "pazar_tatil") == 15 and _say(tanim, "beb_emr") == 15
+    assert _say(tanim, "cgk_kbt") == 24 and _say(tanim, "cgk_kbt", "pzt_cmt") == 6
+
+
+def test_bagimsiz_kalkis_listeleri(tanim):
+    # Küçüksu-İstinye: 7 + 7 kalkış (süre 20 dk varsayım); Üsküdar-Aşiyan: 15+15 ve 14+14 (30 dk varsayım)
+    assert _say(tanim, "kck_ist", yon=0) == 7 and _say(tanim, "kck_ist", yon=1) == 7
+    assert _say(tanim, "usk_asy", "pzt_cmt") == 30 and _say(tanim, "usk_asy", "pazar_tatil") == 28
+    assert _say(tanim, "kck_bsk") == 4
+    # İstinye-Çubuklu araba vapuru iskeleleri: hafta içi 46+46, Cumartesi 28+28, Pazar 24+24
+    assert (_say(tanim, "ist_cub", "hafta_ici"), _say(tanim, "ist_cub", "cumartesi"), _say(tanim, "ist_cub", "pazar_tatil")) == (92, 56, 48)
+    assert {"cubuklu_arabali", "istinye_arabali"} <= {i["id"] for i in tanim["iskeleler"]}
+
+
+def test_bogaz_hatti_iki_sayfalik_matris(tanim):
+    # Sayfa 20-21: Boğaza gidiş 12 hafta içi + 2 Cumartesi + 1 Pazar; Boğazdan geliş 12 + 3 + 1 (satır arka plan renginden)
+    assert (_say(tanim, "bogaz", "hafta_ici", 0), _say(tanim, "bogaz", "cumartesi", 0), _say(tanim, "bogaz", "pazar_tatil", 0)) == (12, 2, 1)
+    assert (_say(tanim, "bogaz", "hafta_ici", 1), _say(tanim, "bogaz", "cumartesi", 1), _say(tanim, "bogaz", "pazar_tatil", 1)) == (12, 3, 1)
+    # Eminönü 17:55 -> Beşiktaş -> Ortaköy -> Bebek -> Kandilli -> A.Hisarı -> Kanlıca -> Çubuklu -> Paşabahçe -> Beykoz 19:30
+    assert any(g["duraklar"] == ["eminonu", "besiktas", "ortakoy", "bebek", "kandilli", "anadolu_hisari", "kanlica",
+                                 "cubuklu", "pasabahce", "beykoz"] and "17:55 18:10 18:20 18:35 18:45 18:50 19:00 19:10 19:15 19:30" in g["saatler"]
+               for g in _grup(tanim, "bogaz", "hafta_ici", 0))
+    assert all("turu" not in h["uzun_ad"].lower() for h in tanim["hatlar"])      # turistik Boğaz turları yok (s.35)
+
+
 # --- doğrulama ------------------------------------------------------------------------------
 def test_dogrula_hatalari_toplar(tanim):
     t = copy.deepcopy(tanim)
@@ -188,11 +253,11 @@ def test_dogrula_binis_yok_dizide_olmali(tanim):
 def test_gtfs_uret_ve_yukle(tanim, tmp_path, oturum):
     sayim = vapur.gtfs_uret(tanim, str(tmp_path))
     toplam = sum(len(g["saatler"]) for g in tanim["seferler"])
-    assert sayim["trips"] == toplam == 610 and sayim["routes"] == 13
+    assert sayim["trips"] == toplam == 1148 and sayim["routes"] == 29
     with open(tmp_path / "routes.csv", encoding="utf-8") as f:
         assert {r["route_type"] for r in csv.DictReader(f)} == {"4"}
     ozet = loader.load_feed(oturum, str(tmp_path), VAPUR)
-    assert ozet["trip"] == 610 and ozet["frequency"] == 0
+    assert ozet["trip"] == 1148 and ozet["frequency"] == 0
     modlar = {r.mode for r in oturum.scalars(select(GtfsRoute).where(GtfsRoute.feed_id == "vapur"))}
     assert modlar == {"ferry"}
     # gece seferi 24:00'ı aşar
@@ -213,4 +278,4 @@ def test_besleme_kayitli_ve_ibb_vapurlari_yuklenmez():
 
 def test_manuel_uret_dosyalari_yazar(tmp_path):
     sayim = build.manuel_uret("vapur", str(tmp_path), log=lambda m: None)
-    assert sayim["trips"] == 610 and (tmp_path / "stop_times.csv").exists()
+    assert sayim["trips"] == 1148 and (tmp_path / "stop_times.csv").exists()

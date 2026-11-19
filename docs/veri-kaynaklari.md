@@ -255,10 +255,26 @@ notu: 00:30-05:30 arası iki kat ücret (planlayıcıda ücret hesabı #26).
   sapıyordu). Kadıköy için iki iskelenin (KADIKÖY-1/-2) ortası, Eminönü için EMİNÖNÜ-3 alındı. Kalan iskeleler sonraki
   hatlarda kullanılacak.
 
-### Kapsam ve eksikler
-Şimdilik kitapçığın 4-9. sayfaları (**450 sefer**): Kadıköy–Karaköy–Eminönü, Üsküdar–Karaköy–Eminönü, Kadıköy–Beşiktaş (+gece),
-Kadıköy–Kabataş, Kadıköy–Üsküdar–Ortaköy ve Ortaköy–Üsküdar–Kadıköy, ayrıca Adalar/Bostancı hatları (sayfa 12-18; **160 sefer**, toplam 610). Sıradakiler: Boğaz (20-28),
-Haliç/Eyüp (29-32), diğer hatlar (33-37); Tuzla–Pendik–Büyükada (İDO iskeleleri, KML'de yok) bekliyor. Turyol/Dentur/İDO kitapçıkta yok ve kapsam dışı.
+### Boğaz, Haliç ve diğer hatlar (sayfa 20-37)
+- **Satır = sefer** olan hatlar: Rumeli Kavağı–Eminönü, Ortaköy–Beşiktaş–Eminönü (kırmızı `*` = yalnız Cumartesi/Pazar/tatil),
+  Anadolu Kavağı–Rumeli Kavağı–Sarıyer (`*` Pazar/tatil yok, `**` yalnız Pazar/tatil), Anadolu Kavağı–Üsküdar,
+  Üsküdar–Haliç, Beşiktaş–Haliç, Kadıköy–Haliç, Çengelköy–Kuzguncuk–Beşiktaş–Kabataş, Bebek–Emirgan (yalnız Pazar/tatil),
+  Çengelköy–İstinye ring ve Aşiyan–Anadolu Hisarı–Küçüksu ring (`(V)` = sefer Anadolu Hisarı'nda biter).
+  Haliç hatlarında `*` → `pzt_cmt`, `**` → `pazar_tatil`; Çengelköy–İstinye ringinde `*` Cumartesi yapılmaz → `hafta_ici`.
+- **Boğaz Hattı (s.20-21):** iki sayfaya yayılan tek matris. Satır = sefer; sol yarı sayfa 20, sağ yarı sayfa 21'dedir
+  (aynı satır sırası). Gün tipi satır arka plan renginden okundu (turuncu/beyaz = hafta içi, gri = Cumartesi, kırmızı = Pazar
+  ve tatil; piksel ölçümüyle doğrulandı). Boğaza gidiş: 12 hafta içi + 2 Cumartesi + 1 Pazar; Boğazdan geliş: 12 + 3 + 1.
+  Duraklar saate göre sıralanır; `(K)` kalkış, `(V)` varış.
+- **Bağımsız kalkış listeleri (satırlar eşleşmiyor):** Küçüksu–İstinye, Üsküdar–Aşiyan, İstinye–Çubuklu (araba vapuru
+  iskeleleri, `*_arabali` kayıtları). Her iskelenin kalkışları ayrı sefer sayıldı; **süreler varsayım:** Küçüksu–İstinye
+  20, Üsküdar–Aşiyan 30, İstinye–Çubuklu 15 dk. Küçüksu–Beşiktaş–Kabataş'ın dört seferi elle eşleştirildi (08:35 Küçüksu seferinin
+  Beşiktaş 09:00 / Kabataş 09:05 varışları varsayım).
+- **Kapsam dışı:** Uzun/Kısa Boğaz Turu (sayfa 35, turistik; planlamaya girmez) ve Tuzla–Pendik–Büyükada (İDO iskeleleri,
+  doğrulanmış koordinat yok; ayrı iş). Turyol/Dentur/İDO kitapçıkta yok ve kapsam dışı.
+
+### Kapsam
+Kitapçığın tüm düzenli hatları: Kadıköy/Üsküdar/Karaköy/Eminönü/Beşiktaş/Kabataş/Ortaköy (s.4-9), Adalar ve Bostancı
+(s.12-18), Boğaz (s.20-28), Haliç ve diğerleri (s.29-34, 37). Toplam **1148 sefer, 29 hat**.
 
 ### Uygulama (#10)
 `app/gtfs/vapur.py` dosyayı doğrular ve GTFS'e çevirir (`route_type=4`, her sefer ayrı GTFS seferi, frekans yok,
