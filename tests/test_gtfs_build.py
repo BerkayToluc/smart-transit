@@ -292,3 +292,111 @@ def test_komut_satiri_hepsi_elle_tanimliyi_bir_kez_uretir(tmp_path):
     assert c.stdout.count("kurallardan GTFS dosyaları üretiliyor") == 1       # çift üretim yok
     assert "portaldan indiriliyor" not in c.stdout                            # Marmaray indirilmez
     assert "hat 2, sefer 7, durak 43" in c.stdout
+
+
+# --- sefer saatleri analizi (`saatler`) -----------------------------------------------------------------
+@pytest.mark.parametrize("gunler, etiket", [
+    ([1, 1, 1, 1, 1, 1, 1], "Her gün"), ([1, 1, 1, 1, 1, 0, 0], "Pzt-Cum"), ([0, 0, 0, 0, 0, 1, 0], "Cts"),
+    ([0, 0, 0, 0, 0, 1, 1], "Cts-Paz"), ([0, 0, 0, 0, 1, 1, 0], "Cum-Cts"), ([1, 0, 1, 0, 0, 0, 1], "Pzt,Çar,Paz"),
+    ([1, 1, 0, 0, 0, 0, 1], "Pzt-Sal,Paz"), ([0, 0, 0, 0, 0, 0, 0], "(günsüz)"),
+])
+def test_gun_etiketi(gunler, etiket):
+    assert build.gun_etiketi(gunler) == etiket
+
+
+@pytest.fixture
+def vapur_klasoru(tmp_path):
+    """Tek vapur hattı: hafta içi 20 dk aralık (5 açık sefer + aralıklı şablon), hafta sonu 40 dk, ters yön tek sefer."""
+    d = tmp_path / "vapur"
+    d.mkdir()
+    yaz(d / "calendar.csv", [["service_id", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
+                              "sunday", "start_date", "end_date"],
+                             ["100", 1, 1, 1, 1, 1, 0, 0, "20220101", "20221231"],
+                             ["101", 0, 0, 0, 0, 0, 1, 1, "20220101", "20221231"]])
+    yaz(d / "routes.csv", [["route_id", "agency_id", "route_short_name", "route_long_name", "route_type"],
+                           ["r1", "1", "KDK-EMN", "KADIKÖY - EMİNÖNÜ", 4]])
+    seferler = [["t1", "100", 7 * 3600], ["t2", "100", 7 * 3600 + 1200], ["t3", "100", 7 * 3600 + 2400],
+                ["t4", "100", 8 * 3600], ["t5", "100", 8 * 3600 + 1200],
+                ["w1", "101", 9 * 3600], ["w2", "101", 9 * 3600 + 2400], ["w3", "101", 10 * 3600 + 1200]]
+    hms = lambda sn: f"{sn // 3600:02d}:{sn % 3600 // 60:02d}:{sn % 60:02d}"
+    satir = [["route_id", "service_id", "trip_id", "trip_headsign", "direction_id"]]
+    st = [["trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence"]]
+    for tid, srv, b in seferler:
+        satir.append(["r1", srv, tid, "Eminönü", 0])
+        st += [[tid, hms(b), hms(b), "s1", 1], [tid, hms(b + 1200), hms(b + 1200), "s2", 2]]
+    satir.append(["r1", "100", "tf", "Eminönü", 0])                     # aralıklı şablon: 08:40, 09:00, 09:20
+    st += [["tf", "00:00:00", "00:00:00", "s1", 1], ["tf", "00:20:00", "00:20:00", "s2", 2]]
+    satir.append(["r1", "100", "ters", "Kadıköy", 1])                    # ters yön, tek sefer
+    st += [["ters", "07:10:00", "07:10:00", "s2", 1], ["ters", "07:30:00", "07:30:00", "s1", 2]]
+    yaz(d / "trips.csv", satir)
+    yaz(d / "stop_times.csv", st)
+    yaz(d / "stops.csv", [["stop_id", "stop_name", "stop_lat", "stop_lon"], ["s1", "Kadıköy", "40.99", "29.02"],
+                          ["s2", "Eminönü", "41.01", "28.97"]])
+    yaz(d / "frequencies.csv", [["trip_id", "start_time", "end_time", "headway_secs", "exact_times"],
+                                ["tf", "08:40:00", "09:30:00", 1200, 0]])
+    return str(d)
+
+
+def test_sefer_saatleri_gruplari(oturum, vapur_klasoru):
+    from app.gtfs.feeds import FeedConfig
+    loader.load_feed(oturum, vapur_klasoru, FeedConfig(feed_id="vapur", name="x"))
+    grup = {(k["gun"], k["yon"]): k for k in build.sefer_saatleri(oturum, "vapur")}
+    hafta_ici = grup[("Pzt-Cum", 0)]
+    assert (hafta_ici["ilk_durak"], hafta_ici["son_durak"]) == ("Kadıköy", "Eminönü")
+    assert hafta_ici["sefer"] == 8                                      # 5 açık + aralıklı şablondan 3 sefer
+    assert (hafta_ici["ilk"], hafta_ici["son"]) == (7 * 3600, 9 * 3600 + 1200)    # 07:00 ... 09:20
+    assert (hafta_ici["aralik_dk"], hafta_ici["aralik_payi"]) == (20, 1.0)
+    assert (hafta_ici["sure_dk"], hafta_ici["sure_en_az"], hafta_ici["sure_en_cok"]) == (20.0, 20.0, 20.0)
+    hafta_sonu = grup[("Cts-Paz", 0)]
+    assert (hafta_sonu["sefer"], hafta_sonu["aralik_dk"]) == (3, 40)
+    ters = grup[("Pzt-Cum", 1)]
+    assert (ters["ilk_durak"], ters["son_durak"], ters["sefer"], ters["aralik_dk"]) == ("Eminönü", "Kadıköy", 1, None)
+    metin = build.sefer_saatleri_metni(build.sefer_saatleri(oturum, "vapur"))
+    assert "KDK-EMN  [ferry]" in metin
+    assert "Pzt-Cum   Kadıköy -> Eminönü | 8 sefer | 07:00 - 09:20 | en sık aralık 20 dk (%100) | süre 20 dk" in metin
+    assert "tek sefer" in metin
+
+
+def test_sefer_saatleri_suzgecler(oturum, vapur_klasoru):
+    from app.gtfs.feeds import FeedConfig
+    loader.load_feed(oturum, vapur_klasoru, FeedConfig(feed_id="vapur", name="x"))
+    assert build.sefer_saatleri(oturum, "vapur", hatlar=["kdk-emn"])                  # büyük/küçük harf ve ASCII duyarsız
+    assert build.sefer_saatleri(oturum, "vapur", hatlar=["YOK"]) == []
+    assert build.sefer_saatleri(oturum, "vapur", en_az_sefer=100) == []
+    assert build.sefer_saatleri(oturum, "vapur", modlar=["metro"]) == []
+    assert build.sefer_saatleri(oturum, "vapur", modlar=["ferry"], en_az_sefer=10)      # 10 sefer satırı yüklü (5 + 3 + şablon + ters)
+    assert build.sefer_saatleri(oturum, "vapur", en_az_sefer=11) == []
+    assert "eşleşen hat/sefer yok" in build.sefer_saatleri_metni([])
+
+
+def test_sefer_saatleri_degisen_aralik_en_sik_olani_secer(oturum, tmp_path):
+    from app.gtfs.feeds import FeedConfig
+    d = tmp_path / "v2"
+    d.mkdir()
+    yaz(d / "calendar.csv", [["service_id", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
+                              "sunday", "start_date", "end_date"], ["1", 1, 1, 1, 1, 1, 1, 1, "20220101", "20221231"]])
+    yaz(d / "routes.csv", [["route_id", "agency_id", "route_short_name", "route_long_name", "route_type"], ["r", "1", "X", "Y", 4]])
+    saatler = [6 * 60, 6 * 60 + 15, 6 * 60 + 30, 6 * 60 + 45, 7 * 60 + 30]          # 15,15,15 sonra 45 dk
+    yaz(d / "trips.csv", [["route_id", "service_id", "trip_id", "trip_headsign", "direction_id"]] +
+        [["r", "1", f"t{i}", "Y", 0] for i in range(len(saatler))])
+    st = [["trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence"]]
+    for i, dk in enumerate(saatler):
+        st += [[f"t{i}", f"{dk // 60:02d}:{dk % 60:02d}:00", f"{dk // 60:02d}:{dk % 60:02d}:00", "a", 1],
+               [f"t{i}", f"{(dk + 10) // 60:02d}:{(dk + 10) % 60:02d}:00", f"{(dk + 10) // 60:02d}:{(dk + 10) % 60:02d}:00", "b", 2]]
+    yaz(d / "stop_times.csv", st)
+    yaz(d / "stops.csv", [["stop_id", "stop_name", "stop_lat", "stop_lon"], ["a", "A", "41.0", "29.0"], ["b", "B", "41.1", "29.1"]])
+    loader.load_feed(oturum, str(d), FeedConfig(feed_id="v2", name="x"))
+    k = build.sefer_saatleri(oturum, "v2")[0]
+    assert (k["aralik_dk"], round(k["aralik_payi"], 2)) == (15, 0.75)            # 3 / 4 aralık 15 dk
+
+
+def test_komut_satiri_saatler_marmaray(tmp_path):
+    hedef = f"sqlite:///{tmp_path / 'gtfs.db'}"
+    assert calistir("yukle", "marmaray", "--klasor", str(tmp_path / "m"), "--hedef", hedef).returncode == 0
+    c = calistir("saatler", "marmaray", "--modlar", "rail", "--hedef", hedef)
+    assert c.returncode == 0, c.stderr
+    assert "Her gün   Halkalı -> Gebze | 70 sefer | 05:58 - 23:28 | en sık aralık 15 dk" in c.stdout
+    assert "Cum-Cts   Halkalı -> Gebze | 4 sefer | 23:58 - 25:28 | en sık aralık 30 dk (%100)" in c.stdout
+    assert "Her gün   Ataköy -> Pendik | 119 sefer | 06:09 - 21:54 | en sık aralık 8 dk" in c.stdout
+    h = calistir("saatler", "marmaray", "--hat", "marmaray", "--en-az-sefer", "1000", "--hedef", hedef)
+    assert h.returncode == 0 and "eşleşen hat/sefer yok" in h.stdout

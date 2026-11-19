@@ -144,6 +144,15 @@ Her hat için ilk durak → son durak, durak sayısı, yolculuk süresi (dk) ve 
 süreleri gerçek hayatla (örn. M2 Yenikapı–Hacıosman) karşılaştırmak için kullanılır. Temsilci sefer, hattın en çok
 durağı olan seferidir (eşitlikte gidiş yönü).
 
+## Sefer saatleri analizi (`scripts/build_gtfs.py saatler`)
+```bash
+python scripts/build_gtfs.py saatler ibb --en-az-sefer 20 --hedef sqlite:///gtfs_data/gtfs.db        # vapur (varsayılan mod)
+python scripts/build_gtfs.py saatler ibb --hat KDK-EMN KRK-KDK --hedef sqlite:///gtfs_data/gtfs.db   # seçili hatlar
+```
+Her hat için, **yön ve gün tipine göre** (Pzt-Cum, Cts-Paz, ...) sefer sayısı, ilk/son kalkış, en sık aralık
+(ve payı) ve yolculuk süresi (ortanca, en az–en çok) yazar. Aralıklı (`frequencies`) tanımlar gerçek seferlere
+açılarak sayılır. Elle tanım (Marmaray gibi) yazmadan önce mevcut tarifeyi görmek ve şüpheli süreleri bulmak içindir.
+
 ## Planlama kuralları (`app/gtfs/rules.py`)
 - `expand_frequency_starts(start, end, headway)`: `[start, end)` penceresindeki sefer başlangıçları.
   Aralık pencereden uzunsa yalnızca pencere başında tek sefer çıkar.

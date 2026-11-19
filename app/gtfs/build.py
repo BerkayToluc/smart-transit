@@ -9,7 +9,9 @@ import os
 import re
 import shutil
 import time
+import statistics
 import zipfile
+from collections import Counter
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
 
@@ -20,6 +22,8 @@ from sqlalchemy.orm import Session
 from app.gtfs import manual
 from app.gtfs.feeds import IBB_MULTIMODAL, IETT, MARMARAY, FeedConfig
 from app.gtfs.loader import EXCEL_SATIR_SINIRI, _veri_satiri_say
+from app.gtfs.rules import expand_frequency_starts
+from app.gtfs.textfix import ascii_katla
 from app.gtfs.models import (
     GtfsAgency, GtfsCalendar, GtfsFeed, GtfsFrequency, GtfsRoute, GtfsStop, GtfsStopTime, GtfsTrip,
 )
@@ -272,6 +276,122 @@ def hat_ozeti_metni(kayitlar: List[dict]) -> str:
         sure = f"{k['sure_dk']:g} dk" if k["sure_dk"] is not None else "?"
         sat.append(f"  {k['mod']:<9} {k['kisa_ad'] or '-':<8} {guzergah} | {k['durak_sayisi']} durak | {sure} | "
                    f"{k['sefer']} sefer" + (f" ({k['aralikli']} aralıklı)" if k["aralikli"] else ""))
+    return "\n".join(sat)
+
+
+# ---------------------------------------------------------------- sefer saatleri analizi
+GUN_KISALTMA = ("Pzt", "Sal", "Çar", "Per", "Cum", "Cts", "Paz")
+
+
+def gun_etiketi(gunler) -> str:
+    """Pazartesi..Pazar bayraklarından okunaklı etiket: "Pzt-Cum", "Cts", "Cts,Paz", "Her gün"."""
+    g = [bool(x) for x in gunler]
+    if all(g):
+        return "Her gün"
+    if not any(g):
+        return "(günsüz)"
+    parcalar, i = [], 0
+    while i < 7:
+        if g[i]:
+            j = i
+            while j + 1 < 7 and g[j + 1]:
+                j += 1
+            parcalar.append(GUN_KISALTMA[i] if i == j else f"{GUN_KISALTMA[i]}-{GUN_KISALTMA[j]}")
+            i = j + 1
+        else:
+            i += 1
+    return ",".join(parcalar)
+
+
+def _saat(sn: int) -> str:
+    return f"{sn // 3600:02d}:{sn % 3600 // 60:02d}"
+
+
+def sefer_saatleri(session: Session, feed_id: str, *, hatlar: Optional[List[str]] = None,
+                   modlar: Optional[List[str]] = None, en_az_sefer: int = 0) -> List[dict]:
+    """Hatların gerçek sefer saatlerini (aralıklı tanımlar seferlere açılarak) yön ve gün tipine göre özetler.
+
+    Her grup: (hat, yön, ilk durak -> son durak, gün etiketi). Grup başına sefer sayısı, ilk/son kalkış,
+    en sık aralık (dk) ve payı, yolculuk süresi (ortanca ve en az/çok). Elle tanım yazmadan önce mevcut
+    tarifeyi görmek ve şüpheli süreleri bulmak için kullanılır.
+    """
+    sorgu = select(GtfsRoute).where(GtfsRoute.feed_id == feed_id)
+    if modlar:
+        sorgu = sorgu.where(GtfsRoute.mode.in_(modlar))
+    rotalar = list(session.scalars(sorgu.order_by(GtfsRoute.short_name, GtfsRoute.id)))
+    if hatlar:
+        istenen = {ascii_katla(h) for h in hatlar}
+        rotalar = [r for r in rotalar if ascii_katla(r.short_name or "") in istenen]
+
+    sonuc = []
+    for hat in rotalar:
+        seferler = session.execute(select(GtfsTrip.id, GtfsTrip.service_id, GtfsTrip.direction_id)
+                                   .where(GtfsTrip.route_id == hat.id)).all()
+        if len(seferler) < en_az_sefer or not seferler:
+            continue
+        takvim = {c.service_id: c for c in session.scalars(
+            select(GtfsCalendar).where(GtfsCalendar.service_id.in_({sf[1] for sf in seferler})))}
+        frekans: Dict[str, list] = {}
+        for tid, b, e, h in session.execute(
+                select(GtfsFrequency.trip_id, GtfsFrequency.start_secs, GtfsFrequency.end_secs, GtfsFrequency.headway_secs)
+                .join(GtfsTrip, GtfsTrip.id == GtfsFrequency.trip_id).where(GtfsTrip.route_id == hat.id)):
+            frekans.setdefault(tid, []).append((b, e, h))
+        duraklar: Dict[str, list] = {}
+        for tid, arr, dep, ad in session.execute(
+                select(GtfsStopTime.trip_id, GtfsStopTime.arrival_secs, GtfsStopTime.departure_secs, GtfsStop.name)
+                .join(GtfsTrip, GtfsTrip.id == GtfsStopTime.trip_id).join(GtfsStop, GtfsStop.id == GtfsStopTime.stop_id)
+                .where(GtfsTrip.route_id == hat.id).order_by(GtfsStopTime.trip_id, GtfsStopTime.stop_sequence)):
+            duraklar.setdefault(tid, []).append((arr, dep, ad))
+
+        gruplar: Dict[tuple, dict] = {}
+        for tid, servis, yon in seferler:
+            st = duraklar.get(tid)
+            if not st:
+                continue
+            ilk_kalkis = st[0][1] if st[0][1] is not None else st[0][0]
+            son_varis = st[-1][0] if st[-1][0] is not None else st[-1][1]
+            if ilk_kalkis is None or son_varis is None:
+                continue
+            sure = son_varis - ilk_kalkis
+            cal = takvim.get(servis)
+            etiket = gun_etiketi([getattr(cal, g) for g in ("monday", "tuesday", "wednesday", "thursday", "friday",
+                                                           "saturday", "sunday")]) if cal else "(takvim yok)"
+            baslangiclar = ([ilk_kalkis] if tid not in frekans else
+                            sorted({x for (b, e, h) in frekans[tid] for x in expand_frequency_starts(b, e, h)}))
+            g = gruplar.setdefault((yon if yon is not None else 0, st[0][2], st[-1][2], etiket),
+                                   {"baslangic": [], "sureler": []})
+            g["baslangic"].extend(baslangiclar)
+            g["sureler"].extend([sure] * len(baslangiclar))
+
+        for (yon, ilk_ad, son_ad, etiket), g in sorted(gruplar.items(), key=lambda kv: (kv[0][3], kv[0][0], kv[0][1])):
+            b = sorted(g["baslangic"])
+            farklar = Counter(round((y - x) / 60) for x, y in zip(b, b[1:]) if y > x)
+            aralik, pay = (None, None)
+            if farklar:
+                aralik, adet = farklar.most_common(1)[0]
+                pay = adet / sum(farklar.values())
+            sureler = sorted(g["sureler"])
+            sonuc.append({
+                "hat": hat.short_name, "uzun_ad": hat.long_name, "mod": hat.mode, "yon": yon, "ilk_durak": ilk_ad,
+                "son_durak": son_ad, "gun": etiket, "sefer": len(b), "ilk": b[0], "son": b[-1], "aralik_dk": aralik,
+                "aralik_payi": pay, "sure_dk": round(statistics.median(sureler) / 60, 1),
+                "sure_en_az": round(sureler[0] / 60, 1), "sure_en_cok": round(sureler[-1] / 60, 1),
+            })
+    return sonuc
+
+
+def sefer_saatleri_metni(kayitlar: List[dict]) -> str:
+    if not kayitlar:
+        return "  (eşleşen hat/sefer yok)"
+    sat, onceki = [], None
+    for k in kayitlar:
+        if k["hat"] != onceki:
+            sat.append(f"{k['hat']}  [{k['mod']}]  {k['uzun_ad'] or ''}".rstrip())
+            onceki = k["hat"]
+        aralik = f"en sık aralık {k['aralik_dk']} dk (%{round(k['aralik_payi'] * 100)})" if k["aralik_dk"] is not None else "tek sefer"
+        sure = f"{k['sure_dk']:g} dk" + (f" ({k['sure_en_az']:g}-{k['sure_en_cok']:g})" if k["sure_en_az"] != k["sure_en_cok"] else "")
+        sat.append(f"   {k['gun']:<9} {k['ilk_durak']} -> {k['son_durak']} | {k['sefer']} sefer | "
+                   f"{_saat(k['ilk'])} - {_saat(k['son'])} | {aralik} | süre {sure}")
     return "\n".join(sat)
 
 
