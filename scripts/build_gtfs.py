@@ -15,6 +15,8 @@ vapur (elle tanımlı: data/vapur.json, Şehir Hatları kış tarifesi; indirme 
 `--modlar metro tram ...` ile süzülür (varsayılan: otobüs ve minibüs dışındakiler).
 `aktarma`: yüklü tüm beslemelerin duraklarından yürüme kenarları (≤150 m; farklı beslemelerin istasyon türü durakları için ≤600 m) ve istasyon kümeleri üretir
 (`python scripts/build_gtfs.py aktarma --hedef ...`); beslemeler yüklendikten SONRA ve her yeniden yüklemeden sonra çalıştırılır.
+`rota`: iki koordinat arası aktarmalı rota (`--nereden 40.99,29.02 --nereye 41.04,28.98 --saat 08:30 --gun 1`);
+grafı ilk seferde kurar ve `gtfs_data/graf.pkl`e yazar, sonraki sorgular hızlı açılır.
 `saatler`: hatların gerçek sefer saatleri (yön ve gün tipine göre: sefer sayısı, ilk/son sefer, en sık aralık,
 süre). `--hat KDK-EMN ...` ya da `--modlar ferry` (varsayılan) ve `--en-az-sefer 20` ile süzülür.
 
@@ -39,10 +41,47 @@ def _maskele(url: str) -> str:
     return url
 
 
+def _rota(a, oturum) -> int:
+    """Örnek rota sorgusu (doğrulama ve süre ölçümü için)."""
+    import time
+    from datetime import datetime
+    if not a.nereden or not a.nereye:
+        print("--nereden ve --nereye gerekli (\"enlem,boylam\")")
+        return 2
+    bas = tuple(float(x) for x in a.nereden.split(","))
+    bit = tuple(float(x) for x in a.nereye.split(","))
+    simdi = datetime.now()
+    gun = a.gun if a.gun is not None else simdi.weekday()
+    saat = a.saat or simdi.strftime("%H:%M")
+    sa, dk = (int(x) for x in saat.split(":")[:2])
+    from app.routing import graph, plan
+    t0 = time.time()
+    g = graph.yukle(oturum, a.graf, log=lambda m: print("  " + m))
+    t1 = time.time()
+    print(f"Graf hazır: {g.durak_sayisi} durak, {len(g.paternler)} örüntü, {g.sefer_sayisi()} sefer ({t1 - t0:.1f} sn)")
+    sonuc = plan.planla(g, bas, bit, gun, sa * 3600 + dk * 60, izinli_modlar=a.modlar, max_aktarma=a.max_aktarma,
+                        max_yurume_m=a.max_yurume, tercih=a.tercih)
+    t2 = time.time()
+    if not sonuc:
+        print("Rota bulunamadı.")
+    for i, s in enumerate(sonuc, 1):
+        print(plan.secenek_metni(g, s, i))
+    print(f"Sorgu süresi: {(t2 - t1) * 1000:.0f} ms  (gün={gun}, saat={saat})")
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("komut", choices=["indir", "yukle", "rapor", "hepsi", "hatlar", "saatler", "aktarma"])
-    ap.add_argument("beslemeler", nargs="*", help="iett, ibb, marmaray, vapur (`aktarma` için gerekmez)")
+    ap.add_argument("komut", choices=["indir", "yukle", "rapor", "hepsi", "hatlar", "saatler", "aktarma", "rota"])
+    ap.add_argument("beslemeler", nargs="*", help="iett, ibb, marmaray, vapur (`aktarma` ve `rota` için gerekmez)")
+    ap.add_argument("--nereden", help="`rota`: başlangıç \"enlem,boylam\" (örn. 40.9903,29.0260)")
+    ap.add_argument("--nereye", help="`rota`: varış \"enlem,boylam\"")
+    ap.add_argument("--saat", help="`rota`: kalkış saati SS:DD (varsayılan: şimdi)")
+    ap.add_argument("--gun", type=int, help="`rota`: 0=Pazartesi ... 6=Pazar (varsayılan: bugün)")
+    ap.add_argument("--max-aktarma", type=int, default=3, help="`rota`: en çok aktarma")
+    ap.add_argument("--max-yurume", type=float, default=800.0, help="`rota`: başlangıç/varışta en çok yürüme (m)")
+    ap.add_argument("--tercih", default="hizli", help="`rota`: hizli | az_aktarma | az_yuruyus")
+    ap.add_argument("--graf", default=os.path.join("gtfs_data", "graf.pkl"), help="`rota`: graf önbellek dosyası")
     ap.add_argument("--yaricap", type=float, default=150.0, help="`aktarma`: yürüme kenarı için en çok mesafe (m)")
     ap.add_argument("--istasyon-yaricap", type=float, default=600.0,
                     help="`aktarma`: farklı beslemelerin istasyon türü durakları (metro, Marmaray, iskele) için en çok mesafe (m)")
@@ -62,7 +101,7 @@ def main(argv=None) -> int:
                 os.makedirs(klasor, exist_ok=True)
 
     from app.gtfs import build                          # noqa: E402  (DATABASE_URL ayarlandıktan sonra)
-    if a.komut != "aktarma" and not a.beslemeler:
+    if a.komut not in ("aktarma", "rota") and not a.beslemeler:
         ap.error("en az bir besleme adı gerekli")
     bilinmeyen = [b for b in a.beslemeler if b not in build.BESLEMELER]
     if bilinmeyen:
@@ -87,7 +126,7 @@ def main(argv=None) -> int:
                 print(f"== {b}: kurallardan GTFS dosyaları üretiliyor -> {klasor_of(b)}")
                 build.manuel_uret(b, klasor_of(b))
 
-    if a.komut in ("yukle", "hepsi", "rapor", "hatlar", "saatler", "aktarma"):
+    if a.komut in ("yukle", "hepsi", "rapor", "hatlar", "saatler", "aktarma", "rota"):
         from app.db import SessionLocal, engine
         from app.db import Base
         from app.gtfs import models  # noqa: F401
@@ -109,6 +148,8 @@ def main(argv=None) -> int:
                     ozet = load_feed(oturum, klasor_of(b), build.BESLEMELER[b].config,
                                      progress=lambda m: print("  " + m))
                     print("  özet:", ozet)
+            if a.komut == "rota":
+                return _rota(a, oturum)
             if a.komut == "aktarma":
                 from app.gtfs import transfers
                 print(f"== aktarma noktaları üretiliyor -> {hedef_adi} (yürüme ≤ {a.yaricap:g} m; istasyonlar arası ≤ {a.istasyon_yaricap:g} m)")
