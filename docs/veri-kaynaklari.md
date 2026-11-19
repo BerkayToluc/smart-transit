@@ -242,8 +242,9 @@ Moovit/Google de vapur saatlerini işletmecinin tarifesinden alır; İBB'nin 201
 - **Dönüş zinciri:** Kadıköy–Karaköy–Eminönü ve Üsküdar–Karaköy–Eminönü'nde Eminönü kalkışları, geldiği yerin
   tersine (Kadıköy / Üsküdar) dönüş seferi sayıldı; Karaköy'de Eminönü'ne devam etmeyen kalkışlar Kadıköy'e mekik
   sayıldı (akşam 21:00'dan sonra Kadıköy↔Karaköy 30 dk'lık iki yönlü mekik gibi görünüyor).
-- **İskele konumları** yaklaşıktır (iskele çevresi, ±200 m). İBB'nin `deniz-ulasim-istasyonlari-vektor-verisi`
-  GeoJSON'u ile doğrulanıp güncellenmeli.
+- **İskele konumları:** kullanıcının sağladığı Şehir Hatları iskeleleri KML dosyasından (56 iskele; ilk tahminler 100-350 m
+  sapıyordu). Kadıköy için iki iskelenin (KADIKÖY-1/-2) ortası, Eminönü için EMİNÖNÜ-3 alındı. Kalan iskeleler sonraki
+  hatlarda kullanılacak.
 
 ### Kapsam ve eksikler
 Şimdilik kitapçığın 4-9. sayfaları: Kadıköy–Karaköy–Eminönü, Üsküdar–Karaköy–Eminönü, Kadıköy–Beşiktaş (+gece),

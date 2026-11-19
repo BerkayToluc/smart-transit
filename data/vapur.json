@@ -3,7 +3,7 @@
   "id": "vapur",
   "ad": "Şehir Hatları vapurları (resmi kış tarifesi, elle tanımlı)",
   "veri_tarihi": "2026-09-07",
-  "kaynak": "Şehir Hatları 2026-2027 Kış Tarifesi kitapçığı (7 Eylül 2026 - 27 Haziran 2027). Saatler kitapçıktan; yolculuk süreleri ve iskele konumları yaklaşıktır."
+  "kaynak": "Şehir Hatları 2026-2027 Kış Tarifesi kitapçığı (7 Eylül 2026 - 27 Haziran 2027). Saatler kitapçıktan; iskele konumları Şehir Hatları iskeleleri KML dosyasından; yolculuk süreleri yaklaşıktır."
  },
  "kurum": {
   "id": "sehir_hatlari",
@@ -14,44 +14,44 @@
   {
    "id": "kadikoy",
    "ad": "Kadıköy",
-   "enlem": 40.9921,
-   "boylam": 29.0233
+   "enlem": 40.992236,
+   "boylam": 29.022333
   },
   {
    "id": "karakoy",
    "ad": "Karaköy",
-   "enlem": 41.0224,
-   "boylam": 28.9771
+   "enlem": 41.021466,
+   "boylam": 28.976779
   },
   {
    "id": "eminonu",
    "ad": "Eminönü",
-   "enlem": 41.018,
-   "boylam": 28.9742
+   "enlem": 41.017862,
+   "boylam": 28.974064
   },
   {
    "id": "uskudar",
    "ad": "Üsküdar",
-   "enlem": 41.0269,
-   "boylam": 29.0149
+   "enlem": 41.027602,
+   "boylam": 29.015185
   },
   {
    "id": "besiktas",
    "ad": "Beşiktaş",
-   "enlem": 41.042,
-   "boylam": 29.0069
+   "enlem": 41.041022,
+   "boylam": 29.007342
   },
   {
    "id": "kabatas",
    "ad": "Kabataş",
-   "enlem": 41.0349,
-   "boylam": 28.9917
+   "enlem": 41.032813,
+   "boylam": 28.994322
   },
   {
    "id": "ortakoy",
    "ad": "Ortaköy",
-   "enlem": 41.0479,
-   "boylam": 29.027
+   "enlem": 41.047381,
+   "boylam": 29.025528
   }
  ],
  "hizmetler": {
