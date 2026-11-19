@@ -100,6 +100,168 @@
    "ad": "Sedef Adası",
    "enlem": 40.853183,
    "boylam": 29.141931
+  },
+  {
+   "id": "rumeli_kavagi",
+   "ad": "Rumeli Kavağı",
+   "enlem": 41.181689,
+   "boylam": 29.075007
+  },
+  {
+   "id": "sariyer",
+   "ad": "Sarıyer",
+   "enlem": 41.166364,
+   "boylam": 29.057227
+  },
+  {
+   "id": "buyukdere",
+   "ad": "Büyükdere",
+   "enlem": 41.160767,
+   "boylam": 29.046219
+  },
+  {
+   "id": "istinye",
+   "ad": "İstinye",
+   "enlem": 41.113257,
+   "boylam": 29.061066
+  },
+  {
+   "id": "emirgan",
+   "ad": "Emirgan",
+   "enlem": 41.103006,
+   "boylam": 29.05613
+  },
+  {
+   "id": "bebek",
+   "ad": "Bebek",
+   "enlem": 41.076317,
+   "boylam": 29.044319
+  },
+  {
+   "id": "kucuksu",
+   "ad": "Küçüksu",
+   "enlem": 41.079689,
+   "boylam": 29.064926
+  },
+  {
+   "id": "kanlica",
+   "ad": "Kanlıca",
+   "enlem": 41.100202,
+   "boylam": 29.06534
+  },
+  {
+   "id": "anadolu_hisari",
+   "ad": "Anadolu Hisarı",
+   "enlem": 41.083214,
+   "boylam": 29.066667
+  },
+  {
+   "id": "anadolu_kavagi",
+   "ad": "Anadolu Kavağı",
+   "enlem": 41.173463,
+   "boylam": 29.088151
+  },
+  {
+   "id": "beykoz",
+   "ad": "Beykoz",
+   "enlem": 41.134629,
+   "boylam": 29.090327
+  },
+  {
+   "id": "pasabahce",
+   "ad": "Paşabahçe",
+   "enlem": 41.116655,
+   "boylam": 29.093203
+  },
+  {
+   "id": "cubuklu",
+   "ad": "Çubuklu",
+   "enlem": 41.107376,
+   "boylam": 29.080421
+  },
+  {
+   "id": "cengelkoy",
+   "ad": "Çengelköy",
+   "enlem": 41.051058,
+   "boylam": 29.051642
+  },
+  {
+   "id": "beylerbeyi",
+   "ad": "Beylerbeyi",
+   "enlem": 41.044941,
+   "boylam": 29.044596
+  },
+  {
+   "id": "kuzguncuk",
+   "ad": "Kuzguncuk",
+   "enlem": 41.036977,
+   "boylam": 29.029638
+  },
+  {
+   "id": "kandilli",
+   "ad": "Kandilli",
+   "enlem": 41.074483,
+   "boylam": 29.058197
+  },
+  {
+   "id": "asiyan",
+   "ad": "Aşiyan",
+   "enlem": 41.08106,
+   "boylam": 29.05466
+  },
+  {
+   "id": "eyupsultan",
+   "ad": "Eyüpsultan",
+   "enlem": 41.047285,
+   "boylam": 28.937816
+  },
+  {
+   "id": "sutluce",
+   "ad": "Sütlüce",
+   "enlem": 41.046671,
+   "boylam": 28.940777
+  },
+  {
+   "id": "haskoy",
+   "ad": "Hasköy",
+   "enlem": 41.040694,
+   "boylam": 28.949107
+  },
+  {
+   "id": "ayvansaray",
+   "ad": "Ayvansaray",
+   "enlem": 41.040811,
+   "boylam": 28.944817
+  },
+  {
+   "id": "balat",
+   "ad": "Balat",
+   "enlem": 41.03491,
+   "boylam": 28.949175
+  },
+  {
+   "id": "fener",
+   "ad": "Fener",
+   "enlem": 41.030958,
+   "boylam": 28.952622
+  },
+  {
+   "id": "kasimpasa",
+   "ad": "Kasımpaşa",
+   "enlem": 41.03041,
+   "boylam": 28.966277
+  },
+  {
+   "id": "cubuklu_arabali",
+   "ad": "Çubuklu (araba vapuru)",
+   "enlem": 41.108588,
+   "boylam": 29.083121
+  },
+  {
+   "id": "istinye_arabali",
+   "ad": "İstinye (araba vapuru)",
+   "enlem": 41.113376,
+   "boylam": 29.05679
   }
  ],
  "hizmetler": {
@@ -253,6 +415,86 @@
    "id": "byk_sdf",
    "kisa_ad": "BYK-SDF",
    "uzun_ad": "Büyükada - Sedef Adası"
+  },
+  {
+   "id": "rmk_emn",
+   "kisa_ad": "RMK-EMN",
+   "uzun_ad": "Rumeli Kavağı - Eminönü (Boğaz)"
+  },
+  {
+   "id": "ort_emn",
+   "kisa_ad": "ORT-BSK-EMN",
+   "uzun_ad": "Ortaköy - Beşiktaş - Eminönü"
+  },
+  {
+   "id": "kck_bsk",
+   "kisa_ad": "KCK-BSK-KBT",
+   "uzun_ad": "Küçüksu - Beşiktaş - Kabataş"
+  },
+  {
+   "id": "kck_ist",
+   "kisa_ad": "KCK-IST",
+   "uzun_ad": "Küçüksu - İstinye"
+  },
+  {
+   "id": "usk_asy",
+   "kisa_ad": "USK-ASY",
+   "uzun_ad": "Üsküdar - Aşiyan"
+  },
+  {
+   "id": "asy_ring",
+   "kisa_ad": "ASY-AHS-KCK-RING",
+   "uzun_ad": "Aşiyan - Anadolu Hisarı - Küçüksu (ring)"
+  },
+  {
+   "id": "akv_sry",
+   "kisa_ad": "AKV-RKV-SRY",
+   "uzun_ad": "Anadolu Kavağı - Rumeli Kavağı - Sarıyer"
+  },
+  {
+   "id": "akv_usk",
+   "kisa_ad": "AKV-USK",
+   "uzun_ad": "Anadolu Kavağı - Üsküdar"
+  },
+  {
+   "id": "usk_halic",
+   "kisa_ad": "USK-HLC",
+   "uzun_ad": "Üsküdar - Haliç"
+  },
+  {
+   "id": "bsk_halic",
+   "kisa_ad": "BSK-HLC",
+   "uzun_ad": "Beşiktaş - Haliç"
+  },
+  {
+   "id": "cgk_kbt",
+   "kisa_ad": "CGK-KZG-BSK-KBT",
+   "uzun_ad": "Çengelköy - Kuzguncuk - Beşiktaş - Kabataş"
+  },
+  {
+   "id": "kdk_halic",
+   "kisa_ad": "KDK-HLC",
+   "uzun_ad": "Kadıköy - Haliç"
+  },
+  {
+   "id": "cgk_ist_ring",
+   "kisa_ad": "CGK-IST-RING",
+   "uzun_ad": "Çengelköy - İstinye (ring)"
+  },
+  {
+   "id": "beb_emr",
+   "kisa_ad": "BEB-EMR",
+   "uzun_ad": "Bebek - Emirgan"
+  },
+  {
+   "id": "ist_cub",
+   "kisa_ad": "IST-CUB",
+   "uzun_ad": "İstinye - Çubuklu (araba vapuru iskeleleri)"
+  },
+  {
+   "id": "bogaz",
+   "kisa_ad": "BOGAZ",
+   "uzun_ad": "Boğaz Hattı (Eminönü/Kabataş - Sarıyer - Beykoz, Boğaz iskeleleri)"
   }
  ],
  "seferler": [
@@ -2037,6 +2279,1985 @@
    ],
    "saatler": [
     "19:45 20:00"
+   ]
+  },
+  {
+   "hat": "rmk_emn",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "rumeli_kavagi",
+    "sariyer",
+    "buyukdere",
+    "istinye",
+    "emirgan",
+    "bebek",
+    "ortakoy",
+    "besiktas",
+    "eminonu"
+   ],
+   "saatler": [
+    "07:20 07:30 07:35 08:00 08:05 08:20 08:35 08:45 09:00",
+    "08:20 08:30 08:35 09:00 09:05 09:20 09:35 09:45 10:00",
+    "11:35 11:45 11:50 12:15 12:20 12:35 12:50 13:05 13:20",
+    "16:10 16:20 16:25 16:50 16:55 17:10 17:30 17:40 17:55",
+    "18:30 18:40 18:45 19:10 19:15 19:30 19:45 19:55 20:10"
+   ]
+  },
+  {
+   "hat": "rmk_emn",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "sariyer",
+    "buyukdere",
+    "istinye",
+    "emirgan",
+    "bebek",
+    "ortakoy",
+    "besiktas",
+    "eminonu"
+   ],
+   "saatler": [
+    "09:30 09:35 10:00 10:05 10:20 10:35 10:45 11:00",
+    "10:30 10:35 11:00 11:05 11:20 11:40 11:50 12:05",
+    "12:25 12:30 12:55 13:00 13:15 13:30 13:40 13:55",
+    "14:25 14:30 14:55 15:00 15:15 15:30 15:40 15:55",
+    "15:45 15:50 16:15 16:20 16:35 16:50 17:00 17:15"
+   ]
+  },
+  {
+   "hat": "rmk_emn",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "rumeli_kavagi",
+    "sariyer",
+    "buyukdere",
+    "istinye",
+    "emirgan",
+    "bebek",
+    "besiktas",
+    "eminonu"
+   ],
+   "saatler": [
+    "13:15 13:25 13:30 13:55 14:00 14:15 14:40 14:55"
+   ]
+  },
+  {
+   "hat": "rmk_emn",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "rumeli_kavagi",
+    "sariyer",
+    "buyukdere",
+    "istinye",
+    "emirgan",
+    "ortakoy",
+    "besiktas",
+    "eminonu"
+   ],
+   "saatler": [
+    "17:10 17:20 17:25 17:50 17:55 18:25 18:35 18:50"
+   ]
+  },
+  {
+   "hat": "rmk_emn",
+   "hizmet": "her_gun",
+   "yon": 1,
+   "duraklar": [
+    "eminonu",
+    "besiktas",
+    "ortakoy",
+    "emirgan",
+    "istinye",
+    "buyukdere",
+    "sariyer",
+    "rumeli_kavagi"
+   ],
+   "saatler": [
+    "09:35 09:50 10:00 10:40 10:45 11:10 11:15 11:25",
+    "11:10 11:25 11:35 12:15 12:25 12:50 12:55 13:05",
+    "15:10 15:25 15:35 16:10 16:20 16:45 16:50 17:00"
+   ]
+  },
+  {
+   "hat": "rmk_emn",
+   "hizmet": "her_gun",
+   "yon": 1,
+   "duraklar": [
+    "eminonu",
+    "besiktas",
+    "bebek",
+    "emirgan",
+    "istinye",
+    "buyukdere",
+    "sariyer"
+   ],
+   "saatler": [
+    "10:15 10:30 11:00 11:20 11:25 11:55 12:00"
+   ]
+  },
+  {
+   "hat": "rmk_emn",
+   "hizmet": "her_gun",
+   "yon": 1,
+   "duraklar": [
+    "eminonu",
+    "besiktas",
+    "ortakoy",
+    "bebek",
+    "emirgan",
+    "istinye",
+    "buyukdere",
+    "sariyer"
+   ],
+   "saatler": [
+    "12:15 12:30 12:40 13:00 13:20 13:25 13:50 13:55",
+    "13:35 13:50 14:00 14:20 14:40 14:45 15:10 15:15",
+    "18:55 19:10 19:20 19:45 20:05 20:10 20:35 20:40",
+    "20:20 20:35 20:45 21:05 21:25 21:30 21:55 22:00"
+   ]
+  },
+  {
+   "hat": "rmk_emn",
+   "hizmet": "her_gun",
+   "yon": 1,
+   "duraklar": [
+    "eminonu",
+    "besiktas",
+    "ortakoy",
+    "bebek",
+    "emirgan",
+    "istinye",
+    "buyukdere",
+    "sariyer",
+    "rumeli_kavagi"
+   ],
+   "saatler": [
+    "14:10 14:25 14:35 15:00 15:15 15:20 15:45 15:50 16:00",
+    "16:10 16:25 16:35 16:55 17:15 17:20 17:45 17:50 18:00",
+    "17:25 17:40 17:50 18:10 18:30 18:35 19:00 19:05 19:15",
+    "18:05 18:20 18:30 18:50 19:10 19:15 19:40 19:45 19:55"
+   ]
+  },
+  {
+   "hat": "ort_emn",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "ortakoy",
+    "besiktas",
+    "eminonu"
+   ],
+   "saatler": [
+    "11:15 11:25 11:40",
+    "12:30 12:40 12:55",
+    "14:45 14:55 15:10",
+    "16:10 16:20 16:35",
+    "17:05 17:15 17:30",
+    "19:55 20:05 20:20",
+    "21:15 21:25 21:40"
+   ]
+  },
+  {
+   "hat": "ort_emn",
+   "hizmet": "hafta_sonu",
+   "yon": 0,
+   "duraklar": [
+    "ortakoy",
+    "besiktas",
+    "eminonu"
+   ],
+   "saatler": [
+    "17:25 17:35 17:50"
+   ]
+  },
+  {
+   "hat": "ort_emn",
+   "hizmet": "her_gun",
+   "yon": 1,
+   "duraklar": [
+    "eminonu",
+    "besiktas",
+    "ortakoy"
+   ],
+   "saatler": [
+    "10:45 11:00 11:10",
+    "11:55 12:10 12:20",
+    "13:10 13:25 13:35",
+    "15:40 15:55 16:05",
+    "16:35 16:50 17:00",
+    "19:25 19:40 19:50",
+    "20:30 20:45 20:55"
+   ]
+  },
+  {
+   "hat": "ort_emn",
+   "hizmet": "hafta_sonu",
+   "yon": 1,
+   "duraklar": [
+    "eminonu",
+    "besiktas",
+    "ortakoy"
+   ],
+   "saatler": [
+    "16:55 17:10 17:20"
+   ]
+  },
+  {
+   "hat": "asy_ring",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "anadolu_hisari",
+    "kucuksu",
+    "asiyan"
+   ],
+   "saatler": [
+    "06:55 07:00 07:05"
+   ]
+  },
+  {
+   "hat": "asy_ring",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "asiyan",
+    "anadolu_hisari",
+    "kucuksu",
+    "asiyan"
+   ],
+   "saatler": [
+    "06:55 07:05 07:10 07:20",
+    "07:10 07:20 07:25 07:35",
+    "07:25 07:35 07:40 07:50",
+    "07:45 07:55 08:00 08:10",
+    "08:00 08:10 08:15 08:25",
+    "08:15 08:25 08:30 08:40",
+    "08:35 08:45 08:50 09:00",
+    "09:00 09:10 09:15 09:25",
+    "09:30 09:40 09:45 09:55",
+    "10:00 10:10 10:15 10:25",
+    "10:35 10:45 10:50 10:55",
+    "11:00 11:10 11:15 11:25",
+    "11:30 11:40 11:45 11:55",
+    "12:00 12:10 12:15 12:25",
+    "12:30 12:40 12:45 12:55",
+    "13:00 13:10 13:15 13:25",
+    "13:35 13:45 13:50 14:00",
+    "14:05 14:15 14:20 14:30",
+    "14:35 14:45 14:50 15:00",
+    "15:05 15:15 15:20 15:30",
+    "15:35 15:45 15:50 16:00",
+    "16:00 16:10 16:15 16:25",
+    "16:25 16:35 16:40 16:50",
+    "16:50 17:00 17:05 17:15",
+    "17:10 17:20 17:25 17:35",
+    "17:20 17:30 17:35 17:45",
+    "17:45 17:55 18:00 18:10",
+    "18:15 18:25 18:30 18:40",
+    "18:30 18:40 18:45 18:55",
+    "19:10 19:20 19:25 19:35",
+    "19:40 19:50 19:55 20:05",
+    "21:30 21:40 21:45 21:55",
+    "23:00 23:10 23:15 23:25"
+   ]
+  },
+  {
+   "hat": "asy_ring",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "asiyan",
+    "kucuksu",
+    "asiyan"
+   ],
+   "saatler": [
+    "18:00 18:15 18:25",
+    "18:50 19:05 19:15"
+   ]
+  },
+  {
+   "hat": "asy_ring",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "asiyan",
+    "kucuksu",
+    "anadolu_hisari"
+   ],
+   "saatler": [
+    "20:00 20:05 20:10"
+   ]
+  },
+  {
+   "hat": "akv_sry",
+   "hizmet": "pzt_cmt",
+   "yon": 0,
+   "duraklar": [
+    "anadolu_kavagi",
+    "rumeli_kavagi",
+    "sariyer"
+   ],
+   "saatler": [
+    "06:40 06:50 07:00"
+   ]
+  },
+  {
+   "hat": "akv_sry",
+   "hizmet": "pazar_tatil",
+   "yon": 0,
+   "duraklar": [
+    "anadolu_kavagi",
+    "rumeli_kavagi",
+    "sariyer"
+   ],
+   "saatler": [
+    "06:55 07:05 07:15"
+   ]
+  },
+  {
+   "hat": "akv_sry",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "anadolu_kavagi",
+    "sariyer"
+   ],
+   "saatler": [
+    "07:30 07:40",
+    "08:30 08:40",
+    "14:15 14:25",
+    "15:35 15:45",
+    "16:00 16:10",
+    "21:15 21:25",
+    "22:45 22:55"
+   ]
+  },
+  {
+   "hat": "akv_sry",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "anadolu_kavagi",
+    "rumeli_kavagi",
+    "sariyer"
+   ],
+   "saatler": [
+    "10:05 10:15 10:25",
+    "12:00 12:10 12:20",
+    "14:00 14:10 14:20",
+    "17:15 17:25 17:35",
+    "18:10 18:20 18:30",
+    "19:10 19:20 19:30",
+    "20:10 20:20 20:30"
+   ]
+  },
+  {
+   "hat": "akv_sry",
+   "hizmet": "her_gun",
+   "yon": 1,
+   "duraklar": [
+    "sariyer",
+    "anadolu_kavagi"
+   ],
+   "saatler": [
+    "07:15 07:25",
+    "09:00 09:10",
+    "10:35 10:45",
+    "13:30 13:40",
+    "14:00 14:10",
+    "15:20 15:30",
+    "17:00 17:10",
+    "21:55 22:05",
+    "23:00 23:10"
+   ]
+  },
+  {
+   "hat": "akv_sry",
+   "hizmet": "her_gun",
+   "yon": 1,
+   "duraklar": [
+    "sariyer",
+    "rumeli_kavagi",
+    "anadolu_kavagi"
+   ],
+   "saatler": [
+    "08:00 08:10 08:20",
+    "15:40 15:50 16:00",
+    "17:45 17:55 18:05",
+    "18:45 18:55 19:05",
+    "19:45 19:55 20:05",
+    "20:35 20:45 20:55"
+   ]
+  },
+  {
+   "hat": "akv_usk",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "beykoz",
+    "pasabahce",
+    "cubuklu",
+    "kanlica",
+    "anadolu_hisari",
+    "cengelkoy",
+    "beylerbeyi",
+    "uskudar"
+   ],
+   "saatler": [
+    "07:00 07:10 07:20 07:30 07:40 07:55 08:05 08:20",
+    "17:45 17:55 18:05 18:15 18:25 18:40 18:50 19:05"
+   ]
+  },
+  {
+   "hat": "akv_usk",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "anadolu_kavagi",
+    "beykoz",
+    "pasabahce",
+    "cubuklu",
+    "kanlica",
+    "anadolu_hisari",
+    "cengelkoy",
+    "beylerbeyi",
+    "uskudar"
+   ],
+   "saatler": [
+    "07:30 07:50 08:00 08:10 08:20 08:30 08:45 08:55 09:10",
+    "14:30 14:50 15:00 15:10 15:20 15:30 15:45 15:55 16:10",
+    "16:00 16:20 16:30 16:40 16:50 17:00 17:15 17:25 17:40"
+   ]
+  },
+  {
+   "hat": "akv_usk",
+   "hizmet": "her_gun",
+   "yon": 1,
+   "duraklar": [
+    "uskudar",
+    "beylerbeyi",
+    "cengelkoy",
+    "anadolu_hisari",
+    "kanlica",
+    "cubuklu",
+    "pasabahce",
+    "beykoz",
+    "anadolu_kavagi"
+   ],
+   "saatler": [
+    "11:35 11:50 12:00 12:15 12:25 12:35 12:45 12:55 13:15",
+    "13:45 14:00 14:10 14:25 14:35 14:45 14:55 15:05 15:25",
+    "17:50 18:05 18:15 18:35 18:45 18:55 19:05 19:15 19:35"
+   ]
+  },
+  {
+   "hat": "akv_usk",
+   "hizmet": "her_gun",
+   "yon": 1,
+   "duraklar": [
+    "uskudar",
+    "beylerbeyi",
+    "cengelkoy",
+    "anadolu_hisari",
+    "kanlica",
+    "cubuklu",
+    "pasabahce",
+    "beykoz"
+   ],
+   "saatler": [
+    "16:15 16:30 16:40 16:55 17:05 17:15 17:25 17:35",
+    "19:10 19:25 19:35 19:50 20:00 20:10 20:20 20:30"
+   ]
+  },
+  {
+   "hat": "usk_halic",
+   "hizmet": "pzt_cmt",
+   "yon": 0,
+   "duraklar": [
+    "eyupsultan",
+    "sutluce",
+    "ayvansaray",
+    "haskoy",
+    "balat",
+    "fener",
+    "kasimpasa",
+    "karakoy",
+    "uskudar"
+   ],
+   "saatler": [
+    "07:30 07:35 07:40 07:45 07:50 07:55 08:00 08:10 08:25",
+    "08:30 08:35 08:40 08:45 08:50 08:55 09:00 09:10 09:25",
+    "09:30 09:35 09:40 09:45 09:50 09:55 10:00 10:10 10:25"
+   ]
+  },
+  {
+   "hat": "usk_halic",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "eyupsultan",
+    "sutluce",
+    "ayvansaray",
+    "haskoy",
+    "balat",
+    "fener",
+    "kasimpasa",
+    "karakoy",
+    "uskudar"
+   ],
+   "saatler": [
+    "10:30 10:35 10:40 10:45 10:50 10:55 11:00 11:10 11:25",
+    "11:30 11:35 11:40 11:45 11:50 11:55 12:00 12:10 12:25",
+    "12:30 12:35 12:40 12:45 12:50 12:55 13:00 13:10 13:25",
+    "13:30 13:35 13:40 13:45 13:50 13:55 14:00 14:10 14:25",
+    "14:30 14:35 14:40 14:45 14:50 14:55 15:00 15:10 15:25",
+    "15:30 15:35 15:40 15:45 15:50 15:55 16:00 16:10 16:25",
+    "16:40 16:45 16:50 16:55 17:00 17:05 17:10 17:20 17:35",
+    "17:40 17:45 17:50 17:55 18:00 18:05 18:10 18:20 18:35",
+    "18:40 18:45 18:50 18:55 19:00 19:05 19:10 19:20 19:35",
+    "19:45 19:50 19:55 20:00 20:05 20:10 20:15 20:25 20:40"
+   ]
+  },
+  {
+   "hat": "usk_halic",
+   "hizmet": "pazar_tatil",
+   "yon": 0,
+   "duraklar": [
+    "eyupsultan",
+    "sutluce",
+    "ayvansaray",
+    "haskoy",
+    "balat",
+    "fener",
+    "kasimpasa",
+    "karakoy",
+    "uskudar"
+   ],
+   "saatler": [
+    "20:45 20:50 20:55 21:00 21:05 21:10 21:15 21:25 21:40"
+   ]
+  },
+  {
+   "hat": "usk_halic",
+   "hizmet": "pzt_cmt",
+   "yon": 0,
+   "duraklar": [
+    "uskudar",
+    "karakoy",
+    "kasimpasa",
+    "fener",
+    "balat",
+    "haskoy",
+    "ayvansaray",
+    "sutluce",
+    "eyupsultan"
+   ],
+   "saatler": [
+    "07:30 07:45 07:55 08:00 08:05 08:10 08:15 08:20 08:25",
+    "08:30 08:45 08:55 09:00 09:05 09:10 09:15 09:20 09:25",
+    "09:30 09:45 09:55 10:00 10:05 10:10 10:15 10:20 10:25"
+   ]
+  },
+  {
+   "hat": "usk_halic",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "uskudar",
+    "karakoy",
+    "kasimpasa",
+    "fener",
+    "balat",
+    "haskoy",
+    "ayvansaray",
+    "sutluce",
+    "eyupsultan"
+   ],
+   "saatler": [
+    "10:30 10:45 10:55 11:00 11:05 11:10 11:15 11:20 11:25",
+    "11:30 11:45 11:55 12:00 12:05 12:10 12:15 12:20 12:25",
+    "12:30 12:45 12:55 13:00 13:05 13:10 13:15 13:20 13:25",
+    "13:30 13:45 13:55 14:00 14:05 14:10 14:15 14:20 14:25",
+    "14:30 14:45 14:55 15:00 15:05 15:10 15:15 15:20 15:25",
+    "15:30 15:45 15:55 16:00 16:05 16:10 16:15 16:20 16:25",
+    "16:40 16:55 17:05 17:10 17:15 17:20 17:25 17:30 17:35",
+    "17:40 17:55 18:05 18:10 18:15 18:20 18:25 18:30 18:35",
+    "18:40 18:55 19:05 19:10 19:15 19:20 19:25 19:30 19:35",
+    "19:45 20:00 20:10 20:15 20:20 20:25 20:30 20:35 20:40"
+   ]
+  },
+  {
+   "hat": "usk_halic",
+   "hizmet": "pazar_tatil",
+   "yon": 0,
+   "duraklar": [
+    "uskudar",
+    "karakoy",
+    "kasimpasa",
+    "fener",
+    "balat",
+    "haskoy",
+    "ayvansaray",
+    "sutluce",
+    "eyupsultan"
+   ],
+   "saatler": [
+    "20:45 21:00 21:10 21:15 21:20 21:25 21:30 21:35 21:40"
+   ]
+  },
+  {
+   "hat": "bsk_halic",
+   "hizmet": "pzt_cmt",
+   "yon": 0,
+   "duraklar": [
+    "besiktas",
+    "kabatas",
+    "karakoy",
+    "kasimpasa",
+    "haskoy",
+    "sutluce",
+    "eyupsultan"
+   ],
+   "saatler": [
+    "07:15 07:25 07:35 07:45 07:55 08:00 08:05"
+   ]
+  },
+  {
+   "hat": "bsk_halic",
+   "hizmet": "pazar_tatil",
+   "yon": 0,
+   "duraklar": [
+    "besiktas",
+    "kabatas",
+    "karakoy",
+    "kasimpasa",
+    "haskoy",
+    "sutluce",
+    "eyupsultan"
+   ],
+   "saatler": [
+    "10:15 10:25 10:35 10:45 10:55 11:00 11:05"
+   ]
+  },
+  {
+   "hat": "bsk_halic",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "besiktas",
+    "kabatas",
+    "karakoy",
+    "kasimpasa",
+    "haskoy",
+    "sutluce",
+    "eyupsultan"
+   ],
+   "saatler": [
+    "11:15 11:25 11:35 11:45 11:55 12:00 12:05",
+    "12:15 12:25 12:35 12:45 12:55 13:00 13:05",
+    "17:20 17:30 17:40 17:50 18:00 18:05 18:10",
+    "18:20 18:30 18:40 18:50 19:00 19:05 19:10",
+    "19:25 19:35 19:45 19:55 20:05 20:10 20:15"
+   ]
+  },
+  {
+   "hat": "bsk_halic",
+   "hizmet": "pzt_cmt",
+   "yon": 1,
+   "duraklar": [
+    "eyupsultan",
+    "sutluce",
+    "haskoy",
+    "kasimpasa",
+    "karakoy",
+    "kabatas",
+    "besiktas"
+   ],
+   "saatler": [
+    "07:20 07:25 07:30 07:40 07:50 08:00 08:05"
+   ]
+  },
+  {
+   "hat": "bsk_halic",
+   "hizmet": "pazar_tatil",
+   "yon": 1,
+   "duraklar": [
+    "eyupsultan",
+    "sutluce",
+    "haskoy",
+    "kasimpasa",
+    "karakoy",
+    "kabatas",
+    "besiktas"
+   ],
+   "saatler": [
+    "10:20 10:25 10:30 10:40 10:50 11:00 11:05"
+   ]
+  },
+  {
+   "hat": "bsk_halic",
+   "hizmet": "her_gun",
+   "yon": 1,
+   "duraklar": [
+    "eyupsultan",
+    "sutluce",
+    "haskoy",
+    "kasimpasa",
+    "karakoy",
+    "kabatas",
+    "besiktas"
+   ],
+   "saatler": [
+    "11:20 11:25 11:30 11:40 11:50 12:00 12:05",
+    "12:20 12:25 12:30 12:40 12:50 13:00 13:05",
+    "17:20 17:25 17:30 17:40 17:50 18:00 18:05",
+    "18:20 18:25 18:30 18:40 18:50 19:00 19:05",
+    "19:20 19:25 19:30 19:40 19:50 20:00 20:05"
+   ]
+  },
+  {
+   "hat": "cgk_kbt",
+   "hizmet": "pzt_cmt",
+   "yon": 0,
+   "duraklar": [
+    "cengelkoy",
+    "besiktas",
+    "kabatas"
+   ],
+   "saatler": [
+    "07:00 07:15 07:25",
+    "07:50 08:05 08:15",
+    "08:40 08:55 09:05"
+   ]
+  },
+  {
+   "hat": "cgk_kbt",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "cengelkoy",
+    "besiktas",
+    "kabatas"
+   ],
+   "saatler": [
+    "11:00 11:15 11:25",
+    "15:00 15:15 15:25",
+    "16:00 16:15 16:25",
+    "18:00 18:15 18:25",
+    "19:00 19:15 19:25",
+    "20:00 20:15 20:25"
+   ]
+  },
+  {
+   "hat": "cgk_kbt",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "cengelkoy",
+    "kuzguncuk",
+    "kabatas"
+   ],
+   "saatler": [
+    "10:00 10:10 10:25",
+    "14:00 14:10 14:25",
+    "17:00 17:10 17:25"
+   ]
+  },
+  {
+   "hat": "cgk_kbt",
+   "hizmet": "pzt_cmt",
+   "yon": 1,
+   "duraklar": [
+    "kabatas",
+    "cengelkoy"
+   ],
+   "saatler": [
+    "07:25 07:50",
+    "08:15 08:40"
+   ]
+  },
+  {
+   "hat": "cgk_kbt",
+   "hizmet": "her_gun",
+   "yon": 1,
+   "duraklar": [
+    "kabatas",
+    "besiktas",
+    "cengelkoy"
+   ],
+   "saatler": [
+    "13:30 13:40 13:55",
+    "15:30 15:40 15:55",
+    "16:30 16:40 16:55",
+    "18:30 18:40 18:55",
+    "19:30 19:40 19:55",
+    "20:30 20:40 20:55"
+   ]
+  },
+  {
+   "hat": "cgk_kbt",
+   "hizmet": "pzt_cmt",
+   "yon": 1,
+   "duraklar": [
+    "kabatas",
+    "besiktas",
+    "cengelkoy"
+   ],
+   "saatler": [
+    "09:30 09:40 09:55"
+   ]
+  },
+  {
+   "hat": "cgk_kbt",
+   "hizmet": "her_gun",
+   "yon": 1,
+   "duraklar": [
+    "kabatas",
+    "kuzguncuk",
+    "cengelkoy"
+   ],
+   "saatler": [
+    "10:30 10:45 10:55",
+    "14:30 14:45 14:55",
+    "17:30 17:45 17:55"
+   ]
+  },
+  {
+   "hat": "kdk_halic",
+   "hizmet": "pzt_cmt",
+   "yon": 0,
+   "duraklar": [
+    "kadikoy",
+    "kasimpasa",
+    "fener",
+    "haskoy",
+    "sutluce",
+    "eyupsultan"
+   ],
+   "saatler": [
+    "07:05 07:30 07:35 07:40 07:45 07:50",
+    "08:00 08:30 08:35 08:40 08:45 08:50",
+    "09:00 09:30 09:35 09:40 09:45 09:50"
+   ]
+  },
+  {
+   "hat": "kdk_halic",
+   "hizmet": "her_gun",
+   "yon": 0,
+   "duraklar": [
+    "kadikoy",
+    "kasimpasa",
+    "fener",
+    "haskoy",
+    "sutluce",
+    "eyupsultan"
+   ],
+   "saatler": [
+    "11:00 11:30 11:35 11:40 11:45 11:50",
+    "13:00 13:30 13:35 13:40 13:45 13:50",
+    "15:00 15:30 15:35 15:40 15:45 15:50",
+    "16:05 16:35 16:40 16:45 16:50 16:55",
+    "17:05 17:35 17:40 17:45 17:50 17:55",
+    "18:10 18:35 18:40 18:45 18:50 18:55",
+    "19:10 19:40 19:45 19:50 19:55 20:00"
+   ]
+  },
+  {
+   "hat": "kdk_halic",
+   "hizmet": "pazar_tatil",
+   "yon": 0,
+   "duraklar": [
+    "kadikoy",
+    "kasimpasa",
+    "fener",
+    "haskoy",
+    "sutluce",
+    "eyupsultan"
+   ],
+   "saatler": [
+    "14:00 14:30 14:35 14:40 14:45 14:50",
+    "20:10 20:40 20:45 20:50 20:55 21:00"
+   ]
+  },
+  {
+   "hat": "kdk_halic",
+   "hizmet": "pzt_cmt",
+   "yon": 1,
+   "duraklar": [
+    "eyupsultan",
+    "sutluce",
+    "haskoy",
+    "fener",
+    "kasimpasa",
+    "kadikoy"
+   ],
+   "saatler": [
+    "07:05 07:10 07:15 07:20 07:30 07:55",
+    "08:05 08:10 08:15 08:20 08:30 08:55",
+    "09:05 09:10 09:15 09:20 09:30 09:55"
+   ]
+  },
+  {
+   "hat": "kdk_halic",
+   "hizmet": "her_gun",
+   "yon": 1,
+   "duraklar": [
+    "eyupsultan",
+    "sutluce",
+    "haskoy",
+    "fener",
+    "kasimpasa",
+    "kadikoy"
+   ],
+   "saatler": [
+    "10:05 10:10 10:15 10:20 10:30 10:55",
+    "12:05 12:10 12:15 12:20 12:30 12:55",
+    "14:05 14:10 14:15 14:20 14:30 14:55",
+    "16:05 16:10 16:15 16:20 16:30 16:55",
+    "17:05 17:10 17:15 17:20 17:30 17:55",
+    "18:05 18:10 18:15 18:20 18:30 18:55",
+    "19:05 19:10 19:15 19:20 19:30 19:55"
+   ]
+  },
+  {
+   "hat": "kdk_halic",
+   "hizmet": "pazar_tatil",
+   "yon": 1,
+   "duraklar": [
+    "eyupsultan",
+    "sutluce",
+    "haskoy",
+    "fener",
+    "kasimpasa",
+    "kadikoy"
+   ],
+   "saatler": [
+    "15:05 15:10 15:15 15:20 15:30 15:55",
+    "20:05 20:10 20:15 20:20 20:30 20:55"
+   ]
+  },
+  {
+   "hat": "cgk_ist_ring",
+   "hizmet": "pzt_cmt",
+   "yon": 0,
+   "duraklar": [
+    "cengelkoy",
+    "bebek",
+    "kandilli",
+    "anadolu_hisari",
+    "kanlica",
+    "emirgan",
+    "istinye"
+   ],
+   "saatler": [
+    "07:25 07:45 07:55 08:00 08:10 08:15 08:20",
+    "09:25 09:45 09:55 10:00 10:10 10:15 10:20",
+    "12:25 12:45 12:55 13:00 13:10 13:15 13:25"
+   ]
+  },
+  {
+   "hat": "cgk_ist_ring",
+   "hizmet": "pzt_cmt",
+   "yon": 0,
+   "duraklar": [
+    "cengelkoy",
+    "bebek",
+    "kandilli",
+    "anadolu_hisari",
+    "kanlica",
+    "emirgan"
+   ],
+   "saatler": [
+    "15:20 15:40 15:50 15:55 16:05 16:10",
+    "18:50 19:10 19:20 19:25 19:35 19:40"
+   ]
+  },
+  {
+   "hat": "cgk_ist_ring",
+   "hizmet": "pzt_cmt",
+   "yon": 0,
+   "duraklar": [
+    "bebek",
+    "kandilli",
+    "anadolu_hisari",
+    "kanlica",
+    "emirgan",
+    "istinye"
+   ],
+   "saatler": [
+    "17:05 17:15 17:20 17:30 17:40 17:45"
+   ]
+  },
+  {
+   "hat": "cgk_ist_ring",
+   "hizmet": "pzt_cmt",
+   "yon": 1,
+   "duraklar": [
+    "emirgan",
+    "istinye",
+    "kanlica",
+    "anadolu_hisari",
+    "kandilli",
+    "bebek",
+    "cengelkoy"
+   ],
+   "saatler": [
+    "08:15 08:20 08:30 08:40 08:45 08:50 09:05",
+    "10:15 10:20 10:30 10:40 10:45 10:50 11:05",
+    "13:15 13:25 13:35 13:45 13:50 13:55 14:10"
+   ]
+  },
+  {
+   "hat": "cgk_ist_ring",
+   "hizmet": "pzt_cmt",
+   "yon": 1,
+   "duraklar": [
+    "emirgan",
+    "kanlica",
+    "anadolu_hisari",
+    "kandilli",
+    "bebek"
+   ],
+   "saatler": [
+    "16:15 16:20 16:30 16:35 16:40"
+   ]
+  },
+  {
+   "hat": "cgk_ist_ring",
+   "hizmet": "pzt_cmt",
+   "yon": 1,
+   "duraklar": [
+    "istinye",
+    "emirgan",
+    "kanlica",
+    "anadolu_hisari",
+    "kandilli",
+    "bebek",
+    "cengelkoy"
+   ],
+   "saatler": [
+    "17:45 17:50 17:55 18:05 18:15 18:25 18:45"
+   ]
+  },
+  {
+   "hat": "cgk_ist_ring",
+   "hizmet": "hafta_ici",
+   "yon": 1,
+   "duraklar": [
+    "emirgan",
+    "kanlica",
+    "anadolu_hisari",
+    "bebek",
+    "cengelkoy"
+   ],
+   "saatler": [
+    "19:45 19:50 20:00 20:10 20:30"
+   ]
+  },
+  {
+   "hat": "beb_emr",
+   "hizmet": "pazar_tatil",
+   "yon": 0,
+   "duraklar": [
+    "bebek",
+    "anadolu_hisari",
+    "kanlica",
+    "emirgan"
+   ],
+   "saatler": [
+    "10:30 10:40 10:50 10:55",
+    "12:00 12:10 12:20 12:25",
+    "13:30 13:40 13:50 13:55",
+    "14:55 15:05 15:15 15:20",
+    "16:25 16:35 16:45 16:50",
+    "18:05 18:15 18:25 18:30",
+    "19:30 19:40 19:50 19:55"
+   ]
+  },
+  {
+   "hat": "beb_emr",
+   "hizmet": "pazar_tatil",
+   "yon": 1,
+   "duraklar": [
+    "emirgan",
+    "kanlica",
+    "anadolu_hisari",
+    "bebek"
+   ],
+   "saatler": [
+    "10:00 10:05 10:15 10:25",
+    "11:00 11:05 11:15 11:25",
+    "12:25 12:30 12:40 12:50",
+    "14:00 14:05 14:15 14:25",
+    "15:30 15:35 15:45 15:55",
+    "17:10 17:15 17:25 17:35",
+    "18:30 18:35 18:45 18:55",
+    "20:00 20:05 20:15 20:25"
+   ]
+  },
+  {
+   "hat": "kck_bsk",
+   "hizmet": "hafta_ici",
+   "yon": 0,
+   "duraklar": [
+    "kanlica",
+    "kucuksu",
+    "besiktas",
+    "kabatas"
+   ],
+   "saatler": [
+    "07:20 07:30 07:55 08:00"
+   ]
+  },
+  {
+   "hat": "kck_bsk",
+   "hizmet": "hafta_ici",
+   "yon": 0,
+   "duraklar": [
+    "kucuksu",
+    "besiktas",
+    "kabatas"
+   ],
+   "saatler": [
+    "08:35 09:00 09:05"
+   ]
+  },
+  {
+   "hat": "kck_bsk",
+   "hizmet": "hafta_ici",
+   "yon": 1,
+   "duraklar": [
+    "kabatas",
+    "besiktas",
+    "kucuksu"
+   ],
+   "saatler": [
+    "18:30 18:40 19:10"
+   ]
+  },
+  {
+   "hat": "kck_bsk",
+   "hizmet": "hafta_ici",
+   "yon": 1,
+   "duraklar": [
+    "kabatas",
+    "besiktas"
+   ],
+   "saatler": [
+    "19:45 19:55"
+   ]
+  },
+  {
+   "hat": "kck_ist",
+   "hizmet": "hafta_ici",
+   "yon": 0,
+   "duraklar": [
+    "kucuksu",
+    "istinye"
+   ],
+   "saatler": [
+    "06:55 07:15",
+    "07:35 07:55",
+    "08:05 08:25",
+    "08:40 09:00",
+    "17:50 18:10",
+    "18:40 19:00",
+    "19:15 19:35"
+   ]
+  },
+  {
+   "hat": "kck_ist",
+   "hizmet": "hafta_ici",
+   "yon": 1,
+   "duraklar": [
+    "istinye",
+    "kucuksu"
+   ],
+   "saatler": [
+    "07:15 07:35",
+    "07:50 08:10",
+    "08:25 08:45",
+    "17:25 17:45",
+    "18:25 18:45",
+    "18:55 19:15",
+    "19:35 19:55"
+   ]
+  },
+  {
+   "hat": "usk_asy",
+   "hizmet": "pzt_cmt",
+   "yon": 0,
+   "duraklar": [
+    "uskudar",
+    "asiyan"
+   ],
+   "saatler": [
+    "06:50 07:20",
+    "07:20 07:50",
+    "08:20 08:50",
+    "09:15 09:45",
+    "11:15 11:45",
+    "13:15 13:45",
+    "15:15 15:45",
+    "16:15 16:45",
+    "16:50 17:20",
+    "17:20 17:50",
+    "17:50 18:20",
+    "18:25 18:55",
+    "18:55 19:25",
+    "19:25 19:55",
+    "20:25 20:55"
+   ]
+  },
+  {
+   "hat": "usk_asy",
+   "hizmet": "pzt_cmt",
+   "yon": 1,
+   "duraklar": [
+    "asiyan",
+    "uskudar"
+   ],
+   "saatler": [
+    "07:20 07:50",
+    "07:50 08:20",
+    "08:50 09:20",
+    "09:45 10:15",
+    "11:45 12:15",
+    "13:45 14:15",
+    "15:45 16:15",
+    "16:50 17:20",
+    "17:20 17:50",
+    "17:50 18:20",
+    "18:25 18:55",
+    "18:55 19:25",
+    "19:25 19:55",
+    "19:55 20:25",
+    "21:00 21:30"
+   ]
+  },
+  {
+   "hat": "usk_asy",
+   "hizmet": "pazar_tatil",
+   "yon": 0,
+   "duraklar": [
+    "uskudar",
+    "asiyan"
+   ],
+   "saatler": [
+    "11:15 11:45",
+    "13:15 13:45",
+    "14:15 14:45",
+    "15:15 15:45",
+    "15:45 16:15",
+    "16:15 16:45",
+    "16:50 17:20",
+    "17:20 17:50",
+    "17:50 18:20",
+    "18:25 18:55",
+    "18:55 19:25",
+    "19:25 19:55",
+    "19:55 20:25",
+    "20:25 20:55"
+   ]
+  },
+  {
+   "hat": "usk_asy",
+   "hizmet": "pazar_tatil",
+   "yon": 1,
+   "duraklar": [
+    "asiyan",
+    "uskudar"
+   ],
+   "saatler": [
+    "11:45 12:15",
+    "13:45 14:15",
+    "14:45 15:15",
+    "15:45 16:15",
+    "16:15 16:45",
+    "16:50 17:20",
+    "17:20 17:50",
+    "17:50 18:20",
+    "18:25 18:55",
+    "18:55 19:25",
+    "19:25 19:55",
+    "19:55 20:25",
+    "20:25 20:55",
+    "21:00 21:30"
+   ]
+  },
+  {
+   "hat": "ist_cub",
+   "hizmet": "hafta_ici",
+   "yon": 0,
+   "duraklar": [
+    "cubuklu_arabali",
+    "istinye_arabali"
+   ],
+   "saatler": [
+    "07:00 07:15",
+    "07:20 07:35",
+    "07:40 07:55",
+    "08:00 08:15",
+    "08:15 08:30",
+    "08:30 08:45",
+    "08:45 09:00",
+    "09:00 09:15",
+    "09:15 09:30",
+    "09:30 09:45",
+    "09:45 10:00",
+    "10:00 10:15",
+    "10:20 10:35",
+    "10:40 10:55",
+    "11:00 11:15",
+    "11:30 11:45",
+    "12:00 12:15",
+    "12:30 12:45",
+    "13:00 13:15",
+    "13:30 13:45",
+    "14:00 14:15",
+    "14:20 14:35",
+    "14:40 14:55",
+    "15:00 15:15",
+    "15:20 15:35",
+    "15:40 15:55",
+    "16:00 16:15",
+    "16:15 16:30",
+    "16:30 16:45",
+    "16:45 17:00",
+    "17:00 17:15",
+    "17:15 17:30",
+    "17:30 17:45",
+    "17:45 18:00",
+    "18:00 18:15",
+    "18:15 18:30",
+    "18:30 18:45",
+    "18:45 19:00",
+    "19:00 19:15",
+    "19:15 19:30",
+    "19:30 19:45",
+    "19:45 20:00",
+    "20:00 20:15",
+    "20:15 20:30",
+    "20:30 20:45",
+    "20:45 21:00"
+   ]
+  },
+  {
+   "hat": "ist_cub",
+   "hizmet": "hafta_ici",
+   "yon": 1,
+   "duraklar": [
+    "istinye_arabali",
+    "cubuklu_arabali"
+   ],
+   "saatler": [
+    "07:20 07:35",
+    "07:40 07:55",
+    "08:00 08:15",
+    "08:15 08:30",
+    "08:30 08:45",
+    "08:45 09:00",
+    "09:00 09:15",
+    "09:15 09:30",
+    "09:30 09:45",
+    "09:45 10:00",
+    "10:00 10:15",
+    "10:20 10:35",
+    "10:40 10:55",
+    "11:00 11:15",
+    "11:15 11:30",
+    "11:45 12:00",
+    "12:15 12:30",
+    "12:45 13:00",
+    "13:15 13:30",
+    "13:45 14:00",
+    "14:15 14:30",
+    "14:40 14:55",
+    "15:00 15:15",
+    "15:20 15:35",
+    "15:40 15:55",
+    "16:00 16:15",
+    "16:15 16:30",
+    "16:30 16:45",
+    "16:45 17:00",
+    "17:00 17:15",
+    "17:15 17:30",
+    "17:30 17:45",
+    "17:45 18:00",
+    "18:00 18:15",
+    "18:15 18:30",
+    "18:30 18:45",
+    "18:45 19:00",
+    "19:00 19:15",
+    "19:15 19:30",
+    "19:30 19:45",
+    "19:45 20:00",
+    "20:00 20:15",
+    "20:15 20:30",
+    "20:30 20:45",
+    "20:45 21:00",
+    "21:00 21:15"
+   ]
+  },
+  {
+   "hat": "ist_cub",
+   "hizmet": "cumartesi",
+   "yon": 0,
+   "duraklar": [
+    "cubuklu_arabali",
+    "istinye_arabali"
+   ],
+   "saatler": [
+    "07:00 07:15",
+    "07:30 07:45",
+    "08:00 08:15",
+    "08:30 08:45",
+    "09:00 09:15",
+    "09:30 09:45",
+    "10:00 10:15",
+    "10:30 10:45",
+    "11:00 11:15",
+    "11:30 11:45",
+    "12:00 12:15",
+    "12:30 12:45",
+    "13:00 13:15",
+    "13:30 13:45",
+    "14:00 14:15",
+    "14:30 14:45",
+    "15:00 15:15",
+    "15:30 15:45",
+    "16:00 16:15",
+    "16:30 16:45",
+    "17:00 17:15",
+    "17:30 17:45",
+    "18:00 18:15",
+    "18:30 18:45",
+    "19:00 19:15",
+    "19:30 19:45",
+    "20:00 20:15",
+    "20:30 20:45"
+   ]
+  },
+  {
+   "hat": "ist_cub",
+   "hizmet": "cumartesi",
+   "yon": 1,
+   "duraklar": [
+    "istinye_arabali",
+    "cubuklu_arabali"
+   ],
+   "saatler": [
+    "07:15 07:30",
+    "07:45 08:00",
+    "08:15 08:30",
+    "08:45 09:00",
+    "09:15 09:30",
+    "09:45 10:00",
+    "10:15 10:30",
+    "10:45 11:00",
+    "11:15 11:30",
+    "11:45 12:00",
+    "12:15 12:30",
+    "12:45 13:00",
+    "13:15 13:30",
+    "13:45 14:00",
+    "14:15 14:30",
+    "14:45 15:00",
+    "15:15 15:30",
+    "15:45 16:00",
+    "16:15 16:30",
+    "16:45 17:00",
+    "17:15 17:30",
+    "17:45 18:00",
+    "18:15 18:30",
+    "18:45 19:00",
+    "19:15 19:30",
+    "19:45 20:00",
+    "20:15 20:30",
+    "20:45 21:00"
+   ]
+  },
+  {
+   "hat": "ist_cub",
+   "hizmet": "pazar_tatil",
+   "yon": 0,
+   "duraklar": [
+    "cubuklu_arabali",
+    "istinye_arabali"
+   ],
+   "saatler": [
+    "09:00 09:15",
+    "09:30 09:45",
+    "10:00 10:15",
+    "10:30 10:45",
+    "11:00 11:15",
+    "11:30 11:45",
+    "12:00 12:15",
+    "12:30 12:45",
+    "13:00 13:15",
+    "13:30 13:45",
+    "14:00 14:15",
+    "14:30 14:45",
+    "15:00 15:15",
+    "15:30 15:45",
+    "16:00 16:15",
+    "16:30 16:45",
+    "17:00 17:15",
+    "17:30 17:45",
+    "18:00 18:15",
+    "18:30 18:45",
+    "19:00 19:15",
+    "19:30 19:45",
+    "20:00 20:15",
+    "20:30 20:45"
+   ]
+  },
+  {
+   "hat": "ist_cub",
+   "hizmet": "pazar_tatil",
+   "yon": 1,
+   "duraklar": [
+    "istinye_arabali",
+    "cubuklu_arabali"
+   ],
+   "saatler": [
+    "09:15 09:30",
+    "09:45 10:00",
+    "10:15 10:30",
+    "10:45 11:00",
+    "11:15 11:30",
+    "11:45 12:00",
+    "12:15 12:30",
+    "12:45 13:00",
+    "13:15 13:30",
+    "13:45 14:00",
+    "14:15 14:30",
+    "14:45 15:00",
+    "15:15 15:30",
+    "15:45 16:00",
+    "16:15 16:30",
+    "16:45 17:00",
+    "17:15 17:30",
+    "17:45 18:00",
+    "18:15 18:30",
+    "18:45 19:00",
+    "19:15 19:30",
+    "19:45 20:00",
+    "20:15 20:30",
+    "20:45 21:00"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 0,
+   "duraklar": [
+    "eminonu",
+    "beylerbeyi"
+   ],
+   "saatler": [
+    "08:00 08:25"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 0,
+   "duraklar": [
+    "eminonu",
+    "besiktas",
+    "beylerbeyi",
+    "cengelkoy"
+   ],
+   "saatler": [
+    "17:15 17:30 17:45 17:55",
+    "17:40 17:55 18:10 18:20",
+    "19:00 19:15 19:30 19:40"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 0,
+   "duraklar": [
+    "eminonu",
+    "besiktas",
+    "ortakoy",
+    "bebek",
+    "kandilli",
+    "anadolu_hisari",
+    "kanlica",
+    "cubuklu",
+    "pasabahce",
+    "beykoz"
+   ],
+   "saatler": [
+    "17:55 18:10 18:20 18:35 18:45 18:50 19:00 19:10 19:15 19:30",
+    "18:40 18:55 19:05 19:20 19:30 19:35 19:45 19:55 20:00 20:15"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 0,
+   "duraklar": [
+    "eminonu",
+    "kabatas",
+    "besiktas",
+    "ortakoy",
+    "emirgan",
+    "istinye",
+    "sariyer"
+   ],
+   "saatler": [
+    "18:10 18:20 18:25 18:35 19:00 19:05 19:30"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 0,
+   "duraklar": [
+    "eminonu",
+    "besiktas",
+    "kuzguncuk",
+    "beylerbeyi",
+    "cengelkoy"
+   ],
+   "saatler": [
+    "18:20 18:35 18:45 18:55 19:05"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 0,
+   "duraklar": [
+    "eminonu",
+    "besiktas",
+    "ortakoy",
+    "emirgan",
+    "pasabahce",
+    "beykoz"
+   ],
+   "saatler": [
+    "18:35 18:50 19:00 19:25 19:40 20:00"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 0,
+   "duraklar": [
+    "kabatas",
+    "uskudar",
+    "kuzguncuk",
+    "kucuksu",
+    "anadolu_hisari",
+    "kanlica",
+    "pasabahce",
+    "beykoz"
+   ],
+   "saatler": [
+    "18:25 18:35 18:40 19:00 19:05 19:15 19:30 19:45"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 0,
+   "duraklar": [
+    "eminonu",
+    "cengelkoy"
+   ],
+   "saatler": [
+    "19:30 19:55"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 0,
+   "duraklar": [
+    "eminonu",
+    "besiktas",
+    "kuzguncuk",
+    "beylerbeyi",
+    "cengelkoy",
+    "anadolu_hisari"
+   ],
+   "saatler": [
+    "19:35 19:50 20:00 20:10 20:20 20:30"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "cumartesi",
+   "yon": 0,
+   "duraklar": [
+    "eminonu",
+    "besiktas",
+    "ortakoy",
+    "bebek",
+    "kandilli",
+    "anadolu_hisari",
+    "kanlica",
+    "cubuklu",
+    "pasabahce",
+    "beykoz"
+   ],
+   "saatler": [
+    "17:55 18:10 18:20 18:35 18:45 18:50 19:00 19:10 19:15 19:30"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "cumartesi",
+   "yon": 0,
+   "duraklar": [
+    "eminonu",
+    "kabatas",
+    "besiktas",
+    "ortakoy",
+    "cengelkoy",
+    "emirgan",
+    "istinye",
+    "sariyer"
+   ],
+   "saatler": [
+    "18:10 18:20 18:25 18:35 18:45 19:05 19:10 19:35"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "pazar_tatil",
+   "yon": 0,
+   "duraklar": [
+    "eminonu",
+    "besiktas",
+    "kanlica",
+    "sariyer"
+   ],
+   "saatler": [
+    "18:20 18:35 19:00 19:25"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 1,
+   "duraklar": [
+    "beykoz",
+    "pasabahce",
+    "cubuklu",
+    "anadolu_hisari",
+    "cengelkoy",
+    "beylerbeyi",
+    "kuzguncuk",
+    "besiktas",
+    "eminonu"
+   ],
+   "saatler": [
+    "06:15 06:25 06:35 06:50 07:10 07:15 07:25 07:35 07:50"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 1,
+   "duraklar": [
+    "beykoz",
+    "pasabahce",
+    "cubuklu",
+    "istinye",
+    "kanlica",
+    "anadolu_hisari",
+    "kandilli",
+    "bebek",
+    "ortakoy",
+    "besiktas",
+    "eminonu"
+   ],
+   "saatler": [
+    "06:50 07:00 07:10 07:20 07:30 07:40 07:50 08:00 08:20 08:30 08:45"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 1,
+   "duraklar": [
+    "beykoz",
+    "pasabahce",
+    "ortakoy",
+    "besiktas",
+    "eminonu"
+   ],
+   "saatler": [
+    "07:00 07:15 07:50 08:00 08:20"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 1,
+   "duraklar": [
+    "cengelkoy",
+    "besiktas",
+    "eminonu"
+   ],
+   "saatler": [
+    "07:30 07:45 08:00",
+    "08:05 08:20 08:35",
+    "08:20 08:35 08:50"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 1,
+   "duraklar": [
+    "anadolu_hisari",
+    "kandilli",
+    "cengelkoy",
+    "besiktas",
+    "eminonu"
+   ],
+   "saatler": [
+    "07:15 07:25 07:40 07:55 08:15"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 1,
+   "duraklar": [
+    "sariyer",
+    "istinye",
+    "emirgan",
+    "beylerbeyi",
+    "kuzguncuk",
+    "besiktas",
+    "kabatas",
+    "eminonu"
+   ],
+   "saatler": [
+    "07:05 07:25 07:30 07:55 08:05 08:15 08:20 08:35"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 1,
+   "duraklar": [
+    "beykoz",
+    "pasabahce",
+    "kanlica",
+    "anadolu_hisari",
+    "kucuksu",
+    "uskudar",
+    "kabatas"
+   ],
+   "saatler": [
+    "07:15 07:25 07:40 07:50 07:55 08:15 08:25"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 1,
+   "duraklar": [
+    "beylerbeyi",
+    "kuzguncuk",
+    "besiktas",
+    "eminonu"
+   ],
+   "saatler": [
+    "08:25 08:35 08:45 09:00"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "hafta_ici",
+   "yon": 1,
+   "duraklar": [
+    "cengelkoy",
+    "beylerbeyi",
+    "besiktas",
+    "eminonu"
+   ],
+   "saatler": [
+    "08:45 08:50 09:05 09:20",
+    "18:25 18:30 18:40 18:55"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "cumartesi",
+   "yon": 1,
+   "duraklar": [
+    "beykoz",
+    "pasabahce",
+    "cubuklu",
+    "anadolu_hisari",
+    "cengelkoy",
+    "beylerbeyi",
+    "besiktas",
+    "eminonu"
+   ],
+   "saatler": [
+    "06:15 06:25 06:35 06:50 07:10 07:15 07:25 07:45"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "cumartesi",
+   "yon": 1,
+   "duraklar": [
+    "beykoz",
+    "pasabahce",
+    "cengelkoy",
+    "ortakoy",
+    "besiktas",
+    "eminonu"
+   ],
+   "saatler": [
+    "07:00 07:15 07:50 08:05 08:15 08:30"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "cumartesi",
+   "yon": 1,
+   "duraklar": [
+    "sariyer",
+    "istinye",
+    "emirgan",
+    "beylerbeyi",
+    "besiktas",
+    "kabatas",
+    "eminonu"
+   ],
+   "saatler": [
+    "07:05 07:25 07:30 07:55 08:10 08:15 08:30"
+   ]
+  },
+  {
+   "hat": "bogaz",
+   "hizmet": "pazar_tatil",
+   "yon": 1,
+   "duraklar": [
+    "sariyer",
+    "kanlica",
+    "besiktas",
+    "eminonu"
+   ],
+   "saatler": [
+    "07:20 07:45 08:10 08:25"
    ]
   }
  ]
