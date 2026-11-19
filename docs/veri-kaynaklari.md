@@ -20,7 +20,7 @@ kurallar. Bu belge **Faz 1 araştırmasının sonucudur**; veri yükleme (#6–#
 | Otobüs, metrobüs | `iett-gtfs-verisi` | Nisan 2026 | **Ana kaynak.** `stop_times` dahil tam GTFS |
 | Metro, tramvay, füniküler, teleferik | `public-transport-gtfs-data` (Metro İstanbul) | **Temmuz 2020** | Eski; M11 ve T5 yok |
 | Marmaray | TCDD resmi tarife (bu belgenin sonu) | **5 Mayıs 2026** | Çizelge elle tanımlanacak |
-| Vapur, deniz otobüsü | `public-transport-gtfs-data` (Şehir Hatları, İDO, Turyol, Dentur) | **2019** | Eski; turistik seferler filtrelenecek |
+| Vapur, deniz otobüsü | `public-transport-gtfs-data` (Şehir Hatları, İDO, Turyol, Dentur) | **2019** | Güvenilmez; **yüklenmez**. Yerine Şehir Hatları 2026-27 kış tarifesi (`data/vapur.json`) |
 | Vapur hat/iskele konumu | `deniz-ulasim-hatlari-vektor-verisi`, `deniz-ulasim-istasyonlari-vektor-verisi` | Kasım 2026 | Konum var, sefer saati yok |
 | İETT hat çizgileri | `iett-hat-guzergahlari` (GeoJSON) | Mart 2026 | Mevcut kodda kullanılıyor |
 
@@ -134,8 +134,9 @@ yok (`rapor` artık hangi hatlar olduğunu gösterir).
   (ör. Kadıköy–Eminönü: ŞH, Turyol, `EMN_KDK`, `EMN_KDK2`; Üsküdar–Eminönü). Hatların çoğu 2 seferlik, bir kısmı
   yüzlerce seferli (Turyol/ŞH ana hatlar). **Şüpheli süreler (doğrulanmalı):** `KDK-EMN` (Yeni Kadıköy → Eminönü Camlı
   İskele) 13,4 dk görünüyor (Turyol aynı hat 25,9 dk); `USK_K.KOY_EMN` 3 durakta 119,8 dk; `AVC-ADA`, `ADA-EMN` gibi
-  adalar hatları 100-120 dk. Yani vapur verisi metro/tramvay kadar güvenilir değil; #10'da ana hatlar ayıklanıp
-  resmi bilgiyle doğrulanmalı.
+  adalar hatları 100-120 dk. Yani vapur verisi metro/tramvay kadar güvenilir değil. **Karar (#10): 2019 vapur
+  verisi hiç yüklenmez** (`ibb` beslemesinde `exclude_modes` içinde `ferry`; Turyol/Dentur/İDO da dahil);
+  vapur, Şehir Hatları'nın resmi kış tarifesinden elle tanımlanır (aşağıda "Vapur: resmi tarife").
 
 #### Minibüs / dolmuş
 375 hat, standart olmayan tiplerle (9, 10). İlk aşamada **dışarıda** bırakılacak.
@@ -210,6 +211,56 @@ listelenip onaylanacak.
   tanımla çakışmasınlar.
 - **Güncelleme:** TCDD tarifeyi değiştirirse `data/marmaray.json` içindeki `ilk`/`son`/`aralik_dk` değerleri ve
   `besleme.veri_tarihi` güncellenir; `python scripts/build_gtfs.py yukle marmaray` yeniden çalıştırılır.
+
+## Vapur: resmi tarife (Şehir Hatları 2026-2027 Kış Tarifesi, 7 Eylül 2026 - 27 Haziran 2027)
+
+Neden elle tanımlı: vapurun güncel, makinece okunabilir (GTFS/API) tarifesi yok; resmi kaynak, kurumun
+kitapçığıdır ve **her iskelenin her kalkış saatini tek tek** verir. Marmaray'daki gibi "her X dakikada bir"
+kuralı yazmak yerine saatler olduğu gibi `data/vapur.json`'da tutulur (düzensiz seferler tarifedeki gibi kalır).
+Moovit/Google de vapur saatlerini işletmecinin tarifesinden alır; İBB'nin 2019 GTFS'i bugünkü tarifeyle uyuşmaz.
+
+### Kitapçığın okunuşu
+- Sütunlar **iskele bazlıdır** ve satırlar sefer değildir (ör. Kadıköy 07:00, Karaköy 07:20, Eminönü 07:30 aynı
+  satırda ama bağımsız listelerdir). Sefer zincirleri saatlerin eşleştirilmesiyle çıkarılmıştır: bir iskelenin
+  kalkışı, bir önceki iskelenin kalkışından 15-30 dk (hat ve dilime göre) sonraya denk gelir. **Doğrulama:**
+  eşleştirme `*`/`**` dipnotlarıyla çelişmedi (aynı zincirdeki tüm duraklar aynı dipnotu taşıyor), Üsküdar–Eminönü'nde
+  Üsküdar'ın 46 ve Eminönü'nün 46 saati hiç artık kalmadan eşleşti, Kadıköy–Karaköy–Eminönü'nde tüm 53/53/42 saat
+  eşleşti; Karaköy 20:55 (`***` "yolcu almaz") Kadıköy 20:30 → Karaköy 20:55 → Eminönü 21:05 zincirinin ortasıdır.
+- **Dipnotlar → hizmet:** işaretsiz = her gün; `*` = Cumartesi/Pazar/tatil yapılmaz → `hafta_ici` (Pzt-Cum);
+  `**` = Pazar/tatil yapılmaz → `pzt_cmt`. Gün sütunlu sayfalar (Kabataş): `hafta_ici`, `cumartesi`, `pazar_tatil`;
+  Ortaköy hatları: `hafta_ici` ve `hafta_sonu`. Gece seferleri: Cuma ve Cumartesi geceleri (`gece`, 24:00 sonrası
+  saatler 24-29 olarak yazılır).
+- Kadıköy (Eski) ve (Yeni) iskeleleri tek durak (`kadikoy`) olarak alındı (yaklaşık 150 m; ayrı durak gerekirse #11).
+- **Resmî tatiller:** takvim yalnız hafta günü bilir; tatil gününe denk gelen hafta içi günü hafta içi tarifesiyle
+  çalışır (tatil tarifesi için `calendar_dates` desteği ileri bir iş).
+
+### Varsayımlar (kitapçıkta yok, doğrulanmadı)
+- **Yolculuk süreleri:** Kitapçıkta kalkış saati var, süre yok. Eşleşen zincirlerde süreler saatlerin kendisinden
+  gelir (Kadıköy→Karaköy 20-30, Karaköy→Eminönü ~10 dk). Eşleşmeyen dönüş seferlerinde varsayım: Eminönü→Kadıköy 25,
+  Üsküdar→Eminönü 20 (Eminönü→Üsküdar 20), Karaköy→Kadıköy 25, Karaköy→Üsküdar 15, Kadıköy↔Beşiktaş 25,
+  Kadıköy↔Kabataş 25, gece Beşiktaş→Kadıköy 30.
+- **Dönüş zinciri:** Kadıköy–Karaköy–Eminönü ve Üsküdar–Karaköy–Eminönü'nde Eminönü kalkışları, geldiği yerin
+  tersine (Kadıköy / Üsküdar) dönüş seferi sayıldı; Karaköy'de Eminönü'ne devam etmeyen kalkışlar Kadıköy'e mekik
+  sayıldı (akşam 21:00'dan sonra Kadıköy↔Karaköy 30 dk'lık iki yönlü mekik gibi görünüyor).
+- **İskele konumları:** kullanıcının sağladığı Şehir Hatları iskeleleri KML dosyasından (56 iskele; ilk tahminler 100-350 m
+  sapıyordu). Kadıköy için iki iskelenin (KADIKÖY-1/-2) ortası, Eminönü için EMİNÖNÜ-3 alındı. Kalan iskeleler sonraki
+  hatlarda kullanılacak.
+
+### Kapsam ve eksikler
+Şimdilik kitapçığın 4-9. sayfaları: Kadıköy–Karaköy–Eminönü, Üsküdar–Karaköy–Eminönü, Kadıköy–Beşiktaş (+gece),
+Kadıköy–Kabataş, Kadıköy–Üsküdar–Ortaköy ve Ortaköy–Üsküdar–Kadıköy (**450 sefer**). Sıradakiler: Adalar (sayfa
+12-18), Boğaz (20-28), Haliç/Eyüp (29-32), diğer hatlar (33-37). Turyol/Dentur/İDO kitapçıkta yok ve kapsam dışı.
+
+### Uygulama (#10)
+`app/gtfs/vapur.py` dosyayı doğrular ve GTFS'e çevirir (`route_type=4`, her sefer ayrı GTFS seferi, frekans yok,
+`binis_yok` → `pickup_type=1`). Yeni besleme adı `vapur`:
+
+```
+python scripts/build_gtfs.py hepsi vapur --hedef sqlite:///gtfs_data/gtfs.db
+python scripts/build_gtfs.py saatler vapur --hedef sqlite:///gtfs_data/gtfs.db
+```
+
+Güncelleme: kurum yeni tarife yayımlarsa `data/vapur.json` ve `besleme.veri_tarihi` güncellenir.
 
 ## Karara bağlanmış / ertelenmiş konular
 - Marmaray için **ayrı mod/rozet**: şimdilik **yok** (normal raylı hat gibi davranır), sonra bakılacak.

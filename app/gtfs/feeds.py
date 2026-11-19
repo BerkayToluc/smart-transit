@@ -70,7 +70,8 @@ IETT = FeedConfig(
 # TCDD (agency 4) hatları YÜKLENMEZ: 2019 tarihli Marmaray verisi bugünkü hizmetle uyuşmuyor
 # (Halkalı-Bahçeşehir, Söğütlüçeşme-Zeytinburnu kalıpları yok, Ataköy-Pendik kalıbı eksik);
 # Marmaray, TCDD'nin resmi tarifesinden elle tanımlanır (MARMARAY, data/marmaray.json).
-# Minibüs/taksi dolmuş ve tipi bilinmeyen hatlar ilk aşamada yüklenmez.
+# Minibüs/taksi dolmuş ve tipi bilinmeyen hatlar ilk aşamada yüklenmez. Vapur hatları da yüklenmez:
+# 2019 verisi güvenilmez (tek yönlü hatlar, çift kayıtlar, imkânsız süreler); bkz. VAPUR beslemesi.
 IBB_MULTIMODAL = FeedConfig(
     feed_id="ibb",
     name="İBB Toplu Ulaşım GTFS (çok modlu, 2018-2020)",
@@ -81,9 +82,20 @@ IBB_MULTIMODAL = FeedConfig(
         "Not: Metro İstanbul bölümü açıklamadaki tarihten yeni (M8 içeriyor, takvim 31.12.2022'den başlıyor)."
     ),
     mode_rules=ModeRules(agency_modes={"4": "rail"}),
-    exclude_modes=frozenset({"minibus", "taxi", "other"}),
+    exclude_modes=frozenset({"minibus", "taxi", "other", "ferry"}),
     exclude_agencies=frozenset({"4"}),
     exclude_route=_turistik_vapur,
+)
+
+# Vapur: Şehir Hatları'nın resmi kış tarifesinden elle tanımlı (data/vapur.json, bkz. app/gtfs/vapur.py).
+VAPUR = FeedConfig(
+    feed_id="vapur",
+    name="Şehir Hatları vapurları (resmi kış tarifesi, elle tanımlı)",
+    data_date=date(2026, 9, 7),
+    source_note=(
+        "Şehir Hatları 2026-2027 Kış Tarifesi (7 Eylül 2026 - 27 Haziran 2027). Saatler kitapçıktan; "
+        "yolculuk süreleri ve iskele konumları yaklaşıktır."
+    ),
 )
 
 # Marmaray: elle tanımlı (kurallardan üretilir, bkz. app/gtfs/manual.py). Veri tarihi: TCDD tarifesi.

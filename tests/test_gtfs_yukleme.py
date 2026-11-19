@@ -39,11 +39,12 @@ def ibb_klasoru(tmp_path):
         ["route_id", "agency_id", "route_short_name", "route_long_name", "route_desc", "route_type"],
         ["r1", "4", "Marmaray", "GEBZE-HALKALI", "", 1],
         ["r2", "11", "M2", "YENİKAPI - HACIOSMAN", "", 1],
-        ["r3", "6", "KDK-EMN", "KADIKÖY - EMİNÖNÜ", "", 4],
+        ["r3", "6", "KDK-EMN", "KADIKÖY - EMİNÖNÜ", "", 7],          # füniküler (2019 vapurları yüklenmez)
         ["r4", "6", "BÖZ-1", "BOĞAZA GİDİŞ", "", 4],              # turistik -> elenir
         ["r5", "37", "MB1", "ŞİŞLİ MİNİBÜS", "", 9],              # minibüs -> elenir
         ["r6", "11", "T1", "BAĞCILAR - KABATAŞ", "", 0],
         ["r7", "11", "XX", "TİPSİZ HAT", "", ""],                  # tipi bilinmeyen -> elenir
+        ["r8", "6", "USK-EMN", "ÜSKÜDAR - EMİNÖNÜ", "", 4],        # 2019 vapuru -> elenir (bkz. VAPUR beslemesi)
     ], kodlama=k)
     yaz(d / "trips.csv", [
         ["route_id", "service_id", "trip_id", "trip_headsign", "direction_id", "shape_id"],
@@ -125,8 +126,8 @@ def test_ibb_yukleme_sayilari(oturum, ibb_klasoru):
     ozet = loader.load_feed(oturum, ibb_klasoru, IBB_MULTIMODAL)
     assert ozet["agency"] == 4
     assert ozet["calendar"] == 2
-    assert ozet["route"] == 3                      # M2, KDK-EMN, T1
-    assert ozet["route_excluded"] == 4             # TCDD (Marmaray), turistik vapur, minibüs, tipsiz
+    assert ozet["route"] == 3                      # M2, KDK-EMN (füniküler), T1
+    assert ozet["route_excluded"] == 5             # TCDD (Marmaray), turistik vapur, minibüs, tipsiz, 2019 vapuru
     assert ozet["trip"] == 4                       # t1..t4 (t5, t6 elenen hatların)
     assert ozet["stop"] == 6                       # s1 s2 s3 P1 s4 s5 (s6 geçersiz, s7-s9 kullanılmıyor)
     assert ozet["stop_invalid_coordinates"] == 1
@@ -140,11 +141,12 @@ def test_ibb_yukleme_sayilari(oturum, ibb_klasoru):
 def test_ibb_modlar_ve_onekli_kimlikler(oturum, ibb_klasoru):
     loader.load_feed(oturum, ibb_klasoru, IBB_MULTIMODAL)
     modlar = {r.id: r.mode for r in oturum.scalars(select(GtfsRoute).where(GtfsRoute.feed_id == "ibb"))}
-    assert modlar == {"ibb:r2": "metro", "ibb:r3": "ferry", "ibb:r6": "tram"}
+    assert modlar == {"ibb:r2": "metro", "ibb:r3": "funicular", "ibb:r6": "tram"}
     assert oturum.get(GtfsRoute, "ibb:r2").route_type == 1     # ham tip korunur
     assert oturum.get(GtfsRoute, "ibb:r2").agency_id == "ibb:11"
     assert oturum.get(GtfsRoute, "ibb:r1") is None             # TCDD (Marmaray 2019) hatları yüklenmez
     assert oturum.get(GtfsRoute, "ibb:r4") is None             # turistik vapur yok
+    assert oturum.get(GtfsRoute, "ibb:r8") is None             # 2019 vapurları yüklenmez (resmi tarife: vapur beslemesi)
     assert oturum.get(GtfsRoute, "ibb:r5") is None             # minibüs yok
 
 
