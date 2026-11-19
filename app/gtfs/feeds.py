@@ -77,7 +77,8 @@ IBB_MULTIMODAL = FeedConfig(
     source_note=(
         "public-transport-gtfs-data; güncellenmeyecek. Veri tarihleri: Metro İstanbul 09.07.2020, "
         "TCDD 16.10.2019 (yüklenmez, bkz. marmaray beslemesi), Şehir Hatları 25.09.2019, İDO 16.10.2019, "
-        "Turyol 02.10.2019, Dentur 30.10.2019, Minibüs 20.02.2018, Taksi dolmuş 16.01.2018."
+        "Turyol 02.10.2019, Dentur 30.10.2019, Minibüs 20.02.2018, Taksi dolmuş 16.01.2018. "
+        "Not: Metro İstanbul bölümü açıklamadaki tarihten yeni (M8 içeriyor, takvim 31.12.2022'den başlıyor)."
     ),
     mode_rules=ModeRules(agency_modes={"4": "rail"}),
     exclude_modes=frozenset({"minibus", "taxi", "other"}),

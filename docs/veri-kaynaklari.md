@@ -88,11 +88,39 @@ ve **bir daha güncellenmeyeceğini** söylüyor.
 | Az sefer | M7 | 20 |
 | Marmaray (portal verisi) | `Marmaray`, `Marmaray1`, `Marmaray2` | 2 – 4 (**kullanılmayacak**, aşağıya bakın) |
 
-- **Eksik hatlar:** M11, T5 (ve M5'in sonraki uzatmaları). Kaynak adayları:
-  `metro-istanbul-sefer-tarifeleri-listesi-web-servisi` (REST `.../MetroMobile/V2/GetTimeTable`, kayıt
-  tarihi 2022, güncelliği doğrulanmadı), `metro-istanbul-istasyon-bilgi-listesi` (Şubat 2026),
-  T5 için KMZ/XLSX (sefer saati yok). M11 (Gayrettepe–Halkalı) TCDD sitesinde ayrı bir sayfa olarak
-  görünüyor; Marmaray ile **ilgisiz**, #8'de ele alınacak.
+- **Eksik hatlar:** M11, T5, M5'in sonraki uzatmaları (Sultanbeyli) ve sonradan açılan diğer uzatmalar.
+  Kaynak adayları: `metro-istanbul-sefer-tarifeleri-listesi-web-servisi` (REST `.../MetroMobile/V2/GetTimeTable`,
+  güncelliği doğrulanmadı), `metro-istanbul-istasyon-bilgi-listesi` (Şubat 2026), T5 için KMZ/XLSX (sefer saati yok),
+  M11 için TCDD sitesindeki "Gayrettepe-Halkalı" tarife sayfası. Marmaray'da olduğu gibi **kurallarla elle tanımlama**
+  da bir seçenektir (`app/gtfs/manual.py`). Takip: ayrı issue.
+
+
+#### Doğrulama (#8): gerçek yükleme çıktısı (19 Kasım 2026)
+Beslemenin yerelde yüklenmesi (`hepsi ibb`) ve `hatlar` raporu sonucu: 92 hat, 13.232 sefer, 272 durak,
+168.812 durak saati, 245 aralıklı tanım, 49 hizmet. Elenen 407 hat: minibüs, taksi dolmuş, tipsiz, turistik vapur
+ve eski TCDD hatları. İsim kontrolünde bozuk karakter şüphesi yok.
+
+| Hat | Güzergah | Durak | Süre (veride) |
+|---|---|---|---|
+| M1A | Yenikapı → Atatürk Havalimanı | 18 | 32,5 dk |
+| M1B | Yenikapı → Kirazlı | 13 | 22,1 dk |
+| M2 | Yenikapı → Hacıosman | 15 | 29,1 dk |
+| M3 | Kirazlı → Başakşehir-Metrokent | 9 | 17,2 dk |
+| M4 | Kadıköy → Tavşantepe | 19 | 38,1 dk |
+| M5 | Üsküdar → Çekmeköy | 16 | 26,6 dk |
+| M7 | Yıldız → Mahmutbey | 17 | 26,7 dk |
+| M8 | Bostancı → Parseller | 13 | 21,8 dk |
+| T1 | Bağcılar → Kabataş | 31 | 68,1 dk |
+| T4 | Topkapı → Mescid-i Selam | 22 | 52,8 dk |
+| F1 / F2 | Taksim–Kabataş / Karaköy–Beyoğlu | 2 | 2,0 / 1,6 dk |
+| TF1 / TF2 | Maçka–Taşkışla / Eyüp–Piyerloti | 2 | 3,2 / 2,5 dk |
+
+Durak sayıları ve süreler bilinen hat bilgileriyle uyumlu görünüyor (resmi kaynakla satır satır karşılaştırılmadı).
+**Önemli bulgu:** Metro İstanbul bölümü, portal açıklamasındaki "Temmuz 2020" tarihinden **daha yeni**: **M8**
+(Bostancı–Parseller, Ocak 2023'te açıldı) verisi içeriyor ve takvimi 31.12.2022'den başlıyor; yani büyük olasılıkla
+Aralık 2022 – Ocak 2023 tarihli. M11 (TCDD işletiyor) ve T5 yok.
+Uyarılar: 5 hizmetin günü işaretli değil (2019 Ramazan gece seferleri vb., planlamada çalışmaz); 7 seferin durak saati
+yok (`rapor` artık hangi hatlar olduğunu gösterir).
 
 #### Vapur
 - 100 hat tipi 4, gördüğümüz hepsi Şehir Hatları. İDO/Turyol/Dentur hatları çıktı kesildiği için
@@ -101,6 +129,13 @@ ve **bir daha güncellenmeyeceğini** söylüyor.
   "... TURU", "LALE FESTİVALİ" vb.
 - Seferlerin 2019 tarifesi bugünkü mevsimlik tarifeyle uyuşmayabilir; sabit aralıklı elle tanım
   gerekebilir (#10).
+- **Gerçek yükleme gözlemleri (19 Kasım 2026, #8 çıktısı):** turistik hatlar elendikten sonra **72 vapur hattı** kaldı
+  (Şehir Hatları "ŞH.", İDO, Turyol, Dentur, Feribot). Aynı güzergâh birden çok işletmeciyle ve varyantla yinelenir
+  (ör. Kadıköy–Eminönü: ŞH, Turyol, `EMN_KDK`, `EMN_KDK2`; Üsküdar–Eminönü). Hatların çoğu 2 seferlik, bir kısmı
+  yüzlerce seferli (Turyol/ŞH ana hatlar). **Şüpheli süreler (doğrulanmalı):** `KDK-EMN` (Yeni Kadıköy → Eminönü Camlı
+  İskele) 13,4 dk görünüyor (Turyol aynı hat 25,9 dk); `USK_K.KOY_EMN` 3 durakta 119,8 dk; `AVC-ADA`, `ADA-EMN` gibi
+  adalar hatları 100-120 dk. Yani vapur verisi metro/tramvay kadar güvenilir değil; #10'da ana hatlar ayıklanıp
+  resmi bilgiyle doğrulanmalı.
 
 #### Minibüs / dolmuş
 375 hat, standart olmayan tiplerle (9, 10). İlk aşamada **dışarıda** bırakılacak.

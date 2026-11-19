@@ -12,6 +12,8 @@ Beslemeler: iett (otobüs + metrobüs), ibb (çok modlu: metro, tramvay, fünik�
 marmaray (elle tanımlı: data/marmaray.json'daki kurallardan üretilir, indirme gerekmez).
 `hatlar`: her hattın ilk/son durağı, durak sayısı ve yolculuk süresi (veriyi doğrulamak için);
 `--modlar metro tram ...` ile süzülür (varsayılan: otobüs ve minibüs dışındakiler).
+`saatler`: hatların gerçek sefer saatleri (yön ve gün tipine göre: sefer sayısı, ilk/son sefer, en sık aralık,
+süre). `--hat KDK-EMN ...` ya da `--modlar ferry` (varsayılan) ve `--en-az-sefer 20` ile süzülür.
 
 --hedef verilmezse .env'deki DATABASE_URL (Neon) kullanılır ve `--evet` istenir: İETT'nin
 durak saatleri yaklaşık bir milyon satırdır, ücretsiz Neon planının yer sınırına yaklaşabilir.
@@ -36,11 +38,13 @@ def _maskele(url: str) -> str:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("komut", choices=["indir", "yukle", "rapor", "hepsi", "hatlar"])
+    ap.add_argument("komut", choices=["indir", "yukle", "rapor", "hepsi", "hatlar", "saatler"])
     ap.add_argument("beslemeler", nargs="+", help="iett, ibb, marmaray")
     ap.add_argument("--hedef", help="veritabanı adresi (örn. sqlite:///gtfs_data/gtfs.db); yoksa .env DATABASE_URL")
     ap.add_argument("--klasor", help="yerel GTFS klasörü (yalnızca tek besleme verildiğinde)")
     ap.add_argument("--modlar", nargs="+", help="`hatlar` için mod süzgeci (örn. metro tram ferry)")
+    ap.add_argument("--hat", nargs="+", help="`saatler` için hat kısa adları (örn. KDK-EMN KRK-KDK)")
+    ap.add_argument("--en-az-sefer", type=int, default=0, help="`saatler`: bundan az seferli hatları gösterme")
     ap.add_argument("--evet", action="store_true", help="--hedef olmadan (.env'deki canlı veritabanına) yüklemeyi onayla")
     a = ap.parse_args(argv)
 
@@ -62,16 +66,20 @@ def main(argv=None) -> int:
 
     if a.komut in ("indir", "hepsi"):
         for b in a.beslemeler:
-            print(f"== {b}: portaldan indiriliyor -> {klasor_of(b)}")
-            build.indir(b, klasor_of(b))
+            if build.BESLEMELER[b].manuel:     # elle tanımlı besleme: indirme yok, kurallardan üretilir
+                print(f"== {b}: kurallardan GTFS dosyaları üretiliyor -> {klasor_of(b)}")
+                build.manuel_uret(b, klasor_of(b))
+            else:
+                print(f"== {b}: portaldan indiriliyor -> {klasor_of(b)}")
+                build.indir(b, klasor_of(b))
 
-    if a.komut in ("yukle", "hepsi"):
-        for b in a.beslemeler:                 # elle tanımlı beslemelerin dosyaları her yüklemede yeniden üretilir
+    if a.komut == "yukle":
+        for b in a.beslemeler:                 # `yukle` indirme yapmaz; elle tanımlı dosyalar yine de güncel üretilir
             if build.BESLEMELER[b].manuel:
-                print(f"== {b}: kurallardan GTFS dosyaları üretiliyor")
+                print(f"== {b}: kurallardan GTFS dosyaları üretiliyor -> {klasor_of(b)}")
                 build.manuel_uret(b, klasor_of(b))
 
-    if a.komut in ("yukle", "hepsi", "rapor", "hatlar"):
+    if a.komut in ("yukle", "hepsi", "rapor", "hatlar", "saatler"):
         from app.db import SessionLocal, engine
         from app.db import Base
         from app.gtfs import models  # noqa: F401
@@ -93,6 +101,14 @@ def main(argv=None) -> int:
                     ozet = load_feed(oturum, klasor_of(b), build.BESLEMELER[b].config,
                                      progress=lambda m: print("  " + m))
                     print("  özet:", ozet)
+            if a.komut == "saatler":
+                modlar = a.modlar or (None if a.hat else ["ferry"])
+                for b in a.beslemeler:
+                    fid = build.BESLEMELER[b].config.feed_id
+                    print(f"[{fid}] sefer saatleri:")
+                    print(build.sefer_saatleri_metni(build.sefer_saatleri(
+                        oturum, fid, hatlar=a.hat, modlar=modlar, en_az_sefer=a.en_az_sefer)))
+                return 0
             if a.komut == "hatlar":
                 varsayilan = [m for m in ("metrobus", "metro", "tram", "funicular", "cable_car", "rail", "ferry")]
                 for b in a.beslemeler:
