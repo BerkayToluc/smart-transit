@@ -166,3 +166,22 @@ açılarak sayılır. Elle tanım (Marmaray gibi) yazmadan önce mevcut tarifeyi
 - Metro, tramvay, Marmaray, vapur verilerinin tamamlanması: #8, #9, #10.
 - Aktarma noktaları ve elle aktarma tablosu: #11.
 - `shapes` (güzergah çizgisi) tablosu: #15.
+
+## Rota motoru (#12): `app/routing/`
+- `graph.py`: veritabanından bellek-içi sefer grafı kurar (saf Python + `array('i')`; yeni bağımlılık yok).
+  *Örüntü* = hat + durak dizisi + biniş/iniş kuralları; saatler sütun-majör dizilerde, `bisect` ile aranır.
+  Seferler gün maskesiyle (bit 0 = Pazartesi) tutulur, sorgu günü sorgu anında uygulanır. Aralıklı (frequency)
+  seferler yüklemede somut seferlere açılır. Günü olmayan hizmetler dışlanır. Boş ara saatler enterpole edilir.
+  `graph.yukle(session, "gtfs_data/graf.pkl")`: pickle önbelleği; parmak izi (besleme yüklenme zamanları + aktarma
+  kenarı sayısı) değişince yeniden kurar. İETT'li gerçek veride ilk kurulum dakikalar sürebilir, sonrası hızlıdır.
+- `raptor.py`: RAPTOR; tur k = en çok k araç. Pareto sonuç (erken varış × aktarma). Yürüme aktarmaları (`gtfs_transfer`),
+  araca binişte 60 sn pay (ilk biniş hariç), `izinli_modlar`, `max_aktarma`, biniş/iniş yasakları. Gece yarısını aşan
+  seferler (25:20) ertesi günün sabahında -24 sa kaymasıyla yakalanır.
+- `plan.py`: koordinattan koordinata (başlangıç/varışa ≤800 m erişim yürümesi, doğrudan yürüyüş seçeneği, tercih:
+  `hizli` | `az_aktarma` | `az_yuruyus`).
+- Bilinen sınırlar: yalnız ileri yönde (kalkış saatine göre) arama (`arrive_by` sonra); sorgu günü ile önceki günün
+  gece seferleri dikkate alınır, ertesi günün sabah seferleri değil; resmî tatiller yok (#47); örüntü içinde "geçme"
+  (overtaking) yoksayılır; canlı konum bilgisi yok (Faz 4).
+- Deneme: `python scripts/build_gtfs.py rota --hedef sqlite:///gtfs_data/gtfs.db --nereden 40.9905,29.0200
+  --nereye 41.0190,28.9790 --saat 08:00 --gun 0` (graf süresi ve sorgu süresi basılır).
+
