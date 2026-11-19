@@ -110,3 +110,37 @@ def secenek_metni(g: Graf, s: Secenek, no: int = 1) -> str:
             satir.append(f"  {zaman}  {e.mod} {g.hat_kisa[e.hat]}: {g.durak_ad[e.bas]} → {g.durak_ad[e.bit]} "
                          f"({e.durak_sayisi} durak) yön: {g.meta_baslik[e.meta]}")
     return "\n".join(satir)
+
+
+def durak_ozeti(g: Graf, metin: str, gun: Optional[int] = None, en_cok: int = 12,
+                modlar: Optional[Iterable[str]] = None) -> str:
+    """Ada göre durak arama (teşhis): hangi örüntüler/modlar uğruyor, kaç sefer, ilk/son kalkış, yürüme kenarı."""
+    from app.gtfs.textfix import ascii_katla
+    ara = ascii_katla(metin).lower()
+    GUNLER = ("Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz")
+    mod_kumesi = set(modlar) if modlar else None
+    bulunan = [i for i, ad in enumerate(g.durak_ad) if ara in ascii_katla(ad).lower()
+               and (mod_kumesi is None or any(g.paternler[pi].mod in mod_kumesi for pi, _ in g.durak_paternleri[i]))]
+    satir = [f"'{metin}' için {len(bulunan)} durak" + (f" (ilk {en_cok} gösteriliyor)" if len(bulunan) > en_cok else "")]
+    for i in bulunan[:en_cok]:
+        satir.append(f"{g.durak_id[i]}  {g.durak_ad[i]}  ({g.durak_lat[i]:.5f},{g.durak_lon[i]:.5f})  "
+                     f"yürüme kenarı: {len(g.yurume[i])}")
+        if not g.durak_paternleri[i]:
+            satir.append("    (hiç seferi yok)")
+        ilgili = [(pi, sira) for pi, sira in g.durak_paternleri[i]
+                  if mod_kumesi is None or g.paternler[pi].mod in mod_kumesi]
+        ilgili.sort(key=lambda x: (g.paternler[x[0]].mod == "bus", g.paternler[x[0]].mod, g.hat_kisa[g.paternler[x[0]].hat]))
+        for pi, sira in ilgili[:20]:
+            p = g.paternler[pi]
+            gunluk = [sum(1 for m in p.maske if m >> d & 1) for d in range(7)]
+            bu = ""
+            if gun is not None and p.sefer_sayisi:
+                kal = [p.kalkis[sira][r] for r in range(p.sefer_sayisi) if p.maske[r] >> gun & 1]
+                if kal:
+                    bu = f" | {GUNLER[gun]} ilk {saat_metni(min(kal))} son {saat_metni(max(kal))}"
+            kural = ("" if p.biner[sira] else " [BİNİLMEZ]") + ("" if p.iner[sira] else " [İNİLMEZ]")
+            satir.append(f"    {p.mod} {g.hat_kisa[p.hat]} sıra {sira + 1}/{len(p.duraklar)}{kural} "
+                         f"seferler(Pzt..Paz): {'/'.join(map(str, gunluk))}{bu}")
+        if len(ilgili) > 20:
+            satir.append(f"    ... {len(ilgili) - 20} örüntü daha")
+    return "\n".join(satir)
