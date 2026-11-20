@@ -5,6 +5,7 @@
   app/catalog.py     /, /api/hatlar, /api/duraklar, /api/guzergah
   app/live.py        İETT canlı araç + varış tahmini (/api/canli-otobus, /api/moovit)
   app/nearest.py     /api/en-yakin-durak
+  app/plan_api.py    POST /api/plan (aktarmalı rota; motor: app/routing/)
   app/gtfs_admin.py  /api/admin/* ve GTFS metin/koordinat yardımcıları
   app/utils.py       ortak yardımcılar
   app/gtfs/          çok modlu GTFS şeması, okuyucu ve yükleyici (docs/schema.md)
@@ -14,13 +15,15 @@ Aşağıdaki yeniden dışa aktarımlar (`__all__`) eski kullanım için korunur
 (gtfs_yukle.py, veri_yukle.py, hat_ekleyici.py) ve testler çalışmaya devam eder.
 Yeni kod `app.*` modüllerinden içe aktarmalıdır.
 """
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text  # noqa: F401  (eski betikler `from main import text` kullanıyor)
 
-from app import catalog, gtfs_admin, live, nearest
+from app import catalog, gtfs_admin, live, nearest, plan_api
+from app.routing import servis
 from app.gtfs import models as _gtfs_models  # noqa: F401  (gtfs_* tablolarının açılışta oluşması için)
 from app.db import (  # noqa: F401
     Base, DATABASE_URL, Durak, Guzergah, Hat, OtobusLive, SessionLocal, engine, get_db,
@@ -42,6 +45,8 @@ from app.utils import mesafe_hesapla_km  # noqa: F401
 async def lifespan(_app: FastAPI):
     Base.metadata.create_all(bind=engine)
     print("Mükemmel! Veritabanı bağlandı ve tablolar oluşturuldu.")
+    if os.getenv("ROTA_GRAF_ARKA_PLAN", "1") != "0":
+        servis.arka_planda_yukle()          # rota grafı: önbellekten/veritabanından, API'yi bekletmeden
     yield
 
 
@@ -59,4 +64,5 @@ app.add_middleware(
 app.include_router(catalog.router)
 app.include_router(live.router)
 app.include_router(nearest.router)
+app.include_router(plan_api.router)
 app.include_router(gtfs_admin.router)

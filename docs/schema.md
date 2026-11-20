@@ -185,3 +185,27 @@ açılarak sayılır. Elle tanım (Marmaray gibi) yazmadan önce mevcut tarifeyi
 - Deneme: `python scripts/build_gtfs.py rota --hedef sqlite:///gtfs_data/gtfs.db --nereden 40.9905,29.0200
   --nereye 41.0190,28.9790 --saat 08:00 --gun 0` (graf süresi ve sorgu süresi basılır).
 
+## `POST /api/plan` (#13)
+Aktarmalı, çok modlu rota. Açılışta rota grafı **arka planda** yüklenir (`ROTA_GRAF_ONBELLEK`, varsayılan
+`gtfs_data/graf.pkl`; `ROTA_GRAF_ARKA_PLAN=0` ile kapatılır); hazır olana dek 503 döner. `GET /api/plan/durum` hazır olup
+olmadığını (durak/örüntü/sefer sayılarıyla) gösterir.
+
+İstek (JSON):
+```json
+{"origin": {"lat": 40.9905, "lng": 29.02, "name": "Kadıköy"}, "dest": {"lat": 41.037, "lng": 28.985},
+ "depart_at": "2026-11-23T08:30:00+03:00", "modes": ["metro", "ferry"], "max_transfers": 3, "max_walk_m": 800,
+ "preference": "fastest", "max_results": 3}
+```
+- `lat/lng` İstanbul sınırları içinde olmalı (40.7-41.7 / 27.8-30.0), aksi halde 422.
+- `depart_at`: ISO 8601; saat dilimi yoksa İstanbul saati (UTC+3); boşsa şimdi. `arrive_by` henüz yok (501);
+  ikisi birlikte verilemez (422).
+- `modes`: `bus, metrobus, metro, tram, funicular, cable_car, rail, ferry` (boşsa hepsi). `preference`: `fastest` |
+  `fewest_transfers` | `least_walking`. `max_transfers` 0-5, `max_walk_m` 100-2000, `max_results` 1-5.
+
+Yanıt: `itineraries[]` → `departure_time`, `arrival_time`, `total_duration` (sn), `transfers`, `walk_distance` (m),
+`legs[]`. Etap: `type` (`walk`|`transit`), `mode`, `from`/`to` (`name`, `lat`, `lng`, `stop_id`, `time`),
+`duration` (sn), `polyline` (`[[enlem, boylam], ...]`: yürüme için düz çizgi, araç için durak dizisi), transit için ek
+olarak `route_short_name`, `route_long_name`, `route_id`, `trip_id`, `headsign`, `num_stops`; yürüme için `distance_m`.
+Rota bulunamazsa 200 ve `itineraries: []` + `neden` (`baslangicta_durak_yok` | `varista_durak_yok` | `baglanti_yok`)
+ve Türkçe `mesaj`. Mevcut `/api/en-yakin-durak` ve `/api/moovit` değişmedi.
+
