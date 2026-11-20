@@ -1,5 +1,5 @@
 // /api/plan istemcisi ve yanıt tipleri (sözleşme: docs/schema.md "POST /api/plan").
-import { apiUrl } from "@/lib/api";
+import { API_BASE, apiUrl } from "@/lib/api";
 
 export type Mod = "bus" | "metrobus" | "metro" | "tram" | "funicular" | "cable_car" | "rail" | "ferry";
 export type Tercih = "fastest" | "fewest_transfers" | "least_walking";
@@ -105,7 +105,9 @@ export async function planIste(govde: PlanIstegi, signal?: AbortSignal): Promise
     });
   } catch (e) {
     if ((e as Error).name === "AbortError") throw e;
-    throw new PlanHatasi("Sunucuya ulaşılamıyor. İnternet bağlantınızı ve sunucunun çalıştığını kontrol edin.");
+    throw new PlanHatasi(
+      `Sunucuya (${API_BASE}) ulaşılamıyor. Backend çalışıyor mu? Kök klasörde "uvicorn main:app --reload" komutuyla başlatın; adres farklıysa frontend/.env.local içindeki NEXT_PUBLIC_API_URL değerini düzeltin.`,
+    );
   }
   if (yanit.ok) return (await yanit.json()) as PlanYaniti;
   let detay: unknown = null;

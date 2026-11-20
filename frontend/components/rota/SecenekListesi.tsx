@@ -36,14 +36,18 @@ export function ZamanSeridi({ y, olcek }: { y: Yolculuk; olcek: number }) {
           );
         }
         const renk = hatRengi(e.mode, e.route_short_name);
+        // Dar bölümde isim yarım kalmasın: bölümün şeritteki payı küçükse yalnızca ikon gösterilir.
+        const pay = (e.duration / y.total_duration) * Math.max(olcek, 0.28);
+        const adGoster = pay >= 0.2;
         return (
           <span
             key={i}
+            title={`${e.route_short_name ?? ""} ${e.route_long_name ?? ""}`.trim()}
             className="serit-parca flex min-w-[2rem] items-center justify-center gap-1 overflow-hidden rounded-md px-1 text-xs font-bold"
             style={{ flex: `${agirlik} 1 0%`, background: renk, color: yaziRengi(renk) }}
           >
             <ModIkonu mod={e.mode} className="shrink-0 text-sm" />
-            <span className="tnum truncate">{e.route_short_name}</span>
+            {adGoster && <span className="tnum min-w-0 truncate">{e.route_short_name}</span>}
           </span>
         );
       })}
