@@ -2,13 +2,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGoogleHarita } from "@/lib/google";
 import { MODLAR } from "@/lib/modes";
-import { PlanHatasi, planIste, type Mod, type Nokta, type PlanYaniti, type Tercih } from "@/lib/plan";
+import {
+  PlanHatasi, planIste, yaklasanIste, type Etap, type Mod, type Nokta, type PlanYaniti, type Tercih, type YaklasanYaniti,
+} from "@/lib/plan";
 import HaritaHataSiniri from "@/components/rota/HaritaHataSiniri";
 import Cekmece, { type Olcu } from "@/components/rota/Cekmece";
 import { ModSecici, TercihSecici, ZamanSecici, type ZamanDurumu } from "@/components/rota/Kontroller";
-import { Asagi, Degistir, Uyari } from "@/components/rota/Ikonlar";
+import { Degistir, Uyari } from "@/components/rota/Ikonlar";
 import RotaHaritasi from "@/components/rota/RotaHaritasi";
 import SecenekListesi from "@/components/rota/SecenekListesi";
+import YaklasanPanel from "@/components/rota/Yaklasan";
 import YerAlani from "@/components/rota/YerAlani";
 
 interface Yer {
@@ -33,7 +36,6 @@ export default function RotaPlanla() {
   const [modlar, setModlar] = useState<Set<Mod>>(() => new Set(MODLAR.map((m) => m.id)));
   const [maxYurume, setMaxYurume] = useState(800);
   const [tekrar, setTekrar] = useState(0);
-  const [tercihAcik, setTercihAcik] = useState(false);
   const sonucRef = useRef<HTMLElement>(null);
   // Son tamamlanan istek ve sonucu; `istek` ile eşleşmiyorsa hesaplama sürüyor demektir (türetilmiş durum).
   const [veri, setVeri] = useState<{ istek: object; sonuc: PlanYaniti | null; hata: string | null } | null>(null);
@@ -42,12 +44,19 @@ export default function RotaPlanla() {
   const [olcu, setOlcu] = useState<Olcu>({ sol: 416, alt: 0 });
   const [konumHatasi, setKonumHatasi] = useState<string | null>(null);
 
+  // "Otobüsleri gör": açık bacak (indeks), seçili hatlar ve son canlı yanıt
+  const [canli, setCanli] = useState<{ anahtar: string; bas: string; bit: string; hat: string } | null>(null);
+  const [canliHatlar, setCanliHatlar] = useState<string[]>([]);
+  const [canliHepsi, setCanliHepsi] = useState(false);
+  const [canliVeri, setCanliVeri] = useState<{ anahtar: string; yanit: YaklasanYaniti | null; hata: string | null } | null>(null);
+
   const istek = useMemo(() => {
     if (!bas.nokta || !bit.nokta) return null;
     return {
       origin: { lat: bas.nokta.lat, lng: bas.nokta.lng, name: bas.nokta.name },
       dest: { lat: bit.nokta.lat, lng: bit.nokta.lng, name: bit.nokta.name },
-      depart_at: zaman.tip === "sec" && zaman.deger ? `${zaman.deger}:00+03:00` : undefined,
+      depart_at: zaman.tip === "kalkis" && zaman.deger ? `${zaman.deger}:00+03:00` : undefined,
+      arrive_by: zaman.tip === "varis" && zaman.deger ? `${zaman.deger}:00+03:00` : undefined,
       modes: modlar.size === MODLAR.length ? undefined : ([...modlar] as Mod[]),
       preference: tercih,
       max_walk_m: maxYurume,
@@ -65,6 +74,7 @@ export default function RotaPlanla() {
         setVeri({ istek, sonuc: yanit, hata: null });
         setSecili(0);
         setDetayAcik(true);
+        setCanli(null);
       } catch (e) {
         if ((e as Error).name === "AbortError") return;
         setVeri({ istek, sonuc: null, hata: e instanceof PlanHatasi ? e.message : "Beklenmeyen bir hata oluştu." });
@@ -79,6 +89,68 @@ export default function RotaPlanla() {
   const yukleniyor = istek !== null && veri?.istek !== istek;
   const sonuc = istek ? (veri?.sonuc ?? null) : null;
   const hata = istek && !yukleniyor ? (veri?.hata ?? null) : null;
+
+  // Canlı yaklaşan otobüsler: açık bacak için 10 saniyede bir yenilenir (görünür sekmede)
+  const canliSecimAnahtari = canli ? `${canli.anahtar}|${canliHepsi ? "*" : canliHatlar.join(",")}` : "";
+  useEffect(() => {
+    if (!canli) return;
+    const ac = new AbortController();
+    const getir = async () => {
+      try {
+        const yanit = await yaklasanIste(canli.bas, canli.bit, canliHepsi ? null : canliHatlar, canli.hat, ac.signal);
+        setCanliVeri({ anahtar: canliSecimAnahtari, yanit, hata: null });
+      } catch (e) {
+        if ((e as Error).name === "AbortError") return;
+        setCanliVeri({ anahtar: canliSecimAnahtari, yanit: null, hata: e instanceof PlanHatasi ? e.message : "Canlı veri alınamadı." });
+      }
+    };
+    void getir();
+    const aralik = setInterval(() => {
+      if (document.visibilityState === "visible") void getir();
+    }, 10000);
+    return () => {
+      ac.abort();
+      clearInterval(aralik);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canliSecimAnahtari]);
+
+  const canliAc = (anahtar: string, etap: Etap) => {
+    if (canli?.anahtar === anahtar) {
+      setCanli(null);
+      return;
+    }
+    setCanliHatlar(etap.route_short_name ? [etap.route_short_name] : []);
+    setCanliHepsi(false);
+    setCanliVeri(null);
+    setCanli({ anahtar, bas: etap.from.stop_id as string, bit: etap.to.stop_id as string, hat: etap.route_short_name ?? "" });
+  };
+  const canliHatDegistir = (hat: string) =>
+    setCanliHatlar((l) => (l.includes(hat) ? (l.length > 1 ? l.filter((x) => x !== hat) : l) : [...l, hat]));
+  const canliGecerli = canliVeri && canliVeri.anahtar === canliSecimAnahtari;
+  const canliYanit = canliGecerli ? canliVeri.yanit : null;
+
+  // Haritadaki araç işaretçileri: seçili hatların tüm canlı araçları; biniş durağına yaklaşanlar vurgulu
+  const araclar = (canliYanit?.hatlar ?? [])
+    .filter((h) => canliHepsi || canliHatlar.includes(h.hat))
+    .flatMap((h) =>
+      h.tum_araclar.map((a) => ({
+        hat: h.hat,
+        kapi: a.kapi_no,
+        lat: a.enlem,
+        lng: a.boylam,
+        dakika: h.araclar.find((x) => x.kapi_no === a.kapi_no)?.dakika ?? null,
+      })),
+    );
+  const odak = canliYanit
+    ? {
+        anahtar: canli?.anahtar ?? "",
+        noktalar: [
+          { lat: canliYanit.binis.lat, lng: canliYanit.binis.lng },
+          ...canliYanit.hatlar.flatMap((h) => h.araclar.slice(0, 2).map((a) => ({ lat: a.enlem, lng: a.boylam }))),
+        ],
+      }
+    : null;
 
   const degistir = () => {
     setBas(bit);
@@ -109,11 +181,11 @@ export default function RotaPlanla() {
   return (
     <>
       <HaritaHataSiniri>
-        <RotaHaritasi durum={durum} yolculuk={yolculuk} baslangic={bas.nokta} varis={bit.nokta} olcu={olcu} />
+        <RotaHaritasi durum={durum} yolculuk={yolculuk} baslangic={bas.nokta} varis={bit.nokta} olcu={olcu} araclar={araclar} odak={odak} />
       </HaritaHataSiniri>
       <Cekmece onOlcu={setOlcu}>
         <div className="kaydir flex-1 overflow-y-auto pb-6" >
-          <header className="px-5 pb-1 pt-1 md:pt-14">
+          <header className="px-5 pb-1 pt-1 md:pt-8">
             <h1 className="font-display text-[1.7rem] font-extrabold leading-none text-murekkep">smarttransit</h1>
             <p className="mt-1.5 hidden text-[15px] text-murekkep-2 md:block">Metro, tramvay, Marmaray, vapur ve otobüsle İstanbul&apos;da nereye gidiyorsunuz?</p>
           </header>
@@ -171,19 +243,8 @@ export default function RotaPlanla() {
 
           <section aria-label="Zaman ve tercihler" className="space-y-3 px-5 pt-4">
             <ZamanSecici zaman={zaman} onDegis={setZaman} />
-            <button
-              type="button"
-              aria-expanded={tercihAcik}
-              onClick={() => setTercihAcik((a) => !a)}
-              className="flex items-center gap-1.5 text-sm font-semibold text-bogaz md:hidden"
-            >
-              Sıralama ve ulaşım türleri
-              <Asagi className={`text-lg transition-transform ${tercihAcik ? "rotate-180" : ""}`} />
-            </button>
-            <div className={`space-y-3 ${tercihAcik ? "block" : "hidden md:block"}`}>
-              <TercihSecici tercih={tercih} onDegis={setTercih} />
-              <ModSecici secili={modlar} onDegis={setModlar} />
-            </div>
+            <TercihSecici tercih={tercih} onDegis={setTercih} />
+            <ModSecici secili={modlar} onDegis={setModlar} />
           </section>
 
           <section ref={sonucRef} aria-live="polite" aria-busy={yukleniyor} className="mt-5">
@@ -268,11 +329,32 @@ export default function RotaPlanla() {
                     secenekler={sonuc.itineraries}
                     secili={secili}
                     detayAcik={detayAcik}
+                    canli={{
+                      acikAnahtar: canli?.anahtar ?? null,
+                      onToggle: canliAc,
+                      panel: (
+                        <YaklasanPanel
+                          veri={canliYanit}
+                          yukleniyor={!canliGecerli}
+                          hata={canliGecerli ? canliVeri.hata : null}
+                          secilenHatlar={canliHatlar}
+                          hepsi={canliHepsi}
+                          onHat={(h) => {
+                            if (canliHepsi) {
+                              setCanliHepsi(false); // "Hepsi" açıkken bir hat seçmek, yalnızca o hatta geçmektir
+                              setCanliHatlar([h]);
+                            } else canliHatDegistir(h);
+                          }}
+                          onHepsi={() => setCanliHepsi((v) => !v)}
+                        />
+                      ),
+                    }}
                     onSec={(i) => {
                       if (i === secili) setDetayAcik((a) => !a); // seçili karta tekrar basınca aç/kapa
                       else {
                         setSecili(i);
                         setDetayAcik(true);
+                        setCanli(null);
                       }
                     }}
                   />

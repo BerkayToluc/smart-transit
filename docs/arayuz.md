@@ -1,14 +1,14 @@
 # Arayüz (Faz 3)
 
-`frontend/` Next.js 16 + React 19 + Tailwind 4. İki sekme: **Rota planla** (yeni, `components/rota/`) ve **Hat takibi**
-(eski canlı otobüs ekranı, `components/HatTakibi.tsx`, davranışı değişmeden taşındı).
+`frontend/` Next.js 16 + React 19 + Tailwind 4. Tek sayfa, tek harita: **Rota planla** (`components/rota/`). Eski "Hat takibi"
+ekranı kaldırıldı; canlı otobüs özelliği rota planlamanın içine ("Otobüsleri gör") taşındı.
 
 ## Çalıştırma
 ```
 uvicorn main:app --reload --port 8000        # kök klasörde; rota grafı için gtfs_data/graf.pkl (build_gtfs.py rota ile üretilir)
 cd frontend && npm run dev                   # http://localhost:3000
 ```
-İki veritabanı: canlı otobüs takibi (Hat takibi) `.env` içindeki `DATABASE_URL`'e (Neon) bakar; rota planlayıcının GTFS verisi
+İki veritabanı: canlı otobüs takibi (eski hat/durak tabloları) `.env` içindeki `DATABASE_URL`'e (Neon) bakar; rota planlayıcının GTFS verisi
 ise `GTFS_DATABASE_URL=sqlite:///gtfs_data/gtfs.db` ile ayrı bir yerden okunur (tam veri Neon'a sığmaz). Birini diğeriyle
 DEĞİŞTİRMEYİN.
 
@@ -42,3 +42,16 @@ yükleyici), `components/rota/*` (RotaPlanla, YerAlani, Kontroller, SecenekListe
 ## Yer arama
 Listeden seçmeden Enter'a basılırsa ya da alandan çıkılırsa yazılan metin Google'ın ilk önerisiyle çözülür
 (`AutocompleteService` + `PlacesService`, Türkiye ve İstanbul öncelikli). `enlem, boylam` yazmak da çalışır.
+
+## Otobüsleri gör (canlı yaklaşan otobüsler)
+Seçili rotadaki her **otobüs/metrobüs bacağında** "Otobüsleri gör" düğmesi vardır. Açılınca o bacağın biniş durağından iniş
+durağına giden tüm hatlar çip olarak listelenir (**çoklu seçim** ve **Hepsi**); seçili hatların canlı araçları kapı
+numarası ve biniş durağına kalan dakikayla sıralanır (10 sn'de bir yenilenir), tüm araçları haritada görünür (biniş durağına
+yaklaşanlar turuncu halkalı). Aktarmalı rotada her otobüs bacağı kendi durağı için ayrı çalışır. Canlı araç yoksa planlı
+kalkışlar gösterilir. Uç nokta: `GET /api/yaklasan` (docs/schema.md).
+
+## Zaman ve filtre
+- Zaman: **Şimdi**, **Kalkış** (şu saatte yola çıkmak istiyorum) ya da **Varış** (en geç şu saatte varmak istiyorum;
+  `arrive_by`, en geç uygun kalkışı 1 dk çözünürlükle bulur).
+- **Ulaşım türleri** açılır bölümü: rotada kullanmak istemediğiniz türlerin işaretini kaldırırsınız; kapalı türler hiç
+  önerilmez.

@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import { dakika, mesafeMetni, saatMetni, sureMetni } from "@/lib/format";
 import { hatRengi, modAdi, yaziRengi } from "@/lib/modes";
 import type { Etap, Yolculuk } from "@/lib/plan";
-import { ModIkonu, Saat, Yurume } from "@/components/rota/Ikonlar";
+import { Otobus, ModIkonu, Saat, Yurume } from "@/components/rota/Ikonlar";
 
 export function HatRozeti({ etap, buyuk }: { etap: Etap; buyuk?: boolean }) {
   const renk = hatRengi(etap.mode, etap.route_short_name);
@@ -73,7 +73,14 @@ function yurumeYonu(e: Etap): string {
   return `${e.from.name} ile ${e.to.name} arası`;
 }
 
-export default function AdimAdim({ yolculuk }: { yolculuk: Yolculuk }) {
+/** Otobüs bacağı için "Otobüsleri gör": açık olan bacağın anahtarı, açma/kapama ve açılınca gösterilecek panel. */
+export interface CanliKancasi {
+  acikAnahtar: string | null;
+  onToggle: (anahtar: string, etap: Etap) => void;
+  panel: React.ReactNode;
+}
+
+export default function AdimAdim({ yolculuk, canli }: { yolculuk: Yolculuk; canli?: CanliKancasi }) {
   const { legs } = yolculuk;
   return (
     <ol className="m-0 list-none p-0" aria-label="Adım adım yolculuk">
@@ -99,12 +106,36 @@ export default function AdimAdim({ yolculuk }: { yolculuk: Yolculuk }) {
                     <HatRozeti etap={e} buyuk />
                     {e.headsign && <span className="text-[13px] text-murekkep-2">{e.headsign} yönü</span>}
                   </div>
+                  {canli && (e.mode === "bus" || e.mode === "metrobus") && e.from.stop_id && e.to.stop_id && (
+                    <button
+                      type="button"
+                      aria-expanded={canli.acikAnahtar === String(i)}
+                      onClick={() => canli.onToggle(String(i), e)}
+                      className={`mt-2.5 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] font-semibold transition-colors ${
+                        canli.acikAnahtar === String(i)
+                          ? "border-transparent bg-murekkep text-yuzey"
+                          : "border-cizgi text-bogaz hover:border-bogaz"
+                      }`}
+                    >
+                      <Otobus className="text-base" />
+                      {canli.acikAnahtar === String(i) ? "Otobüsleri gizle" : "Otobüsleri gör"}
+                    </button>
+                  )}
                 </Satir>
                 <Satir renk={hatRengi(e.mode, e.route_short_name)} parca="orta">
                   <p className="py-1 text-[13px] text-murekkep-2">
                     {e.num_stops} durak, {sureMetni(e.duration)}
                   </p>
                 </Satir>
+                {canli?.acikAnahtar === String(i) && (
+                  <div className="grid grid-cols-[3rem_1.75rem_1fr] gap-x-2">
+                    <span />
+                    <span className="relative">
+                      <span className="absolute inset-y-0 left-1/2 w-1.5 -translate-x-1/2" style={{ background: hatRengi(e.mode, e.route_short_name) }} />
+                    </span>
+                    <div className="min-w-0 pb-3">{canli.panel}</div>
+                  </div>
+                )}
                 <Satir renk={hatRengi(e.mode, e.route_short_name)} parca="alt" saat={saatMetni(e.to.time)}>
                   <p className="text-[15px] font-semibold leading-snug text-murekkep">{e.to.name}</p>
                 </Satir>

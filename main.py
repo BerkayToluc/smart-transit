@@ -6,6 +6,7 @@
   app/live.py        İETT canlı araç + varış tahmini (/api/canli-otobus, /api/moovit)
   app/nearest.py     /api/en-yakin-durak
   app/plan_api.py    POST /api/plan (aktarmalı rota; motor: app/routing/)
+  app/yaklasan.py    GET /api/yaklasan (iki durak arası hatlar + canlı araç varış tahmini)
   app/gtfs_admin.py  /api/admin/* ve GTFS metin/koordinat yardımcıları
   app/utils.py       ortak yardımcılar
   app/gtfs/          çok modlu GTFS şeması, okuyucu ve yükleyici (docs/schema.md)
@@ -22,7 +23,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text  # noqa: F401  (eski betikler `from main import text` kullanıyor)
 
-from app import catalog, gtfs_admin, live, nearest, plan_api
+from app import catalog, gtfs_admin, live, nearest, plan_api, yaklasan
 from app.routing import servis
 from app.gtfs import models as _gtfs_models  # noqa: F401  (gtfs_* tablolarının açılışta oluşması için)
 from app.db import (  # noqa: F401
@@ -65,4 +66,5 @@ app.include_router(catalog.router)
 app.include_router(live.router)
 app.include_router(nearest.router)
 app.include_router(plan_api.router)
+app.include_router(yaklasan.router)
 app.include_router(gtfs_admin.router)

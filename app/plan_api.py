@@ -28,7 +28,7 @@ class PlanIstegi(BaseModel):
     origin: Nokta
     dest: Nokta
     depart_at: Optional[datetime] = Field(None, description="Kalkış anı (ISO 8601). Saat dilimi yoksa İstanbul saati. Boşsa şimdi.")
-    arrive_by: Optional[datetime] = Field(None, description="Henüz desteklenmiyor (501).")
+    arrive_by: Optional[datetime] = Field(None, description="Varış anı (ISO 8601): bu saatte ya da daha önce varacak, EN GEÇ kalkışlı rotalar.")
     modes: Optional[List[Literal[MODLAR]]] = Field(None, description=f"İzinli modlar; boşsa hepsi: {', '.join(MODLAR)}")
     max_transfers: int = Field(3, ge=0, le=5)
     max_walk_m: int = Field(800, ge=100, le=2000, description="Başlangıç/varışta durağa en çok yürüme (m)")
@@ -114,6 +114,32 @@ def _etap(g, e, o, d, gun0: datetime) -> dict:
             "num_stops": e.durak_sayisi, "duration": e.varis - e.kalkis, "polyline": cizgi}
 
 
+ARAMA_PENCERESI_SN = 4 * 3600      # varışa göre aramada en erken kalkış: varıştan 4 saat önce
+ARAMA_COZUNURLUK_SN = 60
+
+
+def _varisa_gore(g, bas, bit, gun, t_sn, ortak):
+    """`t_sn`'ye kadar varan en GEÇ kalkışlı seçenekler. Varış saati kalkışla azalmayan arttığından (daha geç
+    kalkan daha geç varır) ikili arama: en geç uygun kalkışı 1 dk çözünürlükle bulur."""
+    lo = max(0, t_sn - ARAMA_PENCERESI_SN)
+    hi = t_sn
+
+    def dene(d):
+        return [s for s in plan.planla(g, bas, bit, gun, d, **ortak) if s.varis <= t_sn]
+
+    en_iyi = dene(lo)
+    if not en_iyi:
+        return []                      # 4 saat önce çıkılsa da yetişilmiyor
+    while hi - lo > ARAMA_COZUNURLUK_SN:
+        orta = (lo + hi) // 2
+        uygun = dene(orta)
+        if uygun:
+            lo, en_iyi = orta, uygun
+        else:
+            hi = orta
+    return en_iyi
+
+
 @router.get("/api/plan/durum")
 def plan_durum():
     """Rota grafının hazır olup olmadığı (açılışta arka planda yüklenir)."""
@@ -122,8 +148,6 @@ def plan_durum():
 
 @router.post("/api/plan", response_model=PlanYaniti, response_model_exclude_none=True)
 def plan_et(istek: PlanIstegi):
-    if istek.arrive_by is not None:
-        raise HTTPException(status_code=501, detail="arrive_by henüz desteklenmiyor; depart_at kullanın.")
     g = servis.graf_al()
     if g is None or g.durak_sayisi == 0:
         d = servis.durum()
@@ -133,19 +157,26 @@ def plan_et(istek: PlanIstegi):
             raise HTTPException(status_code=503, detail="Rota verisi hazırlanıyor, birkaç dakika sonra tekrar deneyin.")
         raise HTTPException(status_code=503, detail=(
             "Rota verisi (GTFS) yüklü değil. `python scripts/build_gtfs.py hepsi ...` ve `aktarma` ile veriyi yükleyin."))
-    baslangic = _yerel(istek.depart_at)
-    gun0 = baslangic.replace(hour=0, minute=0, second=0, microsecond=0)
-    saat_sn = baslangic.hour * 3600 + baslangic.minute * 60 + baslangic.second
     o, d_ = istek.origin, istek.dest
-    secenekler = plan.planla(
-        g, (o.lat, o.lng), (d_.lat, d_.lng), baslangic.weekday(), saat_sn, izinli_modlar=istek.modes,
-        max_aktarma=istek.max_transfers, max_yurume_m=istek.max_walk_m, tercih=TERCIH[istek.preference],
-        en_cok=istek.max_results)
+    ortak = dict(izinli_modlar=istek.modes, max_aktarma=istek.max_transfers, max_yurume_m=istek.max_walk_m,
+                 tercih=TERCIH[istek.preference], en_cok=istek.max_results)
+    if istek.arrive_by is not None:
+        hedef = _yerel(istek.arrive_by)
+        gun0 = hedef.replace(hour=0, minute=0, second=0, microsecond=0)
+        t_sn = hedef.hour * 3600 + hedef.minute * 60 + hedef.second
+        secenekler = _varisa_gore(g, (o.lat, o.lng), (d_.lat, d_.lng), hedef.weekday(), t_sn, ortak)
+    else:
+        baslangic = _yerel(istek.depart_at)
+        gun0 = baslangic.replace(hour=0, minute=0, second=0, microsecond=0)
+        saat_sn = baslangic.hour * 3600 + baslangic.minute * 60 + baslangic.second
+        secenekler = plan.planla(g, (o.lat, o.lng), (d_.lat, d_.lng), baslangic.weekday(), saat_sn, **ortak)
     if not secenekler:
         neden, mesaj = "baglanti_yok", "Bu iki nokta arasında seçili modlarla bir rota bulunamadı."
-        if not g.yakin_duraklar(o.lat, o.lng, istek.max_walk_m):
+        if istek.arrive_by is not None:
+            neden, mesaj = "yetismiyor", "Bu varış saatine yetişen bir rota bulunamadı. Daha geç bir varış saati deneyin."
+        if istek.arrive_by is None and not g.yakin_duraklar(o.lat, o.lng, istek.max_walk_m):
             neden, mesaj = "baslangicta_durak_yok", f"Başlangıç noktasının {istek.max_walk_m} m çevresinde durak yok."
-        elif not g.yakin_duraklar(d_.lat, d_.lng, istek.max_walk_m):
+        elif istek.arrive_by is None and not g.yakin_duraklar(d_.lat, d_.lng, istek.max_walk_m):
             neden, mesaj = "varista_durak_yok", f"Varış noktasının {istek.max_walk_m} m çevresinde durak yok."
         return {"itineraries": [], "neden": neden, "mesaj": mesaj}
     cikti = []
