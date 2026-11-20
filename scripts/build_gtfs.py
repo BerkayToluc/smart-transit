@@ -17,6 +17,7 @@ vapur (elle tanımlı: data/vapur.json, Şehir Hatları kış tarifesi; indirme 
 (`python scripts/build_gtfs.py aktarma --hedef ...`); beslemeler yüklendikten SONRA ve her yeniden yüklemeden sonra çalıştırılır.
 `rota`: iki koordinat arası aktarmalı rota (`--nereden 40.99,29.02 --nereye 41.04,28.98 --saat 08:30 --gun 1`);
 grafı ilk seferde kurar ve `gtfs_data/graf.pkl`e yazar, sonraki sorgular hızlı açılır.
+`durak`: teşhis; adı geçen durakların hatlarını/sefer sayılarını gösterir (`--ad Kabataş --gun 1 --modlar funicular tram`).
 `saatler`: hatların gerçek sefer saatleri (yön ve gün tipine göre: sefer sayısı, ilk/son sefer, en sık aralık,
 süre). `--hat KDK-EMN ...` ya da `--modlar ferry` (varsayılan) ve `--en-az-sefer 20` ile süzülür.
 
@@ -72,8 +73,9 @@ def _rota(a, oturum) -> int:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("komut", choices=["indir", "yukle", "rapor", "hepsi", "hatlar", "saatler", "aktarma", "rota"])
+    ap.add_argument("komut", choices=["indir", "yukle", "rapor", "hepsi", "hatlar", "saatler", "aktarma", "rota", "durak"])
     ap.add_argument("beslemeler", nargs="*", help="iett, ibb, marmaray, vapur (`aktarma` ve `rota` için gerekmez)")
+    ap.add_argument("--ad", help="`durak`: aranacak durak adı (parça)")
     ap.add_argument("--nereden", help="`rota`: başlangıç \"enlem,boylam\" (örn. 40.9903,29.0260)")
     ap.add_argument("--nereye", help="`rota`: varış \"enlem,boylam\"")
     ap.add_argument("--saat", help="`rota`: kalkış saati SS:DD (varsayılan: şimdi)")
@@ -101,7 +103,7 @@ def main(argv=None) -> int:
                 os.makedirs(klasor, exist_ok=True)
 
     from app.gtfs import build                          # noqa: E402  (DATABASE_URL ayarlandıktan sonra)
-    if a.komut not in ("aktarma", "rota") and not a.beslemeler:
+    if a.komut not in ("aktarma", "rota", "durak") and not a.beslemeler:
         ap.error("en az bir besleme adı gerekli")
     bilinmeyen = [b for b in a.beslemeler if b not in build.BESLEMELER]
     if bilinmeyen:
@@ -126,7 +128,7 @@ def main(argv=None) -> int:
                 print(f"== {b}: kurallardan GTFS dosyaları üretiliyor -> {klasor_of(b)}")
                 build.manuel_uret(b, klasor_of(b))
 
-    if a.komut in ("yukle", "hepsi", "rapor", "hatlar", "saatler", "aktarma", "rota"):
+    if a.komut in ("yukle", "hepsi", "rapor", "hatlar", "saatler", "aktarma", "rota", "durak"):
         from app.db import SessionLocal, engine
         from app.db import Base
         from app.gtfs import models  # noqa: F401
@@ -150,6 +152,14 @@ def main(argv=None) -> int:
                     print("  özet:", ozet)
             if a.komut == "rota":
                 return _rota(a, oturum)
+            if a.komut == "durak":
+                if not a.ad:
+                    print("--ad gerekli (durak adından bir parça)")
+                    return 2
+                from app.routing import graph, plan
+                g = graph.yukle(oturum, a.graf, log=lambda m: print("  " + m))
+                print(plan.durak_ozeti(g, a.ad, a.gun, modlar=a.modlar))
+                return 0
             if a.komut == "aktarma":
                 from app.gtfs import transfers
                 print(f"== aktarma noktaları üretiliyor -> {hedef_adi} (yürüme ≤ {a.yaricap:g} m; istasyonlar arası ≤ {a.istasyon_yaricap:g} m)")

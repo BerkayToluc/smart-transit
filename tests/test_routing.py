@@ -350,3 +350,16 @@ def test_bozuk_saatler_enterpolasyon(ag):
         {"arrival_secs": None, "departure_secs": None})
     g = ag.graf()
     assert sorgu(g, "A", "B", "08:00")[0].varis == hm("08:10")      # ara durak saati 08:00 ile 08:20 arasından
+
+
+def test_durak_ozeti_teshis(ag):
+    for d in ("Kabataş", "Taksim"):
+        ag.durak(d)
+    ag.sefer("F1", "funicular", [("Kabataş", "08:00"), ("Taksim", "08:03")], hizmet="hi", gunler=HAFTA_ICI, kimlik="f1")
+    ag.sefer("F1", "funicular", [("Kabataş", "09:00"), ("Taksim", "09:03")], hizmet="hi", gunler=HAFTA_ICI, kimlik="f2")
+    g = ag.graf()
+    metin = plan.durak_ozeti(g, "kabatas", 1)
+    assert "1 durak" in metin and "funicular F1" in metin and "5/5" not in metin
+    assert "seferler(Pzt..Paz): 2/2/2/2/2/0/0" in metin and "Sal ilk 08:00 son 09:00" in metin
+    assert "0 durak" in plan.durak_ozeti(g, "yok yok", 1)
+    assert "1 durak" not in plan.durak_ozeti(g, "kabatas", 1, modlar=["bus"])
