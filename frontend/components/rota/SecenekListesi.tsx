@@ -1,7 +1,7 @@
 "use client";
 import { mesafeMetni, saatMetni, sureMetni } from "@/lib/format";
-import { hatRengi, yaziRengi } from "@/lib/modes";
-import type { Yolculuk } from "@/lib/plan";
+import { MODLAR, hatRengi, yaziRengi } from "@/lib/modes";
+import type { Etap, Yolculuk } from "@/lib/plan";
 import AdimAdim from "@/components/rota/AdimAdim";
 import { Asagi, ModIkonu, Yurume } from "@/components/rota/Ikonlar";
 
@@ -13,18 +13,40 @@ function sureParcalari(sn: number): { n: number; birim: string }[] {
   return k ? [{ n: s, birim: "sa" }, { n: k, birim: "dk" }] : [{ n: s, birim: "sa" }];
 }
 
-/** Zaman şeridi: her etap süresiyle orantılı; çubuğun toplam uzunluğu en uzun seçeneğe göredir. */
+/** Şeritte bölüm etiketi: kısa hat adı (M2, T1, 500T, Marmaray) olduğu gibi; uzun/anlaşılmaz kodlar
+ * (ORT-BSK-EMN gibi vapur hatları) modun adıyla ("Vapur") gösterilir. Tam ad `title` ve ayrıntıda durur. */
+export function seritEtiketi(e: Etap): string {
+  const ad = (e.route_short_name ?? "").trim();
+  if (ad && ad.length <= 8 && !ad.includes("-")) return ad;
+  return MODLAR.find((m) => m.id === e.mode)?.kisa ?? ad;
+}
+
+// Bölümün en az genişliği (px): ikon + boşluklar + yazı. Yazı hiçbir zaman yarım kesilmesin diye genişlik buna göre.
+const YAZI_PX = 7.6;
+const bolumEnAz = (etiket: string) => Math.ceil(30 + etiket.length * YAZI_PX);
+const YURUME_EN_AZ = 16;
+const ARALIK = 3;
+
+/** Zaman şeridi: her etap süresiyle orantılı; çubuğun toplam uzunluğu en uzun seçeneğe göredir.
+ * Etiketler sığsın diye çubuk, içindeki yazıların en az genişliğinden daha dar olmaz. */
 export function ZamanSeridi({ y, olcek }: { y: Yolculuk; olcek: number }) {
+  const etiketler = y.legs.map((e) => (e.type === "transit" ? seritEtiketi(e) : ""));
+  const enAz =
+    y.legs.reduce((t, e, i) => t + (e.type === "transit" ? bolumEnAz(etiketler[i]) : YURUME_EN_AZ), 0) + ARALIK * (y.legs.length - 1);
   return (
-    <div className="flex h-7 items-stretch gap-[3px]" style={{ width: `${Math.max(olcek, 0.28) * 100}%` }} aria-hidden="true">
+    <div
+      className="flex h-7 items-stretch"
+      style={{ width: `${Math.max(olcek, 0.28) * 100}%`, minWidth: `min(${enAz}px, 100%)`, gap: ARALIK }}
+      aria-hidden="true"
+    >
       {y.legs.map((e, i) => {
         const agirlik = Math.max(e.duration, 150);
         if (e.type === "walk") {
           return (
             <span
               key={i}
-              className="serit-parca relative flex min-w-[0.9rem] items-center justify-center text-murekkep-2"
-              style={{ flex: `${agirlik} 1 0%` }}
+              className="serit-parca relative flex items-center justify-center text-murekkep-2"
+              style={{ flex: `${agirlik} 1 0%`, minWidth: YURUME_EN_AZ }}
             >
               <span className="absolute inset-x-0 top-1/2 border-t-[3px] border-dotted border-murekkep-3" />
               {e.duration >= 420 && (
@@ -36,18 +58,15 @@ export function ZamanSeridi({ y, olcek }: { y: Yolculuk; olcek: number }) {
           );
         }
         const renk = hatRengi(e.mode, e.route_short_name);
-        // Dar bölümde isim yarım kalmasın: bölümün şeritteki payı küçükse yalnızca ikon gösterilir.
-        const pay = (e.duration / y.total_duration) * Math.max(olcek, 0.28);
-        const adGoster = pay >= 0.2;
         return (
           <span
             key={i}
             title={`${e.route_short_name ?? ""} ${e.route_long_name ?? ""}`.trim()}
-            className="serit-parca flex min-w-[2rem] items-center justify-center gap-1 overflow-hidden rounded-md px-1 text-xs font-bold"
-            style={{ flex: `${agirlik} 1 0%`, background: renk, color: yaziRengi(renk) }}
+            className="serit-parca flex items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 text-xs font-bold"
+            style={{ flex: `${agirlik} 1 0%`, minWidth: bolumEnAz(etiketler[i]), background: renk, color: yaziRengi(renk) }}
           >
             <ModIkonu mod={e.mode} className="shrink-0 text-sm" />
-            {adGoster && <span className="tnum min-w-0 truncate">{e.route_short_name}</span>}
+            <span className="tnum">{etiketler[i]}</span>
           </span>
         );
       })}
