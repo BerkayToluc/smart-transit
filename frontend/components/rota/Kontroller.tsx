@@ -86,7 +86,7 @@ export function ModSecici({ secili, onDegis }: { secili: Set<Mod>; onDegis: (s: 
   return (
     <fieldset className="m-0 border-0 p-0">
       <legend className="sr-only">Ulaşım türleri</legend>
-      <div className="kaydir -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+      <div className="flex flex-wrap gap-1.5">
         {MODLAR.map((m) => {
           const acik = secili.has(m.id);
           return (
@@ -95,7 +95,7 @@ export function ModSecici({ secili, onDegis }: { secili: Set<Mod>; onDegis: (s: 
               type="button"
               aria-pressed={acik}
               onClick={() => degistir(m.id)}
-              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[13px] font-medium transition-colors ${
                 acik
                   ? "border-transparent bg-yuzey-2 text-murekkep"
                   : "border-cizgi bg-transparent text-murekkep-3 line-through decoration-murekkep-3/50"
