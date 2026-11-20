@@ -16,6 +16,7 @@ import json
 # --- main import edilmeden önce ayarlanmalı -----------------------------------
 _TEST_DB_DIZINI = tempfile.mkdtemp(prefix="smarttransit-test-")
 os.environ["DATABASE_URL"] = f"sqlite:///{os.path.join(_TEST_DB_DIZINI, 'test.db')}"
+os.environ["ROTA_GRAF_ARKA_PLAN"] = "0"       # testlerde rota grafı arka planda yüklenmez (testler kendi grafını koyar)
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
