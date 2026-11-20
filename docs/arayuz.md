@@ -30,3 +30,15 @@ yerine açıklayıcı bir mesaj görünür; rota listesi çalışmaya devam eder
 ## Dosyalar
 `lib/plan.ts` (API istemcisi, Türkçe hata çevirisi), `lib/modes.ts` (mod/hat renkleri), `lib/google.ts` (tek harita
 yükleyici), `components/rota/*` (RotaPlanla, YerAlani, Kontroller, SecenekListesi, AdimAdim, RotaHaritasi, Cekmece).
+
+## Harita çizimi
+- Çizgiler ve işaretçiler `components/rota/RotaHaritasi.tsx` içinde **doğrudan Google Maps API'siyle** oluşturulur ve her
+  değişiklikte (seçim, giriş, tema) temizlenir; yalnızca seçili seçeneğin rotası görünür.
+- **Otobüs ve metrobüs bacakları yollara oturtulur:** durak sırası boyunca Google Directions (araç yolu, en çok 23 ara
+  nokta; çok sapan sonuçlar atılır, yoksa durak sırası çizgisi kalır; sonuçlar bellekte önbelleklenir). Metro, tramvay,
+  Marmaray ve vapur durak sırasıyla çizilir (ray/deniz yolunu yaklaşık izler).
+- Kalıcı çözüm GTFS `shapes` verisini yüklemektir (#15): Google kotası harcamaz ve resmî güzergâhı verir.
+
+## Yer arama
+Listeden seçmeden Enter'a basılırsa ya da alandan çıkılırsa yazılan metin Google'ın ilk önerisiyle çözülür
+(`AutocompleteService` + `PlacesService`, Türkiye ve İstanbul öncelikli). `enlem, boylam` yazmak da çalışır.

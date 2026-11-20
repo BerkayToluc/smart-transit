@@ -85,6 +85,8 @@ def main(argv=None) -> int:
     ap.add_argument("--tercih", default="hizli", help="`rota`: hizli | az_aktarma | az_yuruyus")
     ap.add_argument("--graf", default=os.path.join("gtfs_data", "graf.pkl"), help="`rota`: graf önbellek dosyası")
     ap.add_argument("--yaricap", type=float, default=150.0, help="`aktarma`: yürüme kenarı için en çok mesafe (m)")
+    ap.add_argument("--istasyon-cevre-yaricap", type=float, default=300.0,
+                    help="`aktarma`: istasyon türü durak (metrobüs, metro ...) ile yakındaki otobüs durakları için en çok mesafe (m)")
     ap.add_argument("--istasyon-yaricap", type=float, default=600.0,
                     help="`aktarma`: farklı beslemelerin istasyon türü durakları (metro, Marmaray, iskele) için en çok mesafe (m)")
     ap.add_argument("--hedef", help="veritabanı adresi (örn. sqlite:///gtfs_data/gtfs.db); yoksa .env DATABASE_URL")
@@ -163,7 +165,8 @@ def main(argv=None) -> int:
             if a.komut == "aktarma":
                 from app.gtfs import transfers
                 print(f"== aktarma noktaları üretiliyor -> {hedef_adi} (yürüme ≤ {a.yaricap:g} m; istasyonlar arası ≤ {a.istasyon_yaricap:g} m)")
-                ozet = transfers.uret(oturum, yaricap_m=a.yaricap, istasyon_yaricap_m=a.istasyon_yaricap, log=lambda m: print("  " + m))
+                ozet = transfers.uret(oturum, yaricap_m=a.yaricap, istasyon_yaricap_m=a.istasyon_yaricap,
+                                       istasyon_cevre_yaricap_m=a.istasyon_cevre_yaricap, log=lambda m: print("  " + m))
                 print(transfers.ozet_metni(ozet))
                 print("Bilinen büyük aktarma noktaları:")
                 print(transfers.nokta_raporu_metni(transfers.bilinen_noktalar(oturum)))

@@ -257,3 +257,30 @@ def test_tanim_hatalari_toplanir(tmp_path):
     with pytest.raises(ValueError) as e:
         transfers.tanim_oku(str(yol))
     assert "yaricap_m" in str(e.value) and "İstanbul" in str(e.value)
+
+
+def test_istasyon_ile_yakin_otobus_duragi_genis_yaricapla_baglanir(oturum):
+    # metrobüs istasyonu E-5 ortasında, otobüs durağı servis yolunda: 250 m ötede, farklı hat
+    mb = kur(oturum, "iett", "mb", "TÜYAP METROBÜS", "metrobus", 0, 0)
+    ot = kur(oturum, "iett", "ot", "TÜYAP", "bus", 250, 0)
+    uzak = kur(oturum, "iett", "uz", "UZAK", "bus", 420, 0)
+    ot2 = kur(oturum, "iett", "ot2", "BAŞKA", "bus", 0, 250, sefer=False)
+    ozet = transfers.uret(oturum, tanim=BOS)
+    for a, b in ((mb, ot), (ot, mb)):
+        assert kenar(oturum, a, b).min_transfer_secs == transfers.yurume_suresi_sn(kenar_mesafe(oturum, a, b))
+    assert kenar(oturum, mb, uzak) is None and kenar(oturum, uzak, mb) is None       # 420 m > 300 m
+    assert kenar(oturum, ot, ot2) is None                                           # otobüs-otobüs: 150 m kuralı
+    assert kenar(oturum, mb, ot2) is not None                                       # durak seferi olmasa da yürünür
+    assert ozet["kume"] == 0
+
+
+def test_istasyon_cevre_yaricap_kapatilabilir(oturum):
+    mb = kur(oturum, "iett", "mb", "METROBÜS", "metrobus", 0, 0)
+    ot = kur(oturum, "iett", "ot", "OTOBÜS", "bus", 250, 0)
+    transfers.uret(oturum, istasyon_cevre_yaricap_m=150, tanim=BOS)
+    assert kenar(oturum, mb, ot) is None
+
+
+def kenar_mesafe(oturum, a, b):
+    sa, sb = oturum.get(GtfsStop, a), oturum.get(GtfsStop, b)
+    return transfers.mesafe_m(sa.lat, sa.lon, sb.lat, sb.lon)

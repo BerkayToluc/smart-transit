@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useMedya } from "@/lib/hooks";
-import { GoogleMap, Marker, Polyline } from "@react-google-maps/api";
+import { GoogleMap } from "@react-google-maps/api";
 import { hatRengi, renkCoz } from "@/lib/modes";
 import { ISTANBUL_MERKEZ, type HaritaDurumu } from "@/lib/google";
 import type { Nokta, Yolculuk } from "@/lib/plan";
@@ -22,6 +22,47 @@ const GUNDUZ_STILI: google.maps.MapTypeStyle[] = [
   { featureType: "transit.station.bus", stylers: [{ visibility: "off" }] },
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#bfd9e3" }] },
 ];
+
+/** Otobüs/metrobüs bacağını gerçek yollara oturtur: durak sırası boyunca Google Directions (araç yolu). Başarısızsa null. */
+const yolOnbellek = new Map<string, google.maps.LatLngLiteral[]>();
+
+function uzunluk(yol: { lat: number; lng: number }[]): number {
+  let t = 0;
+  for (let i = 1; i < yol.length; i++) {
+    const dLat = (yol[i].lat - yol[i - 1].lat) * 111_000;
+    const dLng = (yol[i].lng - yol[i - 1].lng) * 83_800;
+    t += Math.hypot(dLat, dLng);
+  }
+  return t;
+}
+
+async function yolaOturt(noktalar: [number, number][]): Promise<google.maps.LatLngLiteral[] | null> {
+  if (noktalar.length < 2) return null;
+  const anahtar = noktalar.map(([a, b]) => `${a.toFixed(5)},${b.toFixed(5)}`).join("|");
+  const onbellekte = yolOnbellek.get(anahtar);
+  if (onbellekte) return onbellekte;
+  const lit = noktalar.map(([lat, lng]) => ({ lat, lng }));
+  const ic = lit.slice(1, -1);
+  // Directions en çok 25 ara nokta kabul eder: uzun hatlarda eşit aralıklı örnek
+  const ornek = ic.length > 23 ? Array.from({ length: 23 }, (_, i) => ic[Math.floor(((i + 0.5) * ic.length) / 23)]) : ic;
+  try {
+    const sonuc = await new google.maps.DirectionsService().route({
+      origin: lit[0],
+      destination: lit[lit.length - 1],
+      waypoints: ornek.map((location) => ({ location, stopover: false })),
+      travelMode: google.maps.TravelMode.DRIVING,
+      optimizeWaypoints: false,
+      region: "tr",
+    });
+    const yol = sonuc.routes[0]?.overview_path.map((p) => ({ lat: p.lat(), lng: p.lng() }));
+    if (!yol || yol.length < 2) return null;
+    if (uzunluk(yol) > uzunluk(lit) * 2.5) return null; // büyük sapma: durak sırasını bozan yol; düz çizgi kalsın
+    yolOnbellek.set(anahtar, yol);
+    return yol;
+  } catch {
+    return null;
+  }
+}
 
 interface Props {
   durum: HaritaDurumu;
@@ -58,6 +99,66 @@ export default function RotaHaritasi({ durum, yolculuk, baslangic, varis, olcu }
     harita.fitBounds(sinir, { top: 72, right: 32, left: olcu.sol + 32, bottom: olcu.alt + 24 });
   }, [harita, yolculuk, baslangic, varis, olcu.sol, olcu.alt]);
 
+  // Çizgi ve işaretçiler React sarmalayıcısı yerine doğrudan Google API'siyle yönetilir: seçim/giriş değişince
+  // eskiler kesinlikle kaldırılır (eski rotanın haritada kalması hatası).
+  useEffect(() => {
+    if (!harita) return;
+    const nesneler: { setMap: (m: google.maps.Map | null) => void }[] = [];
+    let iptal = false;
+    const ekle = <T extends { setMap: (m: google.maps.Map | null) => void }>(n: T): T => {
+      nesneler.push(n);
+      return n;
+    };
+    const daire = (dolgu: string, kenar: string, olcek: number, kalinlik: number): google.maps.Symbol => ({
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: olcek,
+      fillColor: dolgu,
+      fillOpacity: 1,
+      strokeColor: kenar,
+      strokeWeight: kalinlik,
+    });
+    const isaret = (konum: google.maps.LatLngLiteral, ikon: google.maps.Symbol, baslik: string, z: number) =>
+      ekle(new google.maps.Marker({ map: harita, position: konum, icon: ikon, title: baslik, zIndex: z, clickable: false }));
+
+    yolculuk?.legs.forEach((e) => {
+      const yol = e.polyline.map(([lat, lng]) => ({ lat, lng }));
+      if (e.type === "walk") {
+        ekle(
+          new google.maps.Polyline({
+            map: harita,
+            path: yol,
+            strokeOpacity: 0,
+            zIndex: 1,
+            icons: [{ icon: { path: "M 0,-1 0,1", strokeOpacity: 0.95, strokeColor: karanlik ? "#a8bbc4" : "#4a6572", scale: 3 }, offset: "0", repeat: "11px" }],
+          }),
+        );
+        return;
+      }
+      const renk = renkCoz(hatRengi(e.mode, e.route_short_name));
+      const yolBacagi = e.mode === "bus" || e.mode === "metrobus";
+      const cizgi = ekle(
+        new google.maps.Polyline({ map: harita, path: yol, strokeColor: renk, strokeOpacity: yolBacagi ? 0.4 : 0.95, strokeWeight: 6, zIndex: 2 }),
+      );
+      if (yolBacagi) {
+        yolaOturt(e.polyline).then((oturan) => {
+          if (iptal) return;
+          if (oturan) cizgi.setOptions({ path: oturan, strokeOpacity: 0.95 });
+          else cizgi.setOptions({ strokeOpacity: 0.95 }); // yola oturtulamadı: durak sırası çizgisi
+        });
+      }
+      const nokta = daire("#ffffff", renk, 5.5, 3.5);
+      isaret(e.from, nokta, e.from.name, 5);
+      isaret(e.to, nokta, e.to.name, 5);
+    });
+    if (baslangic) isaret(baslangic, daire("#0c2a38", "#ffffff", 8, 3), "Başlangıç", 10);
+    if (varis) isaret(varis, daire("#f59f0f", "#0c2a38", 9, 3), "Varış", 10);
+
+    return () => {
+      iptal = true;
+      nesneler.forEach((n) => n.setMap(null));
+    };
+  }, [harita, yolculuk, baslangic, varis, karanlik]);
+
   if (durum !== "hazir") {
     return (
       <div className="absolute inset-0 grid place-items-center bg-sis p-8 text-center" role="status">
@@ -78,15 +179,6 @@ export default function RotaHaritasi({ durum, yolculuk, baslangic, varis, olcu }
     );
   }
 
-  const daire = (dolgu: string, kenar: string, olcek: number, kalinlik: number): google.maps.Symbol => ({
-    path: google.maps.SymbolPath.CIRCLE,
-    scale: olcek,
-    fillColor: dolgu,
-    fillOpacity: 1,
-    strokeColor: kenar,
-    strokeWeight: kalinlik,
-  });
-
   return (
     <GoogleMap
       mapContainerClassName="absolute inset-0"
@@ -101,37 +193,6 @@ export default function RotaHaritasi({ durum, yolculuk, baslangic, varis, olcu }
         gestureHandling: "greedy",
         styles: karanlik ? GECE_STILI : GUNDUZ_STILI,
       }}
-    >
-      {yolculuk?.legs.map((e, i) => {
-        const yol = e.polyline.map(([lat, lng]) => ({ lat, lng }));
-        if (e.type === "walk") {
-          return (
-            <Polyline
-              key={`y${i}`}
-              path={yol}
-              options={{
-                strokeOpacity: 0,
-                zIndex: 1,
-                icons: [{ icon: { path: "M 0,-1 0,1", strokeOpacity: 0.95, strokeColor: karanlik ? "#a8bbc4" : "#4a6572", scale: 3 }, offset: "0", repeat: "11px" }],
-              }}
-            />
-          );
-        }
-        const renk = renkCoz(hatRengi(e.mode, e.route_short_name));
-        return (
-          <Polyline key={`a${i}`} path={yol} options={{ strokeColor: renk, strokeOpacity: 0.95, strokeWeight: 6, zIndex: 2 }} />
-        );
-      })}
-      {yolculuk?.legs.map((e, i) =>
-        e.type === "transit" ? (
-          <span key={`d${i}`}>
-            <Marker position={e.from} icon={daire("#ffffff", renkCoz(hatRengi(e.mode, e.route_short_name)), 5.5, 3.5)} title={e.from.name} zIndex={5} />
-            <Marker position={e.to} icon={daire("#ffffff", renkCoz(hatRengi(e.mode, e.route_short_name)), 5.5, 3.5)} title={e.to.name} zIndex={5} />
-          </span>
-        ) : null,
-      )}
-      {baslangic && <Marker position={baslangic} icon={daire("#0c2a38", "#ffffff", 8, 3)} title="Başlangıç" zIndex={10} />}
-      {varis && <Marker position={varis} icon={daire("#f59f0f", "#0c2a38", 9, 3)} title="Varış" zIndex={10} />}
-    </GoogleMap>
+    />
   );
 }
