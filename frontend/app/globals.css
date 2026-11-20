@@ -1,26 +1,130 @@
 @import "tailwindcss";
 
+/* ---------- Renk ve tür belirteçleri ----------
+   Sis: sabah Boğaz'ı; Mürekkep: metin; Boğaz: ana vurgu; İskele: Şehir Hatları turuncusu
+   (tarife kitapçığından ölçüldü), yalnızca "şimdi / seçili" için. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  --sis: #eaf0f2;
+  --yuzey: #ffffff;
+  --yuzey-2: #f4f7f8;
+  --murekkep: #0c2a38;
+  --murekkep-2: #4a6572;
+  --murekkep-3: #7d929d;
+  --cizgi: #d5e0e5;
+  --bogaz: #14657f;
+  --bogaz-koyu: #0e4c60;
+  --iskele: #f59f0f;
+  --iskele-zemin: #fff3dc;
+  --hata: #b3261e;
+  --hata-zemin: #fdecea;
+  --gol: 0 1px 0 rgb(12 42 56 / 0.04), 0 12px 32px -12px rgb(12 42 56 / 0.35);
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* mod renkleri */
+  --mod-bus: #2f7d57;
+  --mod-metrobus: #d6293e;
+  --mod-metro: #14657f;
+  --mod-tram: #2563b8;
+  --mod-funicular: #8a5a2b;
+  --mod-cable_car: #8a5a2b;
+  --mod-rail: #1c4fa3;
+  --mod-ferry: #0f9bb3;
+  --mod-walk: #7d929d;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --sis: #08141b;
+    --yuzey: #0f2430;
+    --yuzey-2: #133040;
+    --murekkep: #e6eef1;
+    --murekkep-2: #a8bbc4;
+    --murekkep-3: #7691a0;
+    --cizgi: #1f3a49;
+    --bogaz: #4fb3d1;
+    --bogaz-koyu: #7cc7de;
+    --iskele: #ffb02e;
+    --iskele-zemin: #3a2a0a;
+    --hata: #ffb4ab;
+    --hata-zemin: #3b1a17;
+    --gol: 0 1px 0 rgb(0 0 0 / 0.3), 0 12px 32px -12px rgb(0 0 0 / 0.7);
+    --mod-bus: #4cae80;
+    --mod-metro: #4fb3d1;
+    --mod-tram: #6b9df0;
+    --mod-rail: #6c95e6;
+    --mod-funicular: #c08a52;
+    --mod-cable_car: #c08a52;
+    --mod-ferry: #36c3dc;
+    --mod-walk: #7691a0;
   }
 }
 
+@theme inline {
+  --color-sis: var(--sis);
+  --color-yuzey: var(--yuzey);
+  --color-yuzey-2: var(--yuzey-2);
+  --color-murekkep: var(--murekkep);
+  --color-murekkep-2: var(--murekkep-2);
+  --color-murekkep-3: var(--murekkep-3);
+  --color-cizgi: var(--cizgi);
+  --color-bogaz: var(--bogaz);
+  --color-bogaz-koyu: var(--bogaz-koyu);
+  --color-iskele: var(--iskele);
+  --color-iskele-zemin: var(--iskele-zemin);
+  --color-hata: var(--hata);
+  --color-hata-zemin: var(--hata-zemin);
+  --font-sans: var(--font-govde), system-ui, sans-serif;
+  --font-display: var(--font-baslik), var(--font-govde), system-ui, sans-serif;
+}
+
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--sis);
+  color: var(--murekkep);
+  font-family: var(--font-govde), system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+.font-display {
+  font-family: var(--font-baslik), var(--font-govde), system-ui, sans-serif;
+  font-variation-settings: "wdth" 90;
+  letter-spacing: -0.02em;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Klavye odağı her zaman görünür */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--iskele);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* ince kaydırma çubuğu */
+.kaydir {
+  scrollbar-width: thin;
+  scrollbar-color: var(--cizgi) transparent;
+  overscroll-behavior: contain;
+}
+
+/* Mevcut (eski) "Hat takibi" ekranı bu sınıfı kullanıyor; davranışı değişmesin */
+.custom-scrollbar {
+  scrollbar-width: thin;
+}
+
+/* Şerit: seçilince süresine göre uzayan çubuk bölümleri */
+.serit-parca {
+  transition: flex-grow 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
