@@ -11,6 +11,7 @@ import { ModSecici, TercihSecici, ZamanSecici, type ZamanDurumu } from "@/compon
 import { Degistir, Uyari } from "@/components/rota/Ikonlar";
 import RotaHaritasi from "@/components/rota/RotaHaritasi";
 import SecenekListesi from "@/components/rota/SecenekListesi";
+import CanliSerit from "@/components/rota/CanliSerit";
 import YaklasanPanel from "@/components/rota/Yaklasan";
 import YerAlani from "@/components/rota/YerAlani";
 
@@ -19,13 +20,6 @@ interface Yer {
   nokta: Nokta | null;
 }
 const BOS: Yer = { metin: "", nokta: null };
-
-// Tek dokunuşla denenebilen örnekler (ilk açılışta boş ekran yerine)
-const ORNEKLER: { ad: string; bas: Nokta & { name: string }; bit: Nokta & { name: string } }[] = [
-  { ad: "Kadıköy ile Taksim", bas: { lat: 40.9905, lng: 29.02, name: "Kadıköy" }, bit: { lat: 41.037, lng: 28.985, name: "Taksim" } },
-  { ad: "Üsküdar ile Sirkeci", bas: { lat: 41.026, lng: 29.014, name: "Üsküdar" }, bit: { lat: 41.014, lng: 28.977, name: "Sirkeci" } },
-  { ad: "Bostancı ile Beşiktaş", bas: { lat: 40.952, lng: 29.095, name: "Bostancı" }, bit: { lat: 41.0415, lng: 29.0075, name: "Beşiktaş" } },
-];
 
 export default function RotaPlanla() {
   const { isLoaded, durum } = useGoogleHarita();
@@ -37,6 +31,7 @@ export default function RotaPlanla() {
   const [maxYurume, setMaxYurume] = useState(800);
   const [tekrar, setTekrar] = useState(0);
   const sonucRef = useRef<HTMLElement>(null);
+  const canliSeritRef = useRef<HTMLDivElement>(null);
   // Son tamamlanan istek ve sonucu; `istek` ile eşleşmiyorsa hesaplama sürüyor demektir (türetilmiş durum).
   const [veri, setVeri] = useState<{ istek: object; sonuc: PlanYaniti | null; hata: string | null } | null>(null);
   const [secili, setSecili] = useState(0);
@@ -120,6 +115,7 @@ export default function RotaPlanla() {
       setCanli(null);
       return;
     }
+    canliSeritRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }); // adım listesinden açıldıysa panel görünür olsun
     setCanliHatlar(etap.route_short_name ? [etap.route_short_name] : []);
     setCanliHepsi(false);
     setCanliVeri(null);
@@ -151,6 +147,23 @@ export default function RotaPlanla() {
         ],
       }
     : null;
+
+  const canliPanel = (
+    <YaklasanPanel
+      veri={canliYanit}
+      yukleniyor={!canliGecerli}
+      hata={canliGecerli ? canliVeri.hata : null}
+      secilenHatlar={canliHatlar}
+      hepsi={canliHepsi}
+      onHat={(h) => {
+        if (canliHepsi) {
+          setCanliHepsi(false); // "Hepsi" açıkken bir hat seçmek, yalnızca o hatta geçmektir
+          setCanliHatlar([h]);
+        } else canliHatDegistir(h);
+      }}
+      onHepsi={() => setCanliHepsi((v) => !v)}
+    />
+  );
 
   const degistir = () => {
     setBas(bit);
@@ -249,27 +262,10 @@ export default function RotaPlanla() {
 
           <section ref={sonucRef} aria-live="polite" aria-busy={yukleniyor} className="mt-5">
             {!istek && (
-              <div className="px-5">
-                <p className="text-[15px] font-semibold text-murekkep">Hemen deneyin</p>
-                <div className="mt-2.5 flex flex-wrap gap-2">
-                  {ORNEKLER.map((o) => (
-                    <button
-                      key={o.ad}
-                      type="button"
-                      onClick={() => {
-                        setBas({ metin: o.bas.name, nokta: o.bas });
-                        setBit({ metin: o.bit.name, nokta: o.bit });
-                      }}
-                      className="rounded-full border border-cizgi bg-yuzey px-3.5 py-2 text-sm font-medium text-murekkep transition-colors hover:border-bogaz hover:text-bogaz"
-                    >
-                      {o.ad}
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-4 text-[13px] leading-relaxed text-murekkep-2">
-                  Başlangıç ve varışı yazıp listeden seçin ya da <span className="tnum">41.037, 28.985</span> gibi bir koordinat girin.
-                </p>
-              </div>
+              <p className="px-5 text-[13px] leading-relaxed text-murekkep-2">
+                Başlangıç ve varışı yazıp listeden seçin ya da <span className="tnum">41.037, 28.985</span> gibi bir koordinat girin.
+                Rota çıkınca binmeniz gereken otobüslerin canlı konumlarını burada görebilirsiniz.
+              </p>
             )}
 
             {istek && yukleniyor && !sonuc && <YuklemeIskeleti />}
@@ -319,8 +315,19 @@ export default function RotaPlanla() {
               </div>
             )}
 
+            {sonucVar && sonuc && yolculuk && (
+              <div ref={canliSeritRef}>
+                <CanliSerit
+                  yolculuk={yolculuk}
+                  acikAnahtar={canli?.anahtar ?? null}
+                  onToggle={(anahtar, i) => canliAc(anahtar, yolculuk.legs[i])}
+                  panel={canliPanel}
+                />
+              </div>
+            )}
+
             {sonucVar && sonuc && (
-              <div className={`mt-1 transition-opacity ${yukleniyor ? "opacity-60" : ""}`}>
+              <div className={`mt-5 transition-opacity ${yukleniyor ? "opacity-60" : ""}`}>
                 <h2 className="px-5 pb-2 text-sm font-semibold text-murekkep-2">
                   {sonuc.itineraries.length} seçenek
                 </h2>
@@ -329,26 +336,7 @@ export default function RotaPlanla() {
                     secenekler={sonuc.itineraries}
                     secili={secili}
                     detayAcik={detayAcik}
-                    canli={{
-                      acikAnahtar: canli?.anahtar ?? null,
-                      onToggle: canliAc,
-                      panel: (
-                        <YaklasanPanel
-                          veri={canliYanit}
-                          yukleniyor={!canliGecerli}
-                          hata={canliGecerli ? canliVeri.hata : null}
-                          secilenHatlar={canliHatlar}
-                          hepsi={canliHepsi}
-                          onHat={(h) => {
-                            if (canliHepsi) {
-                              setCanliHepsi(false); // "Hepsi" açıkken bir hat seçmek, yalnızca o hatta geçmektir
-                              setCanliHatlar([h]);
-                            } else canliHatDegistir(h);
-                          }}
-                          onHepsi={() => setCanliHepsi((v) => !v)}
-                        />
-                      ),
-                    }}
+                    canli={{ acikAnahtar: canli?.anahtar ?? null, onToggle: canliAc }}
                     onSec={(i) => {
                       if (i === secili) setDetayAcik((a) => !a); // seçili karta tekrar basınca aç/kapa
                       else {
