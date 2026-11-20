@@ -156,3 +156,24 @@ def test_openapi_plan_uc_noktalari(client):
     assert "post" in yollar["/api/plan"] and "get" in yollar["/api/plan/durum"]
     for eski in ("/api/en-yakin-durak", "/api/hatlar"):
         assert eski in yollar                                              # mevcut uç noktalar değişmeden duruyor
+
+
+def test_gtfs_veritabani_ayri_adresten_okunur(ag, monkeypatch, tmp_path):  # noqa: F811
+    """GTFS_DATABASE_URL tanımlıysa rota grafı oradan kurulur (canlı takip DATABASE_URL'de kalır)."""
+    import os
+    ag.durak("A", 0, 0)
+    ag.durak("B", 1000, 0)
+    ag.sefer("L1", "bus", [("A", "08:10"), ("B", "08:20")], kimlik="a1")
+    ag.o.commit()
+    monkeypatch.setenv("GTFS_DATABASE_URL", os.environ["DATABASE_URL"])    # test veritabanı dosyası
+    monkeypatch.setattr(servis, "ONBELLEK_YOLU", str(tmp_path / "g.pkl"))
+    servis.graf_ayarla(None)
+    servis.yukle()
+    d = servis.durum()
+    assert d["hazir"] is True and d["hata"] is None and d["sefer"] == 1
+    assert (tmp_path / "g.pkl").exists()
+    servis.graf_ayarla(None)
+    # geçersiz adres: hata durumda görünür, API çökmez
+    monkeypatch.setenv("GTFS_DATABASE_URL", "sqlite:////yok/yok/yok.db")
+    servis.yukle()
+    assert servis.durum()["hazir"] is False and servis.durum()["hata"]
