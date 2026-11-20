@@ -127,6 +127,7 @@ export default function RotaPlanla() {
               </div>
               <div className="min-w-0 flex-1 divide-y divide-cizgi">
                 <YerAlani
+                  secili={!!bas.nokta}
                   id="nereden"
                   etiket="Nereden"
                   yerTutucu="Nereden: adres, yer ya da enlem,boylam"
@@ -138,6 +139,7 @@ export default function RotaPlanla() {
                   onKonumum={konumum}
                 />
                 <YerAlani
+                  secili={!!bit.nokta}
                   id="nereye"
                   etiket="Nereye"
                   yerTutucu="Nereye"
@@ -157,6 +159,9 @@ export default function RotaPlanla() {
                 <Degistir />
               </button>
             </div>
+            {((bas.metin.trim() && !bas.nokta) || (bit.metin.trim() && !bit.nokta)) && (
+              <p className="mt-2 text-[13px] text-murekkep-2">Yazdığınız yeri listeden seçin ya da Enter&apos;a basın; ilk öneri seçilir.</p>
+            )}
             {konumHatasi && (
               <p role="alert" className="mt-2 text-[13px] text-hata">
                 {konumHatasi}

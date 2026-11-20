@@ -41,6 +41,9 @@ VARSAYILAN_YARICAP_M = 150.0
 # Farklı beslemelerin istasyon türü durakları (ör. Marmaray ↔ vapur iskelesi) gerçekte 150 m'den uzaktır:
 # Üsküdar 236 m, Bostancı 262 m, Sirkeci-Eminönü 542 m (gerçek veri ölçümü). Bu çiftler için daha geniş yarıçap.
 VARSAYILAN_ISTASYON_YARICAP_M = 600.0
+# İstasyon türü bir durak (metrobüs, metro ...) ile yakındaki OTOBÜS durakları arasındaki yürüme: metrobüs istasyonları
+# E-5/D-100 ortasında, otobüs durakları servis yollarında olduğundan çoğu kez 150 m'den uzaktır (üst geçit/yürüyüş).
+VARSAYILAN_ISTASYON_CEVRE_YARICAP_M = 300.0
 VARSAYILAN_KUME_BAGLANTI_M = 120.0   # kümeye katılmak için komşu durağa en fazla bu kadar uzaklık
 VARSAYILAN_KUME_TAVAN_M = 300.0      # bir kümenin en uzak iki üyesi arası
 KUME_ICI_EN_AZ_SN = 120              # istasyon içi aktarmada en kısa süre
@@ -224,8 +227,13 @@ def durak_modlari(session: Session) -> Dict[str, set]:
     return durak_mod_ve_hatlari(session)[0]
 
 
+def izgara_cevre_gerek(duraklar: List[dict]) -> bool:
+    return any(not d["modlar"] for d in duraklar)
+
+
 def uret(session: Session, *, yaricap_m: float = VARSAYILAN_YARICAP_M,
          istasyon_yaricap_m: float = VARSAYILAN_ISTASYON_YARICAP_M,
+         istasyon_cevre_yaricap_m: float = VARSAYILAN_ISTASYON_CEVRE_YARICAP_M,
          kume_baglanti_m: float = VARSAYILAN_KUME_BAGLANTI_M, kume_tavan_m: float = VARSAYILAN_KUME_TAVAN_M,
          tanim: Optional[dict] = None, log=lambda m: None) -> dict:
     """Yürüme kenarlarını ve istasyon kümelerini yeniden üretir. Özet sözlüğü döndürür."""
@@ -300,6 +308,21 @@ def uret(session: Session, *, yaricap_m: float = VARSAYILAN_YARICAP_M,
                     continue        # aynı beslemede ortak hat varsa ardışık duraktır, aktarma değil
                 kenarlar.append({"feed_id": None, "from_stop_id": d["id"], "to_stop_id": e["id"],
                                  "transfer_type": 2, "min_transfer_secs": yurume_suresi_sn(m), "source": "auto"})
+    # istasyon türü durak ↔ yakındaki otobüs durakları (150 m - istasyon_cevre_yaricap_m arası)
+    if ist and istasyon_cevre_yaricap_m > yaricap_m and izgara_cevre_gerek(duraklar):
+        ig2 = _Izgara(duraklar, istasyon_cevre_yaricap_m)
+        sira_of = {d["id"]: i for i, d in enumerate(duraklar)}
+        for d in ist:
+            i = sira_of[d["id"]]
+            for j, m in ig2.komsular(i, istasyon_cevre_yaricap_m):
+                e = duraklar[j]
+                if m <= yaricap_m or e["modlar"]:
+                    continue        # yakın çiftler yukarıda; istasyon-istasyon çiftleri yukarıdaki kuralla
+                sn = yurume_suresi_sn(m)
+                kenarlar.append({"feed_id": None, "from_stop_id": d["id"], "to_stop_id": e["id"],
+                                 "transfer_type": 2, "min_transfer_secs": sn, "source": "auto"})
+                kenarlar.append({"feed_id": None, "from_stop_id": e["id"], "to_stop_id": d["id"],
+                                 "transfer_type": 2, "min_transfer_secs": sn, "source": "auto"})
     _toplu_ekle(session, GtfsTransfer, kenarlar)
     session.commit()
     log(f"{len(kenarlar)} yürüme kenarı, {len(kume_listesi)} istasyon kümesi")

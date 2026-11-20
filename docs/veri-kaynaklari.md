@@ -296,6 +296,10 @@ beslemelerin duraklarından:
   Geniş yarıçap **gerçek veri ölçümünden** geldi: Marmaray Üsküdar ↔ iskele 236 m, Bostancı 262 m, Sirkeci ↔ Eminönü
   542 m, Maltepe 504 m; yalnız 150 m kuralı bu aktarmaları kaçırırdı. Aynı beslemede yalnız **ortak hattı olmayan**
   istasyonlar bağlanır (M2 Taksim ↔ F1 Taksim); aynı hattın ardışık durakları ve otobüs durakları geniş yarıçapa girmez.
+- **İstasyon ↔ otobüs durağı:** istasyon türü durak (metrobüs, metro ...) ile yakındaki OTOBÜS durakları için ≤300 m
+  (`--istasyon-cevre-yaricap`): metrobüs istasyonları E-5/D-100 ortasında, otobüs durakları servis yollarında olduğundan
+  (ör. Tüyap otobüs durağı ↔ metrobüs istasyonu) çoğu kez 150 m'den uzaktır; bu bağlantı olmadan otobüsten metrobüse aktarma
+  kurulamaz. Otobüs ↔ otobüs 150 m'de kalır.
 - **İstasyon kümeleri:** metro, tramvay, füniküler, teleferik, Marmaray, metrobüs ve vapur durakları ≤120 m ise tek
   üst istasyon altında toplanır (`gtfs_stop`, `location_type=1`, besleme `kume`, kimlik `kume:ad-xxxxxx`; üyelerin
   `parent_station` alanı dolar). Küme çapı ≤300 m (zincirleme birleşme yok). Otobüs durakları kümelenmez.
