@@ -197,8 +197,9 @@ olmadığını (durak/örüntü/sefer sayılarıyla) gösterir.
  "preference": "fastest", "max_results": 3}
 ```
 - `lat/lng` İstanbul sınırları içinde olmalı (40.7-41.7 / 27.8-30.0), aksi halde 422.
-- `depart_at`: ISO 8601; saat dilimi yoksa İstanbul saati (UTC+3); boşsa şimdi. `arrive_by` henüz yok (501);
-  ikisi birlikte verilemez (422).
+- `depart_at`: ISO 8601; saat dilimi yoksa İstanbul saati (UTC+3); boşsa şimdi. `arrive_by`: bu saatte ya da öncesinde
+  varan, EN GEÇ kalkışlı rotalar (kalkış ikili aramayla 1 dk çözünürlükle bulunur; en çok 4 saat öncesine bakar; yetişen yoksa
+  `neden: yetismiyor`). İkisi birlikte verilemez (422).
 - `modes`: `bus, metrobus, metro, tram, funicular, cable_car, rail, ferry` (boşsa hepsi). `preference`: `fastest` |
   `fewest_transfers` | `least_walking`. `max_transfers` 0-5, `max_walk_m` 100-2000, `max_results` 1-5.
 
@@ -208,4 +209,12 @@ Yanıt: `itineraries[]` → `departure_time`, `arrival_time`, `total_duration` (
 olarak `route_short_name`, `route_long_name`, `route_id`, `trip_id`, `headsign`, `num_stops`; yürüme için `distance_m`.
 Rota bulunamazsa 200 ve `itineraries: []` + `neden` (`baslangicta_durak_yok` | `varista_durak_yok` | `baglanti_yok`)
 ve Türkçe `mesaj`. Mevcut `/api/en-yakin-durak` ve `/api/moovit` değişmedi.
+
+## `GET /api/yaklasan` (canlı yaklaşan otobüsler)
+`?bas=<biniş durağı kimliği>&bit=<iniş durağı kimliği>[&hatlar=401,345][&oncelik=401]`. Bu iki durak arasında (aynı örüntüde,
+biniş önce) giden otobüs/metrobüs hatlarını ve her hat için İETT canlı araçlarının biniş durağına varış tahminini döner
+(eski `/api/moovit` mantığı: rotaya izdüşüm, yön ayrımı, gerçek zamanlı hız). Yanıt: `binis`, `inis`, `hat_adlari` (tüm
+hatlar), `hatlar[]` → `hat`, `mod`, `yon`, `sure_dk` (tarifede biniş-iniş), `araclar[]` (`kapi_no`, `dakika`, `mesafe_km`,
+`hiz_kmh`, `yon`, `enlem`, `boylam`; yaklaşanlar, dakikaya göre), `tum_araclar[]` (hattın tüm canlı araçları, harita için),
+`planli[]` (sıradaki planlı kalkışlar). `hatlar` verilmezse en çok 12 hat gelir. Rota grafı yoksa 503, durak yoksa 404.
 

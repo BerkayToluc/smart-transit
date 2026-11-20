@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMedya } from "@/lib/hooks";
 import { GoogleMap } from "@react-google-maps/api";
-import { hatRengi, renkCoz } from "@/lib/modes";
+import { hatRengi, renkCoz, yaziRengi } from "@/lib/modes";
 import { ISTANBUL_MERKEZ, type HaritaDurumu } from "@/lib/google";
 import type { Nokta, Yolculuk } from "@/lib/plan";
 import type { Olcu } from "@/components/rota/Cekmece";
@@ -64,7 +64,17 @@ async function yolaOturt(noktalar: [number, number][]): Promise<google.maps.LatL
   }
 }
 
+export interface HaritaArac {
+  hat: string;
+  kapi: string;
+  lat: number;
+  lng: number;
+  dakika: number | null; // biniş durağına yaklaşıyorsa kalan dk
+}
+
 interface Props {
+  araclar: HaritaArac[];
+  odak: { anahtar: string; noktalar: { lat: number; lng: number }[] } | null;
   durum: HaritaDurumu;
   yolculuk: Yolculuk | null;
   baslangic: Nokta | null;
@@ -72,7 +82,7 @@ interface Props {
   olcu: Olcu;
 }
 
-export default function RotaHaritasi({ durum, yolculuk, baslangic, varis, olcu }: Props) {
+export default function RotaHaritasi({ araclar, odak, durum, yolculuk, baslangic, varis, olcu }: Props) {
   const [harita, setHarita] = useState<google.maps.Map | null>(null);
   const karanlik = useMedya("(prefers-color-scheme: dark)");
 
@@ -158,6 +168,42 @@ export default function RotaHaritasi({ durum, yolculuk, baslangic, varis, olcu }
       nesneler.forEach((n) => n.setMap(null));
     };
   }, [harita, yolculuk, baslangic, varis, karanlik]);
+
+  // Canlı araç işaretçileri (rota çizgisinden bağımsız; 10 sn'lik yenilemede yalnız bunlar yeniden çizilir)
+  useEffect(() => {
+    if (!harita || araclar.length === 0) return;
+    const isaretler = araclar.map((a) => {
+      const renk = renkCoz(hatRengi("bus", a.hat));
+      return new google.maps.Marker({
+        map: harita,
+        position: { lat: a.lat, lng: a.lng },
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 13,
+          fillColor: renk,
+          fillOpacity: 1,
+          strokeColor: a.dakika != null ? "#f59f0f" : "#ffffff",
+          strokeWeight: a.dakika != null ? 4 : 2,
+        },
+        label: { text: a.hat.slice(0, 4), color: yaziRengi(renk), fontSize: "10px", fontWeight: "700" },
+        title: `${a.hat}, kapı ${a.kapi}${a.dakika != null ? `, ${a.dakika} dk` : ""}`,
+        zIndex: 20,
+        clickable: false,
+      });
+    });
+    return () => isaretler.forEach((m) => m.setMap(null));
+  }, [harita, araclar]);
+
+  // "Otobüsleri gör" açılınca biniş durağı ve en yakın araçlar ekrana sığdırılır (yalnızca bir kez; 10 sn'lik yenilemede değil)
+  const sonOdak = useRef("");
+  useEffect(() => {
+    if (!odak) sonOdak.current = ""; // panel kapandı: bir sonraki açılışta yeniden sığdır
+    if (!harita || !odak || odak.noktalar.length < 2 || sonOdak.current === odak.anahtar) return;
+    sonOdak.current = odak.anahtar;
+    const sinir = new google.maps.LatLngBounds();
+    odak.noktalar.forEach((n) => sinir.extend(n));
+    harita.fitBounds(sinir, { top: 72, right: 32, left: olcu.sol + 32, bottom: olcu.alt + 24 });
+  }, [harita, odak, olcu.sol, olcu.alt]);
 
   if (durum !== "hazir") {
     return (

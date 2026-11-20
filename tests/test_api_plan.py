@@ -124,12 +124,25 @@ def test_gecersiz_girdiler_422(client, ag_kur):
     assert cakisma.status_code == 422 and "birlikte" in str(cakisma.json()["detail"])
 
 
-def test_arrive_by_henuz_yok(client, ag_kur):
+def test_varisa_gore_en_gec_kalkis(client, ag_kur):
     govde = istek()
     govde.pop("depart_at")
-    govde["arrive_by"] = f"{PAZARTESI}T09:00:00+03:00"
+    govde["arrive_by"] = f"{PAZARTESI}T09:30:00+03:00"
     r = client.post("/api/plan", json=govde)
-    assert r.status_code == 501 and "arrive_by" in r.json()["detail"]
+    assert r.status_code == 200, r.text
+    y = r.json()["itineraries"][0]
+    # tek sefer var (otobüs 08:10, metro 08:55): en geç kalkış 08:10 otobüsüne yetişecek andır (~08:08)
+    assert f"{PAZARTESI}T08:0" in y["departure_time"]
+    assert y["arrival_time"] <= f"{PAZARTESI}T09:30:00+03:00" and y["arrival_time"] >= f"{PAZARTESI}T08:55"
+    assert y["legs"][-1]["to"]["time"] == y["arrival_time"]
+
+
+def test_varisa_gore_yetisen_rota_yok(client, ag_kur):
+    govde = istek()
+    govde.pop("depart_at")
+    govde["arrive_by"] = f"{PAZARTESI}T08:30:00+03:00"                    # metro 08:55'te varıyor
+    r = client.post("/api/plan", json=govde).json()
+    assert r["itineraries"] == [] and r["neden"] == "yetismiyor" and "yetişen" in r["mesaj"]
 
 
 def test_tercih_ve_sonuc_sayisi(client, ag_kur):

@@ -14,6 +14,7 @@ export interface PlanIstegi {
   origin: Nokta;
   dest: Nokta;
   depart_at?: string; // ISO 8601; boşsa şimdi
+  arrive_by?: string; // ISO 8601: bu saatte ya da öncesinde varan, en geç kalkışlı rotalar
   modes?: Mod[];
   max_transfers?: number;
   max_walk_m?: number;
@@ -119,4 +120,61 @@ export async function planIste(govde: PlanIstegi, signal?: AbortSignal): Promise
   if (yanit.status === 422) throw new PlanHatasi(dogrulamaMesaji(detay), 422);
   if (typeof detay === "string") throw new PlanHatasi(detay, yanit.status);
   throw new PlanHatasi(`Rota hesaplanamadı (hata kodu ${yanit.status}). Biraz sonra tekrar deneyin.`, yanit.status);
+}
+
+// ---------------------------------------------------------------- yaklaşan otobüsler (GET /api/yaklasan)
+export interface YaklasanArac {
+  kapi_no: string;
+  dakika: number;
+  mesafe_km: number;
+  hiz_kmh: number;
+  yon: string;
+  enlem: number;
+  boylam: number;
+}
+
+export interface HatCanli {
+  hat: string;
+  mod: string;
+  yon: string; // hattın bu yöndeki son durağı
+  sure_dk: number | null; // biniş-iniş arası tarifedeki süre
+  araclar: YaklasanArac[]; // biniş durağına yaklaşanlar, dakikaya göre sıralı
+  tum_araclar: { kapi_no: string; enlem: number; boylam: number; yon: string }[]; // hattın tüm canlı araçları (harita)
+  planli: string[]; // sıradaki planlı kalkışlar "14:20"
+}
+
+export interface YaklasanYaniti {
+  binis: { stop_id: string; name: string; lat: number; lng: number };
+  inis: { stop_id: string; name: string; lat: number; lng: number };
+  hat_adlari: string[]; // bu iki durak arasında giden tüm otobüs hatları
+  hatlar: HatCanli[];
+}
+
+export async function yaklasanIste(
+  bas: string,
+  bit: string,
+  hatlar: string[] | null,
+  oncelik: string | null,
+  signal?: AbortSignal,
+): Promise<YaklasanYaniti> {
+  const q = new URLSearchParams({ bas, bit });
+  if (hatlar && hatlar.length) q.set("hatlar", hatlar.join(","));
+  if (oncelik) q.set("oncelik", oncelik);
+  let yanit: Response;
+  try {
+    yanit = await fetch(apiUrl(`/api/yaklasan?${q}`), { signal });
+  } catch (e) {
+    if ((e as Error).name === "AbortError") throw e;
+    throw new PlanHatasi("Canlı otobüs bilgisine ulaşılamıyor.");
+  }
+  if (!yanit.ok) {
+    let detay = "";
+    try {
+      detay = (await yanit.json()).detail;
+    } catch {
+      /* gövde yok */
+    }
+    throw new PlanHatasi(typeof detay === "string" && detay ? detay : "Canlı otobüs bilgisi alınamadı.", yanit.status);
+  }
+  return (await yanit.json()) as YaklasanYaniti;
 }
