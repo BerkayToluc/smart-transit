@@ -38,6 +38,7 @@ export default function RotaPlanla() {
   // Son tamamlanan istek ve sonucu; `istek` ile eşleşmiyorsa hesaplama sürüyor demektir (türetilmiş durum).
   const [veri, setVeri] = useState<{ istek: object; sonuc: PlanYaniti | null; hata: string | null } | null>(null);
   const [secili, setSecili] = useState(0);
+  const [detayAcik, setDetayAcik] = useState(true);
   const [olcu, setOlcu] = useState<Olcu>({ sol: 416, alt: 0 });
   const [konumHatasi, setKonumHatasi] = useState<string | null>(null);
 
@@ -63,6 +64,7 @@ export default function RotaPlanla() {
         const yanit = await planIste(istek, ac.signal);
         setVeri({ istek, sonuc: yanit, hata: null });
         setSecili(0);
+        setDetayAcik(true);
       } catch (e) {
         if ((e as Error).name === "AbortError") return;
         setVeri({ istek, sonuc: null, hata: e instanceof PlanHatasi ? e.message : "Beklenmeyen bir hata oluştu." });
@@ -257,7 +259,18 @@ export default function RotaPlanla() {
                   {sonuc.itineraries.length} seçenek
                 </h2>
                 <div className="border-y border-cizgi bg-yuzey">
-                  <SecenekListesi secenekler={sonuc.itineraries} secili={secili} onSec={setSecili} />
+                  <SecenekListesi
+                    secenekler={sonuc.itineraries}
+                    secili={secili}
+                    detayAcik={detayAcik}
+                    onSec={(i) => {
+                      if (i === secili) setDetayAcik((a) => !a); // seçili karta tekrar basınca aç/kapa
+                      else {
+                        setSecili(i);
+                        setDetayAcik(true);
+                      }
+                    }}
+                  />
                 </div>
               </div>
             )}

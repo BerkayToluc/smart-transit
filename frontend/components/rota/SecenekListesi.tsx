@@ -81,11 +81,12 @@ function ozet(y: Yolculuk): string {
 
 interface Props {
   secenekler: Yolculuk[];
-  secili: number;
-  onSec: (i: number) => void;
+  secili: number;       // haritada gösterilen seçenek
+  detayAcik: boolean;   // seçili seçeneğin adım adım listesi açık mı
+  onSec: (i: number) => void; // seçili karta tekrar basınca üst bileşen aç/kapa yapar
 }
 
-export default function SecenekListesi({ secenekler, secili, onSec }: Props) {
+export default function SecenekListesi({ secenekler, secili, detayAcik, onSec }: Props) {
   const enUzun = Math.max(...secenekler.map((s) => s.total_duration));
   const enHizli = secenekler.reduce((a, s, i) => (s.total_duration < secenekler[a].total_duration ? i : a), 0);
   const azAktarma = secenekler.reduce((a, s, i) => (s.transfers < secenekler[a].transfers ? i : a), 0);
@@ -101,7 +102,7 @@ export default function SecenekListesi({ secenekler, secili, onSec }: Props) {
   return (
     <ul className="m-0 list-none divide-y divide-cizgi p-0" aria-label="Rota seçenekleri">
       {secenekler.map((y, i) => {
-        const acik = i === secili;
+        const acik = i === secili && detayAcik;
         const eti = etiket(i);
         return (
           <li key={i} className={acik ? "bg-yuzey" : ""}>
