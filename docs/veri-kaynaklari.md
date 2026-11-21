@@ -327,7 +327,10 @@ metrobüs hatları dahil). Seyrek duraklı metrobüsü Google Directions'a oturt
   verilebilir (eski `gtfs_aktar` akışında bu dosya zaten kullanılıyordu).
 - `/api/plan`, her otobüs/metrobüs bacağı için hattın çizgilerinden **biniş ve iniş duraklarını çizgiye izdüşürüp** aradaki
   parçayı keser (`geometry: "resmi"`). Yön: durağın ≤200 m yakınında olan ve iniş binişten çizgi boyunca ileride olan
-  çizgi; birden çok uygunsa duraklara en yakın varyant. Bulunamazsa `geometry: "durak"` ve arayüz Google'a düşer.
+  çizgi. Çizgi bir durağın yakınından birden çok kez geçebildiğinden (gidiş-dönüş, U dönüşü) her durak için birkaç aday
+  izdüşüm denenir ve **en kısa kesit** seçilir (puan: kesit + 4 × uzaklıklar; kesit düz mesafenin 3 katından + 1,5 km'den uzunsa
+  reddedilir; durak çizgiden >120 m uzaksa kesite durak konumu eklenmez). Teşhis: `guzergah --hat 34G --nereden .. --nereye ..`.
+  Bulunamazsa `geometry: "durak"` ve arayüz Google'a düşer.
 - Metro, tramvay, Marmaray ve vapur için resmî çizgi henüz yok: ray bacakları Google toplu taşıma çizgisine oturtulur,
   vapur durak sırasıyla çizilir (ayrı iş: İBB rayli sistem / deniz hatları GeoJSON'ları).
 
