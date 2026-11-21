@@ -205,7 +205,7 @@ olmadığını (durak/örüntü/sefer sayılarıyla) gösterir.
 
 Yanıt: `itineraries[]` → `departure_time`, `arrival_time`, `total_duration` (sn), `transfers`, `walk_distance` (m),
 `legs[]`. Etap: `type` (`walk`|`transit`), `mode`, `from`/`to` (`name`, `lat`, `lng`, `stop_id`, `time`),
-`duration` (sn), `polyline` (`[[enlem, boylam], ...]`: yürüme için düz çizgi, araç için durak dizisi), transit için ek
+`duration` (sn), `polyline` (`[[enlem, boylam], ...]`: yürüme için düz çizgi, araç için resmî güzergâhtan kesit ya da durak dizisi), transit için `geometry` (`resmi` | `durak`), transit için ek
 olarak `route_short_name`, `route_long_name`, `route_id`, `trip_id`, `headsign`, `num_stops`; yürüme için `distance_m`.
 Rota bulunamazsa 200 ve `itineraries: []` + `neden` (`baslangicta_durak_yok` | `varista_durak_yok` | `baglanti_yok`)
 ve Türkçe `mesaj`. Mevcut `/api/en-yakin-durak` ve `/api/moovit` değişmedi.

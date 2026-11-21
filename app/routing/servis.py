@@ -13,7 +13,8 @@ from typing import Optional
 from app.routing.graph import Graf
 
 ONBELLEK_YOLU = os.getenv("ROTA_GRAF_ONBELLEK", os.path.join("gtfs_data", "graf.pkl"))
-_durum = {"graf": None, "hata": None, "yukleniyor": False}
+GUZERGAH_YOLU = os.getenv("ROTA_GUZERGAH_ONBELLEK", os.path.join("gtfs_data", "guzergah.pkl"))
+_durum = {"graf": None, "hata": None, "yukleniyor": False, "guzergah": None}
 _kilit = threading.Lock()
 
 
@@ -26,11 +27,22 @@ def graf_ayarla(g: Optional[Graf]) -> None:
         _durum["graf"], _durum["hata"], _durum["yukleniyor"] = g, None, False
 
 
+def guzergah_al():
+    """Resmî hat güzergah çizgileri (yoksa None: çizgiler durak sırasından / Google'dan çizilir)."""
+    return _durum["guzergah"]
+
+
+def guzergah_ayarla(guz) -> None:
+    with _kilit:
+        _durum["guzergah"] = guz
+
+
 def durum() -> dict:
     g = _durum["graf"]
+    guz = _durum["guzergah"]
     return {"hazir": g is not None and g.durak_sayisi > 0, "yukleniyor": _durum["yukleniyor"], "hata": _durum["hata"],
             "durak": g.durak_sayisi if g else 0, "ornek": len(g.paternler) if g else 0,
-            "sefer": g.sefer_sayisi() if g else 0}
+            "sefer": g.sefer_sayisi() if g else 0, "guzergah_hat": len(guz.hatlar) if guz else 0}
 
 
 def yukle() -> None:
@@ -50,8 +62,11 @@ def yukle() -> None:
         oturum_fabrikasi = sessionmaker(bind=create_engine(normalize_database_url(gtfs_url))) if gtfs_url else SessionLocal
         with oturum_fabrikasi() as oturum:
             g = graph.yukle(oturum, ONBELLEK_YOLU)
+        from app.routing import guzergah as guz_modul
+        guz = guz_modul.oku(GUZERGAH_YOLU)     # yoksa None: resmî çizgisiz de çalışır
         with _kilit:
             _durum["graf"] = g
+            _durum["guzergah"] = guz
     except Exception as e:  # noqa: BLE001  (API ayakta kalmalı; hata /api/plan/durum'da görünür)
         with _kilit:
             _durum["hata"] = f"{type(e).__name__}: {e}"

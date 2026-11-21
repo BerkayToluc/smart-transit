@@ -96,6 +96,34 @@ def kaynak_listesi(paket: str, *, http_get: Callable = requests.get, portal: str
     return [secilen[a] for a in GTFS_DOSYALARI if a in secilen]
 
 
+def geojson_indir(paket: str, hedef_yol: str, *, http_get: Callable = requests.get, log: Callable[[str], None] = print,
+                  portal: str = PORTAL, deneme: int = 3) -> str:
+    """Portaldaki bir veri setinin GeoJSON kaynağını `hedef_yol`a indirir (ör. `iett-hat-guzergahlari`)."""
+    yanit = http_get(f"{portal}/api/3/action/package_show", params={"id": paket}, timeout=60,
+                     headers={"User-Agent": "SmartTransit/1.0"})
+    yanit.raise_for_status()
+    veri = yanit.json()
+    if not veri.get("success"):
+        raise RuntimeError(f"Portal '{paket}' veri setini döndürmedi: {veri.get('error')}")
+    aday = [k for k in veri["result"].get("resources", [])
+            if k.get("url") and ((k.get("format") or "").upper() in ("GEOJSON", "JSON") or k["url"].lower().endswith(".geojson"))]
+    if not aday:
+        raise RuntimeError(f"'{paket}' içinde GeoJSON kaynağı bulunamadı")
+    kaynak = next((k for k in aday if (k.get("format") or "").upper() == "GEOJSON"), aday[0])
+    os.makedirs(os.path.dirname(os.path.abspath(hedef_yol)), exist_ok=True)
+    for sira in range(1, deneme + 1):
+        try:
+            log(f"  {kaynak['url']} indiriliyor...")
+            _dosya_indir(kaynak["url"], hedef_yol, http_get)
+            return hedef_yol
+        except (requests.RequestException, OSError) as hata:
+            if sira == deneme:
+                raise
+            log(f"    hata ({hata}); {sira}/{deneme}. deneme")
+            time.sleep(2 * sira)
+    return hedef_yol
+
+
 def indir(besleme: str, klasor: Optional[str] = None, *, http_get: Callable = requests.get,
           log: Callable[[str], None] = print, deneme: int = 3, portal: str = PORTAL) -> List[str]:
     """Beslemenin GTFS dosyalarını `klasor`e indirir. Boyutu portalla aynı olan dosyalar atlanır.

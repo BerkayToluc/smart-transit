@@ -44,6 +44,7 @@ export interface Etap {
   duration: number;
   distance_m?: number | null;
   polyline: [number, number][];
+  geometry?: "resmi" | "durak"; // transit: resmî İETT güzergâh çizgisinden mi (resmi), durak sırasından mı (durak)
 }
 
 export interface Yolculuk {

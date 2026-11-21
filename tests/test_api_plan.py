@@ -156,7 +156,7 @@ def test_graf_yoksa_503_ve_durum(client, ag):  # noqa: F811
     r = client.post("/api/plan", json=istek())
     assert r.status_code == 503 and "yüklü değil" in r.json()["detail"]
     assert client.get("/api/plan/durum").json() == {"hazir": False, "yukleniyor": False, "hata": None, "durak": 0,
-                                                    "ornek": 0, "sefer": 0}
+                                                    "ornek": 0, "sefer": 0, "guzergah_hat": 0}
 
 
 def test_durum_graf_hazirken(client, ag_kur):
