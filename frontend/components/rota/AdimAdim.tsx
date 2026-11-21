@@ -105,7 +105,7 @@ export default function AdimAdim({ yolculuk, canli }: { yolculuk: Yolculuk; canl
                     <HatRozeti etap={e} buyuk />
                     {e.headsign && <span className="text-[13px] text-murekkep-2">{e.headsign} yönü</span>}
                   </div>
-                  {canli && (e.mode === "bus" || e.mode === "metrobus") && e.from.stop_id && e.to.stop_id && (
+                  {canli && e.mode === "bus" && e.from.stop_id && e.to.stop_id && (
                     <button
                       type="button"
                       aria-expanded={canli.acikAnahtar === String(i)}

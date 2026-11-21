@@ -23,7 +23,6 @@ const GUNDUZ_STILI: google.maps.MapTypeStyle[] = [
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#bfd9e3" }] },
 ];
 
-/** Otobüs/metrobüs bacağını gerçek yollara oturtur: durak sırası boyunca Google Directions (araç yolu). Başarısızsa null. */
 const yolOnbellek = new Map<string, google.maps.LatLngLiteral[]>();
 
 function uzunluk(yol: { lat: number; lng: number }[]): number {
@@ -36,32 +35,47 @@ function uzunluk(yol: { lat: number; lng: number }[]): number {
   return t;
 }
 
-async function yolaOturt(noktalar: [number, number][]): Promise<google.maps.LatLngLiteral[] | null> {
-  if (noktalar.length < 2) return null;
-  const anahtar = noktalar.map(([a, b]) => `${a.toFixed(5)},${b.toFixed(5)}`).join("|");
-  const onbellekte = yolOnbellek.get(anahtar);
-  if (onbellekte) return onbellekte;
-  const lit = noktalar.map(([lat, lng]) => ({ lat, lng }));
-  const ic = lit.slice(1, -1);
-  // Directions en çok 25 ara nokta kabul eder: uzun hatlarda eşit aralıklı örnek
-  const ornek = ic.length > 23 ? Array.from({ length: 23 }, (_, i) => ic[Math.floor(((i + 0.5) * ic.length) / 23)]) : ic;
+/** Tek parça (en çok 9 durak): Google Directions ile araç yolu. Sapma/hata olursa null. */
+async function parcaOturt(lit: google.maps.LatLngLiteral[]): Promise<google.maps.LatLngLiteral[] | null> {
   try {
     const sonuc = await new google.maps.DirectionsService().route({
       origin: lit[0],
       destination: lit[lit.length - 1],
-      waypoints: ornek.map((location) => ({ location, stopover: false })),
+      waypoints: lit.slice(1, -1).map((location) => ({ location, stopover: false })),
       travelMode: google.maps.TravelMode.DRIVING,
       optimizeWaypoints: false,
       region: "tr",
     });
     const yol = sonuc.routes[0]?.overview_path.map((p) => ({ lat: p.lat(), lng: p.lng() }));
     if (!yol || yol.length < 2) return null;
-    if (uzunluk(yol) > uzunluk(lit) * 2.5) return null; // büyük sapma: durak sırasını bozan yol; düz çizgi kalsın
-    yolOnbellek.set(anahtar, yol);
+    if (uzunluk(yol) > uzunluk(lit) * 3 + 300) return null; // büyük sapma: durak sırasını bozan yol; düz çizgi kalsın
     return yol;
   } catch {
     return null;
   }
+}
+
+const PARCA_ARALIK = 8; // bir istekte en çok 8 aralık (9 durak)
+
+/** Otobüs/metrobüs bacağını gerçek yollara oturtur. Uzun bacak (özellikle seyrek duraklı metrobüs) tek istekte
+ * başarısız olabildiği için kısa parçalara bölünür; başarısız parça düz çizgi kalır, diğerleri yolu izler. */
+async function yolaOturt(noktalar: [number, number][]): Promise<google.maps.LatLngLiteral[] | null> {
+  if (noktalar.length < 2) return null;
+  const anahtar = "B|" + noktalar.map(([a, b]) => `${a.toFixed(5)},${b.toFixed(5)}`).join("|");
+  const onbellekte = yolOnbellek.get(anahtar);
+  if (onbellekte) return onbellekte;
+  const lit = noktalar.map(([lat, lng]) => ({ lat, lng }));
+  const tum: google.maps.LatLngLiteral[] = [];
+  let basarili = 0;
+  for (let i = 0; i < lit.length - 1; i += PARCA_ARALIK) {
+    const parca = lit.slice(i, Math.min(i + PARCA_ARALIK + 1, lit.length));
+    const oturan = await parcaOturt(parca);
+    if (oturan) basarili++;
+    tum.push(...(oturan ?? parca).slice(tum.length ? 1 : 0)); // birleşim noktası iki kez eklenmesin
+  }
+  if (basarili === 0) return null;
+  yolOnbellek.set(anahtar, tum);
+  return tum;
 }
 
 export interface HaritaArac {

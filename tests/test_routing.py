@@ -363,3 +363,35 @@ def test_durak_ozeti_teshis(ag):
     assert "seferler(Pzt..Paz): 2/2/2/2/2/0/0" in metin and "Sal ilk 08:00 son 09:00" in metin
     assert "0 durak" in plan.durak_ozeti(g, "yok yok", 1)
     assert "1 durak" not in plan.durak_ozeti(g, "kabatas", 1, modlar=["bus"])
+
+
+def test_ayni_sefere_baslangica_yakin_duraktan_binilir(ag):  # noqa: F811
+    # Hat: UZAK (700 m) -> YAKIN (200 m) -> VARIS. Aynı sefer iki durağa da uğrar; yürüyerek ikisine de yetişilir.
+    # Varış aynıdır; daha az yürütmek için YAKIN'dan binilmeli.
+    ag.durak("UZAK", 700, 0)
+    ag.durak("YAKIN", 200, 0)
+    ag.durak("VARIS", 5000, 0)
+    ag.sefer("L1", "bus", [("UZAK", "08:20"), ("YAKIN", "08:23"), ("VARIS", "08:40")], kimlik="a1")
+    g = ag.graf()
+    s = plan.planla(g, yer(0, 0), yer(5000, 0), 0, hm("08:00"), max_yurume_m=1000)
+    arac = [e for e in s[0].etaplar if e.tip == "arac"][0]
+    assert g.durak_ad[arac.bas] == "YAKIN"
+    assert s[0].yuruyus_m < 400                                        # 700 m'lik yürüyüş yok
+
+
+def test_yakin_duraklar_alternatifi_listede_olur(ag):  # noqa: F811
+    # HIZLI hat uzak duraktan (750 m) kalkar ve erken varır; YAVAS hat yakın duraktan (100 m) kalkar ve geç varır.
+    # Yalnızca erken varışa bakılırsa YAVAS elenirdi (aynı aktarma sayısında domine); yakın durak alternatifi olarak da çıkmalı.
+    for ad, k in (("UZAK", 750), ("YAKIN", 100), ("VARIS", 6000), ("VARIS2", 6050)):
+        ag.durak(ad, k, 0)
+    ag.sefer("HIZLI", "bus", [("UZAK", "08:15"), ("VARIS", "08:28")], kimlik="h1")
+    ag.sefer("YAVAS", "bus", [("YAKIN", "08:05"), ("VARIS2", "08:50")], kimlik="y1")
+    # fazladan duraklar: en yakın 3 durak içinde YAKIN bulunsun, UZAK 4. sırada kalsın (yakın duraklar araması YAVAS'ı bulur)
+    for ad, k in (("D1", 120), ("D2", 140), ("D3", 160)):
+        ag.durak(ad, k, 0)
+        ag.sefer("X" + ad, "bus", [(ad, "07:00"), ("VARIS", "07:10")], kimlik="x" + ad)
+    g = ag.graf()
+    s = plan.planla(g, yer(0, 0), yer(6000, 0), 0, hm("08:00"), max_yurume_m=1000, en_cok=5)
+    hatlar = {g.hat_kisa[e.hat] for sec in s for e in sec.etaplar if e.tip == "arac"}
+    assert {"HIZLI", "YAVAS"} <= hatlar
+    assert s[0].varis < [x for x in s if any(g.hat_kisa[e.hat] == "YAVAS" for e in x.etaplar if e.tip == "arac")][0].varis
