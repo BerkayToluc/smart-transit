@@ -315,6 +315,22 @@ beslemelerin duraklarından:
   Çeşmesi) için bulunan durakları/modları ve kaç bağlı gruba bölündüklerini basar (`OK` = beklenen tüm modlar var ve
   tek grup).
 
+## Hat güzergah çizgileri (resmî)
+
+İETT'nin GTFS'inde `shapes` yoktur. Haritada otobüs/metrobüs çizgilerinin yolu/şeridi tam izlemesi için İBB portalındaki
+`iett-hat-guzergahlari` GeoJSON'u kullanılır (`properties.HAT_KODU`, `GUZERGAH_KODU`; her hat için yön/varyant çizgileri;
+metrobüs hatları dahil). Seyrek duraklı metrobüsü Google Directions'a oturtmak başarısız oluyordu (düz çizgi); resmî
+çizgi bunu kökten çözer ve Google kotası harcamaz.
+
+- `python scripts/build_gtfs.py guzergah`: dosya `gtfs_data/iett-hat-guzergahlari.geojson` yoksa portaldan indirir (portal bulut
+  sunucularından açılmaz; yerel makinede çalıştırın), dizinler ve `gtfs_data/guzergah.pkl` yazar. `--dosya` ile başka yol
+  verilebilir (eski `gtfs_aktar` akışında bu dosya zaten kullanılıyordu).
+- `/api/plan`, her otobüs/metrobüs bacağı için hattın çizgilerinden **biniş ve iniş duraklarını çizgiye izdüşürüp** aradaki
+  parçayı keser (`geometry: "resmi"`). Yön: durağın ≤200 m yakınında olan ve iniş binişten çizgi boyunca ileride olan
+  çizgi; birden çok uygunsa duraklara en yakın varyant. Bulunamazsa `geometry: "durak"` ve arayüz Google'a düşer.
+- Metro, tramvay, Marmaray ve vapur için resmî çizgi henüz yok: ray bacakları Google toplu taşıma çizgisine oturtulur,
+  vapur durak sırasıyla çizilir (ayrı iş: İBB rayli sistem / deniz hatları GeoJSON'ları).
+
 ## Karara bağlanmış / ertelenmiş konular
 - Marmaray için **ayrı mod/rozet**: şimdilik **yok** (normal raylı hat gibi davranır), sonra bakılacak.
 - Arayüzde **veri tarihi gösterimi**: şimdilik **yok**, sonra bakılacak.

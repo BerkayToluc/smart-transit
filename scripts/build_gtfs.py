@@ -17,6 +17,7 @@ vapur (elle tanımlı: data/vapur.json, Şehir Hatları kış tarifesi; indirme 
 (`python scripts/build_gtfs.py aktarma --hedef ...`); beslemeler yüklendikten SONRA ve her yeniden yüklemeden sonra çalıştırılır.
 `rota`: iki koordinat arası aktarmalı rota (`--nereden 40.99,29.02 --nereye 41.04,28.98 --saat 08:30 --gun 1`);
 grafı ilk seferde kurar ve `gtfs_data/graf.pkl`e yazar, sonraki sorgular hızlı açılır.
+`guzergah`: resmî İETT hat güzergah çizgilerini indirir/dizinler (rota çizgileri yolu tam izler).
 `durak`: teşhis; adı geçen durakların hatlarını/sefer sayılarını gösterir (`--ad Kabataş --gun 1 --modlar funicular tram`).
 `saatler`: hatların gerçek sefer saatleri (yön ve gün tipine göre: sefer sayısı, ilk/son sefer, en sık aralık,
 süre). `--hat KDK-EMN ...` ya da `--modlar ferry` (varsayılan) ve `--en-az-sefer 20` ile süzülür.
@@ -40,6 +41,25 @@ def _maskele(url: str) -> str:
         kimlik, ev = geri.rsplit("@", 1)
         return f"{sema}://{kimlik.split(':')[0]}:****@{ev}"
     return url
+
+
+def _guzergah(a, build) -> int:
+    """Resmî hat güzergah çizgilerini indirir (yoksa) ve rota planlayıcının kullanacağı dizini kurar."""
+    import time
+    from app.routing import guzergah, servis
+    if not os.path.exists(a.dosya):
+        print(f"== {a.dosya} yok; portaldan indiriliyor (iett-hat-guzergahlari)")
+        build.geojson_indir("iett-hat-guzergahlari", a.dosya, log=print)
+    t0 = time.time()
+    print(f"== {a.dosya} dizinleniyor")
+    g = guzergah.indeks_kur(a.dosya, log=lambda m: print("  " + m))
+    guzergah.kaydet(g, servis.GUZERGAH_YOLU)
+    o = g.ozet()
+    print(f"Hat: {o['hat']}, çizgi: {o['cizgi']}, nokta: {o['nokta']:,} ({time.time() - t0:.1f} sn) -> {servis.GUZERGAH_YOLU}")
+    for ornek in ("34", "34BZ", "401", "500T"):
+        print(f"  {ornek}: {len(g.hatlar.get(ornek, []))} çizgi" + ("" if ornek in g.hatlar else "  (bu hat dosyada yok)"))
+    print("Backend'i yeniden başlatın; /api/plan/durum'da guzergah_hat sayısı görünür.")
+    return 0
 
 
 def _rota(a, oturum) -> int:
@@ -73,8 +93,10 @@ def _rota(a, oturum) -> int:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("komut", choices=["indir", "yukle", "rapor", "hepsi", "hatlar", "saatler", "aktarma", "rota", "durak"])
+    ap.add_argument("komut", choices=["indir", "yukle", "rapor", "hepsi", "hatlar", "saatler", "aktarma", "rota", "durak", "guzergah"])
     ap.add_argument("beslemeler", nargs="*", help="iett, ibb, marmaray, vapur (`aktarma` ve `rota` için gerekmez)")
+    ap.add_argument("--dosya", default=os.path.join("gtfs_data", "iett-hat-guzergahlari.geojson"),
+                    help="`guzergah`: İETT hat güzergahları GeoJSON dosyası (yoksa portaldan indirilir)")
     ap.add_argument("--ad", help="`durak`: aranacak durak adı (parça)")
     ap.add_argument("--nereden", help="`rota`: başlangıç \"enlem,boylam\" (örn. 40.9903,29.0260)")
     ap.add_argument("--nereye", help="`rota`: varış \"enlem,boylam\"")
@@ -105,7 +127,9 @@ def main(argv=None) -> int:
                 os.makedirs(klasor, exist_ok=True)
 
     from app.gtfs import build                          # noqa: E402  (DATABASE_URL ayarlandıktan sonra)
-    if a.komut not in ("aktarma", "rota", "durak") and not a.beslemeler:
+    if a.komut == "guzergah":
+        return _guzergah(a, build)
+    if a.komut not in ("aktarma", "rota", "durak", "guzergah") and not a.beslemeler:
         ap.error("en az bir besleme adı gerekli")
     bilinmeyen = [b for b in a.beslemeler if b not in build.BESLEMELER]
     if bilinmeyen:

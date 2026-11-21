@@ -201,8 +201,10 @@ export default function RotaHaritasi({ araclar, odak, durum, yolculuk, baslangic
         return;
       }
       const renk = renkCoz(hatRengi(e.mode, e.route_short_name));
-      const yolBacagi = e.mode === "bus" || e.mode === "metrobus";
-      const rayBacagi = RAYLI_MODLAR.includes(e.mode);
+      // Resmî güzergâh çizgisi (backend, İETT GeoJSON) varsa olduğu gibi çizilir; Google'a sorulmaz.
+      const resmi = e.geometry === "resmi";
+      const yolBacagi = !resmi && (e.mode === "bus" || e.mode === "metrobus");
+      const rayBacagi = !resmi && RAYLI_MODLAR.includes(e.mode);
       const cizgi = ekle(
         new google.maps.Polyline({ map: harita, path: yol, strokeColor: renk, strokeOpacity: yolBacagi || rayBacagi ? 0.4 : 0.95, strokeWeight: 6, zIndex: 2 }),
       );

@@ -34,7 +34,9 @@ yükleyici), `components/rota/*` (RotaPlanla, YerAlani, Kontroller, SecenekListe
 ## Harita çizimi
 - Çizgiler ve işaretçiler `components/rota/RotaHaritasi.tsx` içinde **doğrudan Google Maps API'siyle** oluşturulur ve her
   değişiklikte (seçim, giriş, tema) temizlenir; yalnızca seçili seçeneğin rotası görünür.
-- **Otobüs ve metrobüs bacakları yollara oturtulur:** durak sırası boyunca Google Directions (araç yolu). Uzun bacak (özellikle
+- **Otobüs/metrobüs bacakları için önce resmî güzergâh çizgisi:** backend `geometry: "resmi"` döndürürse (İETT GeoJSON'u,
+  `python scripts/build_gtfs.py guzergah`) çizgi olduğu gibi çizilir. Yoksa:
+- **Otobüs ve metrobüs bacakları yollara oturtulur (yedek):** durak sırası boyunca Google Directions (araç yolu). Uzun bacak (özellikle
   seyrek duraklı metrobüs) 8'er aralıklı parçalara bölünür; çok sapan ya da başarısız parça düz çizgi kalır, diğerleri yolu
   izler; sonuçlar bellekte önbelleklenir. Metro, tramvay,
   Marmaray ve vapur durak sırasıyla çizilir (ray/deniz yolunu yaklaşık izler).

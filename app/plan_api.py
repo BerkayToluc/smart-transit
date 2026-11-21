@@ -64,6 +64,8 @@ class Etap(BaseModel):
     duration: int = Field(..., description="saniye")
     distance_m: Optional[float] = Field(None, description="yalnız yürüme etabı")
     polyline: List[List[float]] = Field(..., description="[[enlem, boylam], ...]")
+    geometry: Optional[Literal["resmi", "durak"]] = Field(
+        None, description="transit etabı: 'resmi' = İETT resmî hat güzergahından kesilmiş çizgi, 'durak' = durak sırası çizgisi")
 
     model_config = {"populate_by_name": True}
 
@@ -93,7 +95,7 @@ def _iso(gun0: datetime, sn: int) -> str:
     return (gun0 + timedelta(seconds=int(sn))).isoformat()
 
 
-def _etap(g, e, o, d, gun0: datetime) -> dict:
+def _etap(g, e, o, d, gun0: datetime, guz=None) -> dict:
     def yer(i, nokta, sn):
         if i < 0:
             return {"name": nokta.name or ("Başlangıç" if nokta is o else "Varış"), "lat": nokta.lat, "lng": nokta.lng,
@@ -108,10 +110,16 @@ def _etap(g, e, o, d, gun0: datetime) -> dict:
                 "distance_m": round(mesafe, 1), "polyline": [[bas["lat"], bas["lng"]], [bit["lat"], bit["lng"]]]}
     p = g.paternler[e.patern]
     cizgi = [[g.durak_lat[p.duraklar[k]], g.durak_lon[p.duraklar[k]]] for k in range(e.bas_sira, e.bit_sira + 1)]
+    geometri = "durak"
+    if guz is not None and e.mod in ("bus", "metrobus"):
+        kesit = guz.dilimle(g.hat_kisa[e.hat], (bas["lat"], bas["lng"]), (bit["lat"], bit["lng"]))
+        if kesit:
+            cizgi, geometri = [[la, lo] for la, lo in kesit], "resmi"
     return {"type": "transit", "mode": e.mod, "route_short_name": g.hat_kisa[e.hat] or None,
             "route_long_name": g.hat_uzun[e.hat] or None, "route_id": g.hat_id[e.hat],
             "trip_id": g.meta_sefer_id[e.meta], "headsign": g.meta_baslik[e.meta] or None, "from": bas, "to": bit,
-            "num_stops": e.durak_sayisi, "duration": e.varis - e.kalkis, "polyline": cizgi}
+            "num_stops": e.durak_sayisi, "duration": e.varis - e.kalkis, "polyline": cizgi,
+            "geometry": geometri}
 
 
 ARAMA_PENCERESI_SN = 4 * 3600      # varışa göre aramada en erken kalkış: varıştan 4 saat önce
@@ -179,9 +187,10 @@ def plan_et(istek: PlanIstegi):
         elif istek.arrive_by is None and not g.yakin_duraklar(d_.lat, d_.lng, istek.max_walk_m):
             neden, mesaj = "varista_durak_yok", f"Varış noktasının {istek.max_walk_m} m çevresinde durak yok."
         return {"itineraries": [], "neden": neden, "mesaj": mesaj}
+    guz = servis.guzergah_al()
     cikti = []
     for s in secenekler:
-        etaplar = [_etap(g, e, o, d_, gun0) for e in s.etaplar]
+        etaplar = [_etap(g, e, o, d_, gun0, guz) for e in s.etaplar]
         cikti.append({"departure_time": _iso(gun0, s.kalkis), "arrival_time": _iso(gun0, s.varis),
                       "total_duration": s.sure, "transfers": s.aktarma, "walk_distance": round(s.yuruyus_m, 1),
                       "legs": etaplar})
