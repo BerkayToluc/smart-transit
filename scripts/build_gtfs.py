@@ -17,7 +17,8 @@ vapur (elle tanımlı: data/vapur.json, Şehir Hatları kış tarifesi; indirme 
 (`python scripts/build_gtfs.py aktarma --hedef ...`); beslemeler yüklendikten SONRA ve her yeniden yüklemeden sonra çalıştırılır.
 `rota`: iki koordinat arası aktarmalı rota (`--nereden 40.99,29.02 --nereye 41.04,28.98 --saat 08:30 --gun 1`);
 grafı ilk seferde kurar ve `gtfs_data/graf.pkl`e yazar, sonraki sorgular hızlı açılır.
-`guzergah`: resmî İETT hat güzergah çizgilerini indirir/dizinler (rota çizgileri yolu tam izler).
+`guzergah`: resmî İETT hat güzergah çizgilerini indirir/dizinler (rota çizgileri yolu tam izler); teşhis için
+`guzergah --hat 34G --nereden 41.01,28.92 --nereye 41.02,28.94` bir bacağın kesit adaylarını açıklar.
 `durak`: teşhis; adı geçen durakların hatlarını/sefer sayılarını gösterir (`--ad Kabataş --gun 1 --modlar funicular tram`).
 `saatler`: hatların gerçek sefer saatleri (yön ve gün tipine göre: sefer sayısı, ilk/son sefer, en sık aralık,
 süre). `--hat KDK-EMN ...` ya da `--modlar ferry` (varsayılan) ve `--en-az-sefer 20` ile süzülür.
@@ -47,6 +48,16 @@ def _guzergah(a, build) -> int:
     """Resmî hat güzergah çizgilerini indirir (yoksa) ve rota planlayıcının kullanacağı dizini kurar."""
     import time
     from app.routing import guzergah, servis
+    if a.hat and a.nereden and a.nereye:          # teşhis: dizin hazırsa yeniden kurmadan bir bacağın kesitini açıkla
+        g = guzergah.oku(servis.GUZERGAH_YOLU)
+        if g is None:
+            print("Önce `python scripts/build_gtfs.py guzergah` ile dizini kurun.")
+            return 2
+        bas = tuple(float(x) for x in a.nereden.split(","))
+        bit = tuple(float(x) for x in a.nereye.split(","))
+        for h in a.hat:
+            print("\n".join(g.teshis(h, bas, bit)))
+        return 0
     if not os.path.exists(a.dosya):
         print(f"== {a.dosya} yok; portaldan indiriliyor (iett-hat-guzergahlari)")
         build.geojson_indir("iett-hat-guzergahlari", a.dosya, log=print)

@@ -137,3 +137,45 @@ def test_birden_cok_ileri_varyantta_duraklara_en_yakin_secilir(tmp_path):
     paralel = g.dilimle("H", nokta(160, 500), nokta(160, 4000))
     assert max((la - LAT0) * 111_195.0 for la, lo in ana) < 100        # ana yol (0 m) izlendi
     assert min((la - LAT0) * 111_195.0 for la, lo in paralel[1:-1]) > 100  # paralel yol (150 m) izlendi
+
+
+def test_cizgi_duragin_yakininden_iki_kez_geciyorsa_kisa_gecis_secilir(tmp_path):
+    # Doğuya giden yol, 4 km'de U dönüşü yapıp 60 m kuzeyden geri dönüyor (hat tek çizgi). Duraklar dönüş yoluna daha yakın
+    # (15 m; gidişe 45 m) ve 1 km - 3 km'de. En kısa kesit gidişteki 2 km'dir; dönüş yolunu seçmek
+    # 4 km'lik U dönüşünü çizdirirdi (haritadaki dolanbaç).
+    yol = tmp_path / "u.geojson"
+    koord = [[LON0 + d / kx(), LAT0 + 0 / 111_195.0] for d in range(0, 4001, 500)]
+    koord += [[LON0 + d / kx(), LAT0 + 60 / 111_195.0] for d in range(4000, -1, -500)]
+    yol.write_text(json.dumps({"type": "FeatureCollection", "features": [
+        {"type": "Feature", "properties": {"HAT_KODU": "U", "GUZERGAH_KODU": "U_G_D0"},
+         "geometry": {"type": "LineString", "coordinates": koord}}]}))
+    g = guzergah.indeks_kur(str(yol))
+    kes = g.dilimle("U", nokta(45, 1000), nokta(45, 3000))      # dönüş yoluna 15 m, gidişe 45 m: salt yakınlık dönüşü seçerdi
+    assert kes is not None
+    doguler = [(lo - LON0) * kx() for la, lo in kes]
+    assert max(doguler) < 3100 and min(doguler) > 900                   # 4 km'ye uzanıp dönmedi
+    assert len(kes) <= 8
+
+
+def test_durak_cizgiden_uzaksa_uca_durak_eklenmez(guz):
+    # durak çizgiye ~148 m uzakta (≤200 m kabul, >120 m bağlama): kesitin ucuna durak konumu eklenmez (sivri çıkıntı olmasın)
+    bas, bit = nokta(190, 1000), nokta(30, 4000)
+    kes = guz.dilimle("34X", bas, bit)
+    assert kes is not None and kes[0] != bas and kes[-1] == bit
+
+
+def test_cok_dolambacli_kesit_reddedilir(tmp_path):
+    # Hat 1 km'lik düz mesafeyi 13 km'lik bir dolambaçla gidiyor (kuzeye 6 km, doğuya 1 km, güneye 6 km): kesit reddedilir
+    yol = tmp_path / "d.geojson"
+    pts = [(0, 0), (0, 6000), (1000, 6000), (1000, 0)]
+    yol.write_text(json.dumps({"type": "FeatureCollection", "features": [
+        {"type": "Feature", "properties": {"HAT_KODU": "D", "GUZERGAH_KODU": "D_G_D0"},
+         "geometry": {"type": "LineString", "coordinates": [[LON0 + d / kx(), LAT0 + k / 111_195.0] for d, k in pts]}}]}))
+    g = guzergah.indeks_kur(str(yol))
+    assert g.dilimle("D", nokta(0, 10), nokta(0, 990)) is None
+
+
+def test_teshis_metni(guz):
+    metin = "\n".join(guz.teshis("34X", nokta(30, 1000), nokta(30, 4000)))
+    assert "34X: 2 çizgi" in metin and "OK " in metin and "seçilen kesit:" in metin and "yedeğe" not in metin
+    assert "yedeğe düşer" in "\n".join(guz.teshis("34X", nokta(0, 500), nokta(1500, 4000)))
