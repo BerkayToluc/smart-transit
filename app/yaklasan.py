@@ -21,7 +21,7 @@ from app.utils import mesafe_hesapla_km
 
 router = APIRouter()
 TR = timezone(timedelta(hours=3))
-CANLI_MODLAR = ("bus", "metrobus")      # İETT canlı konum servisi yalnız bu modlar için anlamlı
+CANLI_MODLAR = ("bus",)      # yalnız İETT otobüsleri (metrobüs canlı listesine alınmaz)
 EN_COK_HAT = 12
 
 

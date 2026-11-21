@@ -177,7 +177,7 @@ açılarak sayılır. Elle tanım (Marmaray gibi) yazmadan önce mevcut tarifeyi
 - `raptor.py`: RAPTOR; tur k = en çok k araç. Pareto sonuç (erken varış × aktarma). Yürüme aktarmaları (`gtfs_transfer`),
   araca binişte 60 sn pay (ilk biniş hariç), `izinli_modlar`, `max_aktarma`, biniş/iniş yasakları. Gece yarısını aşan
   seferler (25:20) ertesi günün sabahında -24 sa kaymasıyla yakalanır.
-- `plan.py`: koordinattan koordinata (başlangıç/varışa ≤800 m erişim yürümesi, doğrudan yürüyüş seçeneği, tercih:
+- `plan.py`: koordinattan koordinata (en erken varış bazen uzak bir durağa yürütür; bu yüzden yalnızca en yakın 3 durakla ikinci bir arama da yapılıp sonuçlar birleştirilir) (başlangıç/varışa ≤800 m erişim yürümesi, doğrudan yürüyüş seçeneği, tercih:
   `hizli` | `az_aktarma` | `az_yuruyus`).
 - Bilinen sınırlar: yalnız ileri yönde (kalkış saatine göre) arama (`arrive_by` sonra); sorgu günü ile önceki günün
   gece seferleri dikkate alınır, ertesi günün sabah seferleri değil; resmî tatiller yok (#47); örüntü içinde "geçme"

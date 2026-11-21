@@ -6,7 +6,7 @@ import { Otobus } from "@/components/rota/Ikonlar";
 export function otobusBacaklari(y: Yolculuk) {
   return y.legs
     .map((e, i) => ({ e, i }))
-    .filter(({ e }) => (e.mode === "bus" || e.mode === "metrobus") && e.from.stop_id && e.to.stop_id);
+    .filter(({ e }) => e.mode === "bus" && e.from.stop_id && e.to.stop_id); // yalnız İETT otobüsleri (metrobüs hariç)
 }
 
 interface Props {

@@ -152,9 +152,11 @@ def ara(g: Graf, kaynaklar: Dict[int, int], hedefler: Dict[int, int], gun: int, 
                 if onc < INF and biner[sira]:
                     esik = onc + payi
                     burada = INF if sefer is None else kalkis[sira][sefer[0]] - sefer[1] * GUN_SANIYE
-                    if esik < burada:                  # bu durakta daha erken bir sefere binilebilir
+                    if esik <= burada:                 # bu durakta daha erken (ya da eşit) bir sefere binilebilir
                         yeni = _sonraki(p, sira, esik, gun)
-                        if yeni is not None and yeni[0] < burada:
+                        if yeni is not None and (yeni[0] < burada or (k == 1 and (yeni[1], yeni[2]) == sefer)):
+                            # k == 1: AYNI sefere hem önceki hem bu duraktan binilebiliyorsa (başlangıçtan yürüyerek) varış
+                            # aynıdır; daha az yürütmek için sefere sonraki (başlangıca genelde daha yakın) duraktan bin
                             sefer, bin_sira, bin_kalkis = (yeni[1], yeni[2]), sira, yeni[0]
         yuru(k, tau, [(s, tau[s]) for s in arac_iyi], isaretli)
 

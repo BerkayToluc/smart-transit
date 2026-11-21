@@ -34,8 +34,9 @@ yükleyici), `components/rota/*` (RotaPlanla, YerAlani, Kontroller, SecenekListe
 ## Harita çizimi
 - Çizgiler ve işaretçiler `components/rota/RotaHaritasi.tsx` içinde **doğrudan Google Maps API'siyle** oluşturulur ve her
   değişiklikte (seçim, giriş, tema) temizlenir; yalnızca seçili seçeneğin rotası görünür.
-- **Otobüs ve metrobüs bacakları yollara oturtulur:** durak sırası boyunca Google Directions (araç yolu, en çok 23 ara
-  nokta; çok sapan sonuçlar atılır, yoksa durak sırası çizgisi kalır; sonuçlar bellekte önbelleklenir). Metro, tramvay,
+- **Otobüs ve metrobüs bacakları yollara oturtulur:** durak sırası boyunca Google Directions (araç yolu). Uzun bacak (özellikle
+  seyrek duraklı metrobüs) 8'er aralıklı parçalara bölünür; çok sapan ya da başarısız parça düz çizgi kalır, diğerleri yolu
+  izler; sonuçlar bellekte önbelleklenir. Metro, tramvay,
   Marmaray ve vapur durak sırasıyla çizilir (ray/deniz yolunu yaklaşık izler).
 - **Metro, tramvay, Marmaray ve füniküler** bacakları ray hattına oturtulur: Google toplu taşıma güzergâhının adım çizgileri
   (`TRANSIT`, uygun modlar) kullanılır; uçlar istasyondan 500 m'den uzaksa ya da çizgi çok uzunsa düz çizgi kalır. Vapur durak
@@ -48,7 +49,7 @@ Listeden seçmeden Enter'a basılırsa ya da alandan çıkılırsa yazılan meti
 
 ## Otobüsleri gör (canlı yaklaşan otobüsler)
 Seçili rotanın hemen üstünde **"Canlı otobüsler"** bölümü vardır (önceki "Hemen deneyin" örneklerinin yerine); rotadaki her
-**otobüs/metrobüs bacağı** için bir satır ve "Otobüsleri gör" düğmesi içerir. Adım listesindeki bacak da aynı düğmeyi taşır ve
+**İETT otobüsü bacağı** (metrobüs hariç) için bir satır ve "Otobüsleri gör" düğmesi içerir. Adım listesindeki bacak da aynı düğmeyi taşır ve
 aynı paneli açar/kapar. Açılınca o bacağın biniş durağından iniş
 durağına giden tüm hatlar çip olarak listelenir (**çoklu seçim** ve **Hepsi**); seçili hatların canlı araçları kapı
 numarası ve biniş durağına kalan dakikayla sıralanır (10 sn'de bir yenilenir), tüm araçları haritada görünür (biniş durağına

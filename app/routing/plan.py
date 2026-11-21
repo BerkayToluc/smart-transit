@@ -10,6 +10,7 @@ from app.routing.raptor import Etap
 YURUME_KATSAYISI = 1.3
 YURUME_HIZI_MS = 4.8 / 3.6
 TERCIHLER = ("hizli", "az_aktarma", "az_yuruyus")
+YAKIN_DURAK_SAYISI = 3        # "yakın duraklar" alternatifi için başlangıç/varışta en yakın durak sayısı
 
 
 def yurume_sn(mesafe: float) -> int:
@@ -57,13 +58,13 @@ def planla(g: Graf, bas: tuple, bit: tuple, gun: int, saat_sn: int, *, izinli_mo
         e = Etap("yurume", -1, -1, saat_sn, saat_sn + sn)
         secenekler.append(Secenek(saat_sn, saat_sn + sn, 0, dogrudan_m * YURUME_KATSAYISI, [e]))
 
-    if erisim and cikis:
+    def calistir(erisim_l, cikis_l):
         kaynaklar, hedefler, giris_sn = {}, {}, {}
-        for i, m in erisim:
+        for i, m in erisim_l:
             sn = yurume_sn(m)
             kaynaklar[i] = saat_sn + sn
             giris_sn[i] = sn
-        for i, m in cikis:
+        for i, m in cikis_l:
             hedefler[i] = yurume_sn(m)
         for y in raptor.ara(g, kaynaklar, hedefler, gun, max_aktarma=max_aktarma, izinli_modlar=izinli_modlar,
                             aktarma_payi_sn=aktarma_payi_sn):
@@ -75,6 +76,13 @@ def planla(g: Graf, bas: tuple, bit: tuple, gun: int, saat_sn: int, *, izinli_mo
             son = Etap("yurume", y.hedef, -1, son_t, son_t + hedefler[y.hedef])
             tam = [ilk] + etaplar + [son]
             secenekler.append(Secenek(saat_sn, son.varis, y.aktarma, _yuruyus_m(g, tam, bas, bit), tam))
+
+    if erisim and cikis:
+        calistir(erisim, cikis)
+        # En erken varış bazen başlangıçtan uzak bir durağa yürütür (daha hızlı hat varyantı). Kullanıcı yakın durakları da
+        # görsün: yalnızca en yakın birkaç durakla ikinci bir arama, sonuçlar birleştirilip yinelenenler elenir.
+        if len(erisim) > YAKIN_DURAK_SAYISI or len(cikis) > YAKIN_DURAK_SAYISI:
+            calistir(erisim[:YAKIN_DURAK_SAYISI], cikis[:YAKIN_DURAK_SAYISI])
 
     # aynı güzergâhı tekrarlayanları ele
     goruldu, tekil = set(), []
