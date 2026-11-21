@@ -4,7 +4,7 @@ import { useMedya } from "@/lib/hooks";
 import { GoogleMap } from "@react-google-maps/api";
 import { hatRengi, renkCoz, yaziRengi } from "@/lib/modes";
 import { ISTANBUL_MERKEZ, type HaritaDurumu } from "@/lib/google";
-import type { Nokta, Yolculuk } from "@/lib/plan";
+import type { Etap, Nokta, Yolculuk } from "@/lib/plan";
 import type { Olcu } from "@/components/rota/Cekmece";
 
 const GECE_STILI: google.maps.MapTypeStyle[] = [
@@ -70,6 +70,48 @@ export interface HaritaArac {
   lat: number;
   lng: number;
   dakika: number | null; // biniş durağına yaklaşıyorsa kalan dk
+}
+
+const RAYLI_MODLAR = ["rail", "metro", "tram", "funicular", "cable_car"];
+
+function ayriMetre(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  return Math.hypot((a.lat - b.lat) * 111_000, (a.lng - b.lng) * 83_800);
+}
+
+/** Metro/tramvay/Marmaray bacağını ray hattına oturtur: Google toplu taşıma güzergâhının adım çizgileri raya uyar
+ * (durakları düz çizgiyle birleştirmek kıyı boyunca kıvrılan Marmaray'da sapıyordu). Başarısızsa null. */
+async function raylaOturt(e: Etap): Promise<google.maps.LatLngLiteral[] | null> {
+  const bas = { lat: e.from.lat, lng: e.from.lng };
+  const bit = { lat: e.to.lat, lng: e.to.lng };
+  const anahtar = `T|${e.mode}|${bas.lat.toFixed(5)},${bas.lng.toFixed(5)}|${bit.lat.toFixed(5)},${bit.lng.toFixed(5)}`;
+  const onbellekte = yolOnbellek.get(anahtar);
+  if (onbellekte) return onbellekte;
+  const T = google.maps.TransitMode;
+  const modlar = e.mode === "metro" ? [T.SUBWAY, T.RAIL, T.TRAIN] : e.mode === "tram" ? [T.TRAM] : [T.RAIL, T.TRAIN, T.SUBWAY, T.TRAM];
+  // Gece seferi yokken sonuç boş dönmesin: yarın öğlen için sor (güzergâh çizgisi saatten bağımsızdır)
+  const yarin = new Date();
+  yarin.setDate(yarin.getDate() + 1);
+  yarin.setHours(12, 0, 0, 0);
+  try {
+    const sonuc = await new google.maps.DirectionsService().route({
+      origin: bas,
+      destination: bit,
+      travelMode: google.maps.TravelMode.TRANSIT,
+      transitOptions: { modes: modlar, departureTime: yarin },
+      region: "tr",
+    });
+    const adimlar = (sonuc.routes[0]?.legs[0]?.steps ?? []).filter((a) => a.travel_mode === google.maps.TravelMode.TRANSIT);
+    const yol = adimlar.flatMap((a) => (a.path ?? []).map((p) => ({ lat: p.lat(), lng: p.lng() })));
+    if (yol.length < 2) return null;
+    // Uçlar istasyonlara yakın olmalı ve çizgi makul uzunlukta kalmalı; yoksa Google başka bir güzergâh seçmiştir
+    if (ayriMetre(yol[0], bas) > 500 || ayriMetre(yol[yol.length - 1], bit) > 500) return null;
+    if (uzunluk(yol) > ayriMetre(bas, bit) * 3 + 500) return null;
+    const tam = [bas, ...yol, bit];
+    yolOnbellek.set(anahtar, tam);
+    return tam;
+  } catch {
+    return null;
+  }
 }
 
 interface Props {
@@ -146,11 +188,12 @@ export default function RotaHaritasi({ araclar, odak, durum, yolculuk, baslangic
       }
       const renk = renkCoz(hatRengi(e.mode, e.route_short_name));
       const yolBacagi = e.mode === "bus" || e.mode === "metrobus";
+      const rayBacagi = RAYLI_MODLAR.includes(e.mode);
       const cizgi = ekle(
-        new google.maps.Polyline({ map: harita, path: yol, strokeColor: renk, strokeOpacity: yolBacagi ? 0.4 : 0.95, strokeWeight: 6, zIndex: 2 }),
+        new google.maps.Polyline({ map: harita, path: yol, strokeColor: renk, strokeOpacity: yolBacagi || rayBacagi ? 0.4 : 0.95, strokeWeight: 6, zIndex: 2 }),
       );
-      if (yolBacagi) {
-        yolaOturt(e.polyline).then((oturan) => {
+      if (yolBacagi || rayBacagi) {
+        (yolBacagi ? yolaOturt(e.polyline) : raylaOturt(e)).then((oturan) => {
           if (iptal) return;
           if (oturan) cizgi.setOptions({ path: oturan, strokeOpacity: 0.95 });
           else cizgi.setOptions({ strokeOpacity: 0.95 }); // yola oturtulamadı: durak sırası çizgisi

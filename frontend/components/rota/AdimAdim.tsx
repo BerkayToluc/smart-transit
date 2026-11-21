@@ -77,7 +77,6 @@ function yurumeYonu(e: Etap): string {
 export interface CanliKancasi {
   acikAnahtar: string | null;
   onToggle: (anahtar: string, etap: Etap) => void;
-  panel: React.ReactNode;
 }
 
 export default function AdimAdim({ yolculuk, canli }: { yolculuk: Yolculuk; canli?: CanliKancasi }) {
@@ -127,15 +126,6 @@ export default function AdimAdim({ yolculuk, canli }: { yolculuk: Yolculuk; canl
                     {e.num_stops} durak, {sureMetni(e.duration)}
                   </p>
                 </Satir>
-                {canli?.acikAnahtar === String(i) && (
-                  <div className="grid grid-cols-[3rem_1.75rem_1fr] gap-x-2">
-                    <span />
-                    <span className="relative">
-                      <span className="absolute inset-y-0 left-1/2 w-1.5 -translate-x-1/2" style={{ background: hatRengi(e.mode, e.route_short_name) }} />
-                    </span>
-                    <div className="min-w-0 pb-3">{canli.panel}</div>
-                  </div>
-                )}
                 <Satir renk={hatRengi(e.mode, e.route_short_name)} parca="alt" saat={saatMetni(e.to.time)}>
                   <p className="text-[15px] font-semibold leading-snug text-murekkep">{e.to.name}</p>
                 </Satir>

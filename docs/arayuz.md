@@ -37,6 +37,9 @@ yükleyici), `components/rota/*` (RotaPlanla, YerAlani, Kontroller, SecenekListe
 - **Otobüs ve metrobüs bacakları yollara oturtulur:** durak sırası boyunca Google Directions (araç yolu, en çok 23 ara
   nokta; çok sapan sonuçlar atılır, yoksa durak sırası çizgisi kalır; sonuçlar bellekte önbelleklenir). Metro, tramvay,
   Marmaray ve vapur durak sırasıyla çizilir (ray/deniz yolunu yaklaşık izler).
+- **Metro, tramvay, Marmaray ve füniküler** bacakları ray hattına oturtulur: Google toplu taşıma güzergâhının adım çizgileri
+  (`TRANSIT`, uygun modlar) kullanılır; uçlar istasyondan 500 m'den uzaksa ya da çizgi çok uzunsa düz çizgi kalır. Vapur durak
+  sırasıyla çizilir.
 - Kalıcı çözüm GTFS `shapes` verisini yüklemektir (#15): Google kotası harcamaz ve resmî güzergâhı verir.
 
 ## Yer arama
@@ -44,7 +47,9 @@ Listeden seçmeden Enter'a basılırsa ya da alandan çıkılırsa yazılan meti
 (`AutocompleteService` + `PlacesService`, Türkiye ve İstanbul öncelikli). `enlem, boylam` yazmak da çalışır.
 
 ## Otobüsleri gör (canlı yaklaşan otobüsler)
-Seçili rotadaki her **otobüs/metrobüs bacağında** "Otobüsleri gör" düğmesi vardır. Açılınca o bacağın biniş durağından iniş
+Seçili rotanın hemen üstünde **"Canlı otobüsler"** bölümü vardır (önceki "Hemen deneyin" örneklerinin yerine); rotadaki her
+**otobüs/metrobüs bacağı** için bir satır ve "Otobüsleri gör" düğmesi içerir. Adım listesindeki bacak da aynı düğmeyi taşır ve
+aynı paneli açar/kapar. Açılınca o bacağın biniş durağından iniş
 durağına giden tüm hatlar çip olarak listelenir (**çoklu seçim** ve **Hepsi**); seçili hatların canlı araçları kapı
 numarası ve biniş durağına kalan dakikayla sıralanır (10 sn'de bir yenilenir), tüm araçları haritada görünür (biniş durağına
 yaklaşanlar turuncu halkalı). Aktarmalı rotada her otobüs bacağı kendi durağı için ayrı çalışır. Canlı araç yoksa planlı
