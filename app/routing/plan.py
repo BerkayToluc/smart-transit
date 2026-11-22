@@ -138,9 +138,14 @@ def planla(g: Graf, bas: tuple, bit: tuple, gun: int, saat_sn: int, *, izinli_mo
                     calistir(erisim, cikis, kalkis=saat_sn + dk * 60)
 
     # aynı hat dizisinden en düşük maliyetli olan kalır
+    def imza_goster(x):
+        # Kullanıcıya aynı görünenler tek sayılır: aynı hat adı (örüntü/yön varyantları) ve metrobüs hatları (34, 34A, 34BZ, 34C,
+        # 34G... aynı koridoru paylaşır; Google da "34BZ/34C/34G" diye birleştirir) birbirinin yerine geçer.
+        return tuple("metrobus" if e.mod == "metrobus" else g.hat_kisa[e.hat] for e in x.etaplar if e.tip == "arac") or ("yaya",)
+
     en_iyi_imza = {}
     for x in secenekler:
-        k = x.imza()
+        k = imza_goster(x)
         if k not in en_iyi_imza or (x.maliyet, x.varis) < (en_iyi_imza[k].maliyet, en_iyi_imza[k].varis):
             en_iyi_imza[k] = x
     tekil = list(en_iyi_imza.values())

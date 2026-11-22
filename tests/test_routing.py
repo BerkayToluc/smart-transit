@@ -481,3 +481,14 @@ def test_planla_kumulatif_yasak_ucuncu_alternatifi_bulur(ag):  # noqa: F811
     g = ag.graf()
     s = plan.planla(g, yer(0, 0), yer(6000, 0), 0, hm("08:00"))
     assert [g.hat_kisa[sec.etaplar[1].hat] for sec in s] == ["HIZLI", "ORTA", "METRO"]
+
+
+def test_planla_ayni_gorunen_metrobus_varyantlari_tek_secenek(ag):  # noqa: F811
+    # 34BZ ve 34G aynı koridorda aynı saatlerde gider; kullanıcıya iki ayrı (aynı görünen) seçenek gösterilmemeli.
+    ag.durak("A", 0, 0); ag.durak("B", 6000, 0)
+    ag.sefer("34BZ", "metrobus", [("A", "08:10"), ("B", "08:25")], kimlik="z1")
+    ag.sefer("34G", "metrobus", [("A", "08:10"), ("B", "08:26")], kimlik="g1")
+    ag.sefer("ORTA", "bus", [("A", "08:12"), ("B", "08:50")], kimlik="o1")
+    g = ag.graf()
+    s = plan.planla(g, yer(0, 0), yer(6000, 0), 0, hm("08:00"))
+    assert [g.hat_kisa[sec.etaplar[1].hat] for sec in s] == ["34BZ", "ORTA"]
