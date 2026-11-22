@@ -44,6 +44,17 @@ interface Satir {
 }
 
 const bekle = (ms: number) => new Promise((r) => setTimeout(r, ms));
+// Graf yüklenirken (503 "hazırlanıyor") en çok ~3 dk bekleyip yeniden dener.
+async function planBekle(govde: Parameters<typeof planIste>[0]) {
+  for (let i = 0; ; i++) {
+    try {
+      return await planIste(govde);
+    } catch (e) {
+      if (i >= 18 || !/hazırlan/i.test((e as Error).message)) throw e;
+      await bekle(10000);
+    }
+  }
+}
 const ortak = (a: string[], b: string[]) => a.filter((x) => b.includes(x)).length;
 
 export default function Karsilastir() {
@@ -65,7 +76,7 @@ export default function Karsilastir() {
     for (const c of CIFTLER) {
       const s: Satir = { ad: c.ad, bizim: null, google: null };
       try {
-        const y = await planIste({ origin: c.bas, dest: c.bit, max_results: 5 });
+        const y = await planBekle({ origin: c.bas, dest: c.bit, max_results: 5 });
         if (y.itineraries.length) {
           const en = y.itineraries[0];
           s.bizim = {
