@@ -22,6 +22,7 @@ AKTARMA_CEZASI_SN = 480       # her aktarma, süreye eşdeğer ~8 dk "zahmet" ek
 YURUME_EK_KATSAYI = 0.5       # yürüme süresi 1,5 kat sayılır (süre + 0,5 × yürüme)
 DEGER_ESIGI_SN = 300          # fazladan aktarma, varışı en az 5 dk öne çekmiyorsa seçenek elenir
 BAN_SAYISI = 2                # çeşitlilik: en iyi rotanın ilk bu kadar hattı sırayla yasaklanıp yeniden aranır
+KUMULATIF_TEKRAR = 2           # çeşitlilik: bulunan seçeneklerin ortak olmayan hatları birlikte yasaklanarak en çok bu kadar ek arama
 SONRAKI_KALKIS_DK = (20,)     # çeşitlilik: bu kadar dk sonraki kalkışlar da aranır (farklı hat dizisi çıkarsa listelenir)
 
 
@@ -120,6 +121,19 @@ def planla(g: Graf, bas: tuple, bit: tuple, gun: int, saat_sn: int, *, izinli_mo
                         hatlar.append(e.hat)
                 for h in hatlar[:BAN_SAYISI]:        # en iyi rotadaki hat olmadan ne var? (ör. otobüs yerine metro)
                     calistir(erisim, cikis, yasak={h})
+                # Her hat tek tek yasaklanınca bulunamayan alternatifler (ör. iki paralel otobüs varken metrobüs): bulunan
+                # seçeneklerin hepsinde ortak olmayan hatlar birlikte yasaklanıp yeniden aranır. Ortak hat (ör. çıkış
+                # durağına tek giden hat) serbest kalır.
+                yasak_toplu: set = set()
+                for _ in range(KUMULATIF_TEKRAR):
+                    hat_kumeleri = [{e.hat for e in x.etaplar if e.tip == "arac"}
+                                    for x in secenekler if any(e.tip == "arac" for e in x.etaplar)]
+                    ortak = set.intersection(*hat_kumeleri)
+                    yeni = set.union(*hat_kumeleri) - ortak - yasak_toplu
+                    if not yeni:
+                        break
+                    yasak_toplu |= yeni
+                    calistir(erisim, cikis, yasak=set(yasak_toplu))
                 for dk in SONRAKI_KALKIS_DK:          # sonraki seferlerle (farklı hat dizisi çıkarsa listelenir)
                     calistir(erisim, cikis, kalkis=saat_sn + dk * 60)
 
