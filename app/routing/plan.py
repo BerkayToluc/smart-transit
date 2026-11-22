@@ -163,7 +163,7 @@ def secenek_metni(g: Graf, s: Secenek, no: int = 1) -> str:
 
 
 def durak_ozeti(g: Graf, metin: str, gun: Optional[int] = None, en_cok: int = 12,
-                modlar: Optional[Iterable[str]] = None) -> str:
+                modlar: Optional[Iterable[str]] = None, komsu_m: float = 0.0) -> str:
     """Ada göre durak arama (teşhis): hangi örüntüler/modlar uğruyor, kaç sefer, ilk/son kalkış, yürüme kenarı."""
     from app.gtfs.textfix import ascii_katla
     ara = ascii_katla(metin).lower()
@@ -177,6 +177,16 @@ def durak_ozeti(g: Graf, metin: str, gun: Optional[int] = None, en_cok: int = 12
                      f"yürüme kenarı: {len(g.yurume[i])}")
         if not g.durak_paternleri[i]:
             satir.append("    (hiç seferi yok)")
+        if komsu_m:
+            bagli = {j for j, _ in g.yurume[i]}
+            yakin = [(j, m) for j, m in g.yakin_duraklar(g.durak_lat[i], g.durak_lon[i], komsu_m) if j != i]
+            if yakin:
+                satir.append(f"    {komsu_m:.0f} m içindeki duraklar (+ = yürüme kenarı var):")
+            for j, m in yakin[:25]:
+                modlar_j = sorted({g.paternler[pi].mod for pi, _ in g.durak_paternleri[j]})
+                hatlar_j = sorted({g.hat_kisa[g.paternler[pi].hat] for pi, _ in g.durak_paternleri[j]})
+                satir.append(f"      {'+' if j in bagli else '-'} {m:4.0f} m  {g.durak_ad[j]}  {'/'.join(modlar_j)}  "
+                             f"hatlar: {', '.join(hatlar_j[:10])}{'…' if len(hatlar_j) > 10 else ''}")
         ilgili = [(pi, sira) for pi, sira in g.durak_paternleri[i]
                   if mod_kumesi is None or g.paternler[pi].mod in mod_kumesi]
         ilgili.sort(key=lambda x: (g.paternler[x[0]].mod == "bus", g.paternler[x[0]].mod, g.hat_kisa[g.paternler[x[0]].hat]))
