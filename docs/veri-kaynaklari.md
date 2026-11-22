@@ -292,7 +292,7 @@ Güncelleme: kurum yeni tarife yayımlarsa `data/vapur.json` ve `besleme.veri_ta
 `python scripts/build_gtfs.py aktarma --hedef sqlite:///gtfs_data/gtfs.db` (`app/gtfs/transfers.py`) yüklü tüm
 beslemelerin duraklarından:
 - **Yürüme kenarları** (`gtfs_transfer`, `source=auto`, `transfer_type=2`): ≤150 m çiftler (tüm durak türleri) ve
-  **farklı beslemelerin istasyon türü durakları için ≤600 m**. Süre = mesafe × 1.3 / 4.8 km/s (yukarı yuvarlanır).
+  **farklı beslemelerin istasyon türü durakları için ≤900 m**. Süre = mesafe × 1.3 / 4.8 km/s (yukarı yuvarlanır).
   Geniş yarıçap **gerçek veri ölçümünden** geldi: Marmaray Üsküdar ↔ iskele 236 m, Bostancı 262 m, Sirkeci ↔ Eminönü
   542 m, Maltepe 504 m; yalnız 150 m kuralı bu aktarmaları kaçırırdı. Aynı beslemede yalnız **ortak hattı olmayan**
   istasyonlar bağlanır (M2 Taksim ↔ F1 Taksim); aynı hattın ardışık durakları ve otobüs durakları geniş yarıçapa girmez.

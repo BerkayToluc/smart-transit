@@ -185,6 +185,16 @@ açılarak sayılır. Elle tanım (Marmaray gibi) yazmadan önce mevcut tarifeyi
 - Deneme: `python scripts/build_gtfs.py rota --hedef sqlite:///gtfs_data/gtfs.db --nereden 40.9905,29.0200
   --nereye 41.0190,28.9790 --saat 08:00 --gun 0` (graf süresi ve sorgu süresi basılır).
 
+### Seçenek sıralaması ve çeşitlilik (`app/routing/plan.py`)
+
+- **Maliyet** (OpenTripPlanner yaklaşımı): `(varış − sorgu anı) + 480 sn × aktarma + 0,5 × yürüme sn`.
+  `hizli` bu maliyete göre, `az_aktarma` (aktarma, maliyet), `az_yuruyus` (yürüme m, maliyet) sırasına göre dizilir.
+- **Anlamsız aktarma elemesi:** fazladan aktarma varışı en az 300 sn öne almıyorsa seçenek elenir.
+- **Yinelenen eleme:** aynı hat dizisine sahip seçeneklerden yalnızca en düşük maliyetlisi kalır.
+- **Çeşitlilik:** en iyi seçeneğin ilk 2 hattı yasaklanarak (`raptor.ara(yasak_hatlar=…)`) ve +20 dk sonraki kalkışla
+  ek koşular yapılır; ayrıca en yakın 3 durak ayrı denenir. `arrive_by` ikili aramasında çeşitlilik kapalıdır,
+  yalnızca son koşuda açılır.
+
 ## `POST /api/plan` (#13)
 Aktarmalı, çok modlu rota. Açılışta rota grafı **arka planda** yüklenir (`ROTA_GRAF_ONBELLEK`, varsayılan
 `gtfs_data/graf.pkl`; `ROTA_GRAF_ARKA_PLAN=0` ile kapatılır); hazır olana dek 503 döner. `GET /api/plan/durum` hazır olup

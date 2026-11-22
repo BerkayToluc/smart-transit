@@ -202,11 +202,13 @@ def test_farkli_beslemelerin_istasyonlari_icin_genis_yaricap(oturum):
     r = kur(oturum, "marmaray", "u", "Üsküdar", "rail", 0, 0)
     f = kur(oturum, "vapur", "p", "Üsküdar", "ferry", 236, 0)
     uzak = kur(oturum, "vapur", "e", "Eminönü", "ferry", 542, 0)
-    cok_uzak = kur(oturum, "vapur", "z", "Uzak", "ferry", 800, 0)
+    cok_uzak = kur(oturum, "vapur", "z", "Uzak", "ferry", 1000, 0)
+    metro = kur(oturum, "metro", "mt", "Metro", "metro", 850, 0)
     ozet = transfers.uret(oturum, tanim=BOS)
     assert kenar(oturum, r, f).min_transfer_secs == transfers.yurume_suresi_sn(236)
     assert kenar(oturum, f, r) is not None and kenar(oturum, r, uzak) is not None
-    assert kenar(oturum, r, cok_uzak) is None                                  # 800 m > 600 m
+    assert kenar(oturum, r, cok_uzak) is None                                  # 1000 m > 900 m
+    assert kenar(oturum, r, metro) is not None                                 # 850 m (metrobüs-metro gibi) ≤ 900 m
     assert ozet["kume"] == 0                                                   # kümeleme hâlâ yalnız ≤120 m
 
 

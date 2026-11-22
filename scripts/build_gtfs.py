@@ -120,7 +120,7 @@ def main(argv=None) -> int:
     ap.add_argument("--yaricap", type=float, default=150.0, help="`aktarma`: yürüme kenarı için en çok mesafe (m)")
     ap.add_argument("--istasyon-cevre-yaricap", type=float, default=300.0,
                     help="`aktarma`: istasyon türü durak (metrobüs, metro ...) ile yakındaki otobüs durakları için en çok mesafe (m)")
-    ap.add_argument("--istasyon-yaricap", type=float, default=600.0,
+    ap.add_argument("--istasyon-yaricap", type=float, default=900.0,
                     help="`aktarma`: farklı beslemelerin istasyon türü durakları (metro, Marmaray, iskele) için en çok mesafe (m)")
     ap.add_argument("--hedef", help="veritabanı adresi (örn. sqlite:///gtfs_data/gtfs.db); yoksa .env DATABASE_URL")
     ap.add_argument("--klasor", help="yerel GTFS klasörü (yalnızca tek besleme verildiğinde)")
