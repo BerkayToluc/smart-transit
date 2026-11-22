@@ -132,8 +132,8 @@ def _varisa_gore(g, bas, bit, gun, t_sn, ortak):
     lo = max(0, t_sn - ARAMA_PENCERESI_SN)
     hi = t_sn
 
-    def dene(d):
-        return [s for s in plan.planla(g, bas, bit, gun, d, **ortak) if s.varis <= t_sn]
+    def dene(d, cesitlilik=False):
+        return [s for s in plan.planla(g, bas, bit, gun, d, cesitlilik=cesitlilik, **ortak) if s.varis <= t_sn]
 
     en_iyi = dene(lo)
     if not en_iyi:
@@ -145,7 +145,7 @@ def _varisa_gore(g, bas, bit, gun, t_sn, ortak):
             lo, en_iyi = orta, uygun
         else:
             hi = orta
-    return en_iyi
+    return dene(lo, cesitlilik=True) or en_iyi      # çeşitli alternatifler yalnızca bulunan kalkış anı için aranır (hız)
 
 
 @router.get("/api/plan/durum")

@@ -17,6 +17,14 @@ def yurume_sn(mesafe: float) -> int:
     return math.ceil(mesafe * YURUME_KATSAYISI / YURUME_HIZI_MS)
 
 
+# --- Sıralama ve eleme (genelleştirilmiş maliyet; OpenTripPlanner'ın yaklaşımı) ---------------------------------
+AKTARMA_CEZASI_SN = 480       # her aktarma, süreye eşdeğer ~8 dk "zahmet" ekler
+YURUME_EK_KATSAYI = 0.5       # yürüme süresi 1,5 kat sayılır (süre + 0,5 × yürüme)
+DEGER_ESIGI_SN = 300          # fazladan aktarma, varışı en az 5 dk öne çekmiyorsa seçenek elenir
+BAN_SAYISI = 2                # çeşitlilik: en iyi rotanın ilk bu kadar hattı sırayla yasaklanıp yeniden aranır
+SONRAKI_KALKIS_DK = (20,)     # çeşitlilik: bu kadar dk sonraki kalkışlar da aranır (farklı hat dizisi çıkarsa listelenir)
+
+
 @dataclass
 class Secenek:
     kalkis: int                       # ilk etabın başlangıcı, sn
@@ -24,10 +32,21 @@ class Secenek:
     aktarma: int
     yuruyus_m: float
     etaplar: List[Etap] = field(default_factory=list)
+    maliyet: int = 0                  # genelleştirilmiş maliyet (sn): sıralama için; sorgu anından varışa süre + cezalar
+    yuruyus_sn: int = 0
 
     @property
     def sure(self) -> int:
         return self.varis - self.kalkis
+
+    def imza(self) -> tuple:
+        """Aynı hat dizisi = aynı seçenek (farklı durak/yürüyüşle yinelenmesin)."""
+        araclar = tuple(e.hat for e in self.etaplar if e.tip == "arac")
+        return araclar or ("yaya",)
+
+
+def _maliyet(saat_sn: int, varis: int, aktarma: int, yuruyus_sn: int) -> int:
+    return int((varis - saat_sn) + AKTARMA_CEZASI_SN * aktarma + YURUME_EK_KATSAYI * yuruyus_sn)
 
 
 def _yuruyus_m(g: Graf, etaplar: List[Etap], bas_koord, bit_koord) -> float:
@@ -43,39 +62,47 @@ def _yuruyus_m(g: Graf, etaplar: List[Etap], bas_koord, bit_koord) -> float:
 
 def planla(g: Graf, bas: tuple, bit: tuple, gun: int, saat_sn: int, *, izinli_modlar: Optional[Iterable[str]] = None,
            max_aktarma: int = 3, max_yurume_m: float = 800.0, tercih: str = "hizli", en_cok: int = 5,
-           aktarma_payi_sn: int = 60, erisim_sayisi: int = 40) -> List[Secenek]:
-    """`bas`/`bit` (enlem, boylam). `saat_sn`: kalkış anı (gece yarısından sn). Seçenekler tercihe göre sıralı."""
+           aktarma_payi_sn: int = 60, erisim_sayisi: int = 40, cesitlilik: bool = True) -> List[Secenek]:
+    """`bas`/`bit` (enlem, boylam). `saat_sn`: kalkış anı (gece yarısından sn). Seçenekler tercihe göre sıralı.
+
+    Adaylar: (1) tüm yakın duraklarla arama, (2) yalnız en yakın duraklarla arama, (3) çeşitlilik: en iyi rotadaki hatlar sırayla
+    yasaklanıp yeniden arama ve sonraki kalkış(lar). Sonra: aynı hat dizisinden en düşük maliyetli kalır, varışı belirgin
+    öne çekmeyen fazladan aktarmalar elenir, tercihe göre (maliyet puanıyla) sıralanır."""
     if tercih not in TERCIHLER:
         raise ValueError(f"tercih {TERCIHLER} içinden olmalı: {tercih!r}")
     erisim = g.yakin_duraklar(bas[0], bas[1], max_yurume_m)[:erisim_sayisi]
     cikis = g.yakin_duraklar(bit[0], bit[1], max_yurume_m)[:erisim_sayisi]
     secenekler: List[Secenek] = []
 
+    def ekle(kalkis, varis, aktarma, yuruyus_m, etaplar):
+        yurusn = sum(e.varis - e.kalkis for e in etaplar if e.tip == "yurume")
+        secenekler.append(Secenek(kalkis, varis, aktarma, yuruyus_m, etaplar, _maliyet(saat_sn, varis, aktarma, yurusn), yurusn))
+
     # yalnız yürüyüş (yakınsa)
     dogrudan_m = mesafe_m(bas[0], bas[1], bit[0], bit[1])
     if dogrudan_m * YURUME_KATSAYISI <= max_yurume_m * 1.5:
         sn = yurume_sn(dogrudan_m)
-        e = Etap("yurume", -1, -1, saat_sn, saat_sn + sn)
-        secenekler.append(Secenek(saat_sn, saat_sn + sn, 0, dogrudan_m * YURUME_KATSAYISI, [e]))
+        ekle(saat_sn, saat_sn + sn, 0, dogrudan_m * YURUME_KATSAYISI, [Etap("yurume", -1, -1, saat_sn, saat_sn + sn)])
 
-    def calistir(erisim_l, cikis_l):
+    def calistir(erisim_l, cikis_l, kalkis=None, yasak=None):
+        kalkis = saat_sn if kalkis is None else kalkis
         kaynaklar, hedefler, giris_sn = {}, {}, {}
         for i, m in erisim_l:
             sn = yurume_sn(m)
-            kaynaklar[i] = saat_sn + sn
+            kaynaklar[i] = kalkis + sn
             giris_sn[i] = sn
         for i, m in cikis_l:
             hedefler[i] = yurume_sn(m)
         for y in raptor.ara(g, kaynaklar, hedefler, gun, max_aktarma=max_aktarma, izinli_modlar=izinli_modlar,
-                            aktarma_payi_sn=aktarma_payi_sn):
+                            aktarma_payi_sn=aktarma_payi_sn, yasak_hatlar=yasak):
             if not any(e.tip == "arac" for e in y.etaplar):
                 continue                      # araçsız (yalnız yürüyüş) sonuç: doğrudan yürüyüş zaten ayrı eklendi
             etaplar = list(y.etaplar)
-            ilk = Etap("yurume", -1, y.kaynak, saat_sn, saat_sn + giris_sn[y.kaynak])
+            ilk = Etap("yurume", -1, y.kaynak, kalkis, kalkis + giris_sn[y.kaynak])
             son_t = etaplar[-1].varis if etaplar else ilk.varis
             son = Etap("yurume", y.hedef, -1, son_t, son_t + hedefler[y.hedef])
             tam = [ilk] + etaplar + [son]
-            secenekler.append(Secenek(saat_sn, son.varis, y.aktarma, _yuruyus_m(g, tam, bas, bit), tam))
+            ekle(kalkis, son.varis, y.aktarma, _yuruyus_m(g, tam, bas, bit), tam)
 
     if erisim and cikis:
         calistir(erisim, cikis)
@@ -83,19 +110,34 @@ def planla(g: Graf, bas: tuple, bit: tuple, gun: int, saat_sn: int, *, izinli_mo
         # görsün: yalnızca en yakın birkaç durakla ikinci bir arama, sonuçlar birleştirilip yinelenenler elenir.
         if len(erisim) > YAKIN_DURAK_SAYISI or len(cikis) > YAKIN_DURAK_SAYISI:
             calistir(erisim[:YAKIN_DURAK_SAYISI], cikis[:YAKIN_DURAK_SAYISI])
+        if cesitlilik:
+            araclilar = [x for x in secenekler if any(e.tip == "arac" for e in x.etaplar)]
+            if araclilar:
+                en_iyi = min(araclilar, key=lambda x: (x.maliyet, x.varis))
+                hatlar = []
+                for e in en_iyi.etaplar:
+                    if e.tip == "arac" and e.hat not in hatlar:
+                        hatlar.append(e.hat)
+                for h in hatlar[:BAN_SAYISI]:        # en iyi rotadaki hat olmadan ne var? (ör. otobüs yerine metro)
+                    calistir(erisim, cikis, yasak={h})
+                for dk in SONRAKI_KALKIS_DK:          # sonraki seferlerle (farklı hat dizisi çıkarsa listelenir)
+                    calistir(erisim, cikis, kalkis=saat_sn + dk * 60)
 
-    # aynı güzergâhı tekrarlayanları ele
-    goruldu, tekil = set(), []
-    for s in secenekler:
-        iz = tuple((e.tip, e.bas, e.bit, e.meta) for e in s.etaplar if e.tip == "arac") or ("yaya",)
-        if iz not in goruldu:
-            goruldu.add(iz)
-            tekil.append(s)
-    anahtar = {"hizli": lambda s: (s.varis, s.aktarma, s.yuruyus_m),
-               "az_aktarma": lambda s: (s.aktarma, s.varis, s.yuruyus_m),
-               "az_yuruyus": lambda s: (s.yuruyus_m, s.varis, s.aktarma)}[tercih]
-    tekil.sort(key=anahtar)
-    return tekil[:en_cok]
+    # aynı hat dizisinden en düşük maliyetli olan kalır
+    en_iyi_imza = {}
+    for x in secenekler:
+        k = x.imza()
+        if k not in en_iyi_imza or (x.maliyet, x.varis) < (en_iyi_imza[k].maliyet, en_iyi_imza[k].varis):
+            en_iyi_imza[k] = x
+    tekil = list(en_iyi_imza.values())
+    # fazladan aktarma varışı en az DEGER_ESIGI_SN öne çekmiyorsa değmez (1 duraklık metrobüs hamlesi gibi)
+    kalan = [x for x in tekil
+             if not any(y.aktarma < x.aktarma and x.varis > y.varis - DEGER_ESIGI_SN for y in tekil)]
+    anahtar = {"hizli": lambda x: (x.maliyet, x.varis),
+               "az_aktarma": lambda x: (x.aktarma, x.maliyet),
+               "az_yuruyus": lambda x: (x.yuruyus_m, x.maliyet)}[tercih]
+    kalan.sort(key=anahtar)
+    return kalan[:en_cok]
 
 
 # ---------------------------------------------------------------- metin çıktısı (CLI / hata ayıklama)

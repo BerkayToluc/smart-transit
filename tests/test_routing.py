@@ -395,3 +395,77 @@ def test_yakin_duraklar_alternatifi_listede_olur(ag):  # noqa: F811
     hatlar = {g.hat_kisa[e.hat] for sec in s for e in sec.etaplar if e.tip == "arac"}
     assert {"HIZLI", "YAVAS"} <= hatlar
     assert s[0].varis < [x for x in s if any(g.hat_kisa[e.hat] == "YAVAS" for e in x.etaplar if e.tip == "arac")][0].varis
+
+
+# --- sıralama ve eleme (genelleştirilmiş maliyet) -----------------------------------------------
+def test_planla_yarim_dakika_kazandiran_aktarmalar_elenir(ag):  # noqa: F811
+    # Doğrudan hat 08:40'ta varır. Alternatif: otobüs + 1 duraklık metrobüs + otobüs, 08:39'da varır (1 dk kazanç, 2 aktarma).
+    for ad, k in (("A", 0), ("M", 2000), ("N", 2300), ("B", 5000)):
+        ag.durak(ad, k, 0)
+    ag.sefer("D1", "bus", [("A", "08:10"), ("B", "08:40")], kimlik="d1")
+    ag.sefer("X1", "bus", [("A", "08:10"), ("M", "08:25")], kimlik="x1")
+    ag.sefer("MB", "metrobus", [("M", "08:27"), ("N", "08:29")], kimlik="mb")
+    ag.sefer("X2", "bus", [("N", "08:31"), ("B", "08:39")], kimlik="x2")
+    g = ag.graf()
+    s = plan.planla(g, yer(0, 0), yer(5000, 0), 0, hm("08:00"))
+    assert [sec.aktarma for sec in s] == [0] and {g.hat_kisa[e.hat] for e in s[0].etaplar if e.tip == "arac"} == {"D1"}
+    # alternatif gerçekten belirgin (>=5 dk) kazandırıyorsa elenmez
+    ag.o.query(GtfsStopTime).filter(GtfsStopTime.trip_id == "t:d1").update({"arrival_secs": hm("09:05"), "departure_secs": hm("09:05")})
+    s = plan.planla(ag.graf(), yer(0, 0), yer(5000, 0), 0, hm("08:00"))
+    assert [sec.aktarma for sec in s] == [2, 0] or [sec.aktarma for sec in s] == [0, 2]
+    assert s[0].aktarma == 2                                                   # 26 dk daha erken varır: önde
+
+
+def test_planla_ayni_hat_dizisi_tek_secenek(ag):  # noqa: F811
+    ag.durak("P1", 100, 0); ag.durak("P2", 700, 0); ag.durak("B", 6000, 0)
+    ag.sefer("L1", "bus", [("P2", "08:15"), ("P1", "08:20"), ("B", "08:50")], kimlik="l1")
+    g = ag.graf()
+    s = plan.planla(g, yer(0, 0), yer(6000, 0), 0, hm("08:00"), max_yurume_m=1000)
+    assert len(s) == 1                                                         # yakın/uzak durak varyantları tek seçenek
+
+
+def test_planla_cesitlilik_en_iyi_hat_yasaklanarak_alternatif_bulunur(ag):  # noqa: F811
+    # Aynı duraklar arasında hızlı (HIZLI) ve yavaş (YAVAS) iki paralel hat. Yalnızca erken varışa bakan Pareto, yavaşı eler
+    # (aynı aktarma sayısı); çeşitlilik aramasında hızlı hat yasaklanınca yavaş çıkar.
+    ag.durak("A", 0, 0); ag.durak("B", 6000, 0)
+    ag.sefer("HIZLI", "bus", [("A", "08:10"), ("B", "08:25")], kimlik="h1")
+    ag.sefer("YAVAS", "bus", [("A", "08:12"), ("B", "08:50")], kimlik="y1")
+    g = ag.graf()
+    s = plan.planla(g, yer(0, 0), yer(6000, 0), 0, hm("08:00"))
+    assert [g.hat_kisa[sec.etaplar[1].hat] for sec in s] == ["HIZLI", "YAVAS"]
+    # çeşitlilik kapalıysa yalnızca en hızlı
+    k = plan.planla(g, yer(0, 0), yer(6000, 0), 0, hm("08:00"), cesitlilik=False)
+    assert [g.hat_kisa[sec.etaplar[1].hat] for sec in k] == ["HIZLI"]
+
+
+def test_raptor_yasak_hatlar(ag):  # noqa: F811
+    for d in "AB":
+        ag.durak(d)
+    ag.sefer("L1", "bus", [("A", "08:00"), ("B", "08:10")], kimlik="a1")
+    ag.sefer("L2", "bus", [("A", "08:05"), ("B", "08:30")], kimlik="a2")
+    g = ag.graf()
+    l1 = g.hat_kisa.index("L1")
+    assert sorgu(g, "A", "B", "08:00")[0].varis == hm("08:10")
+    assert sorgu(g, "A", "B", "08:00", yasak_hatlar={l1})[0].varis == hm("08:30")
+    assert sorgu(g, "A", "B", "08:00", yasak_hatlar={l1, g.hat_kisa.index("L2")}) == []
+
+
+def test_maliyet_formulu():
+    # 40 dk süre + 2 aktarma (16 dk) + 10 dk yürüme (+5 dk ek) = 61 dk
+    assert plan._maliyet(0, 2400, 2, 600) == 2400 + 2 * 480 + 300
+    assert plan.AKTARMA_CEZASI_SN == 480 and plan.YURUME_EK_KATSAYI == 0.5 and plan.DEGER_ESIGI_SN == 300
+
+
+def test_planla_hizli_siralama_aktarma_cezasini_hesaba_katar(ag):  # noqa: F811
+    # A seçeneği 6 dk daha erken varır ama 2 aktarma yapar; B aktarmasızdır. Salt varışa bakılsa A önde olurdu;
+    # maliyette A = süre + 16 dk ceza olduğundan B öne geçer. (A yine de elenmez: 5 dk eşiğinden fazla kazandırıyor.)
+    for ad, k in (("A", 0), ("M", 2000), ("N", 2300), ("B", 5000)):
+        ag.durak(ad, k, 0)
+    ag.sefer("D1", "bus", [("A", "08:10"), ("B", "08:40")], kimlik="d1")
+    ag.sefer("X1", "bus", [("A", "08:10"), ("M", "08:15")], kimlik="x1")
+    ag.sefer("MB", "metrobus", [("M", "08:17"), ("N", "08:20")], kimlik="mb")
+    ag.sefer("X2", "bus", [("N", "08:22"), ("B", "08:34")], kimlik="x2")
+    g = ag.graf()
+    s = plan.planla(g, yer(0, 0), yer(5000, 0), 0, hm("08:00"))
+    assert [sec.aktarma for sec in s] == [0, 2]
+    assert s[1].varis < s[0].varis and s[0].maliyet < s[1].maliyet

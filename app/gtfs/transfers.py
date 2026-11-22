@@ -5,7 +5,7 @@ bilmek zorundadır. Bu modül, yüklenmiş tüm beslemelerin duraklarına bakıp
 
 1. **Yürüme kenarları** (`gtfs_transfer`, `source="auto"`): birbirine `yaricap` metreden (varsayılan 150)
    yakın her durak çifti için iki yönlü kenar; ayrıca istasyon türü duraklar
-   (metro, Marmaray, vapur iskelesi ...) için `istasyon_yaricap` (varsayılan 600 m; farklı beslemelerde her zaman,
+   (metro, Marmaray, vapur iskelesi ...) için `istasyon_yaricap` (varsayılan 900 m; farklı beslemelerde her zaman,
    aynı beslemede yalnız ortak hat yoksa). Süre = mesafe × 1.3
    (kuş uçuşu düzeltmesi) / 4.8 km/s.
 2. **İstasyon kümeleri**: metro, tramvay, füniküler, teleferik, raylı, metrobüs ve vapur durakları
@@ -39,8 +39,9 @@ YURUME_KATSAYISI = 1.3            # kuş uçuşu mesafeyi gerçek yürüme yolun
 YURUME_HIZI_MS = 4.8 / 3.6        # 4.8 km/s
 VARSAYILAN_YARICAP_M = 150.0
 # Farklı beslemelerin istasyon türü durakları (ör. Marmaray ↔ vapur iskelesi) gerçekte 150 m'den uzaktır:
-# Üsküdar 236 m, Bostancı 262 m, Sirkeci-Eminönü 542 m (gerçek veri ölçümü). Bu çiftler için daha geniş yarıçap.
-VARSAYILAN_ISTASYON_YARICAP_M = 600.0
+# Üsküdar 236 m, Bostancı 262 m, Sirkeci-Eminönü 542 m (gerçek veri ölçümü); metrobüs ↔ metro (Zincirlikuyu-Gayrettepe gibi) daha da uzak.
+# Bu çiftler için daha geniş yarıçap; yürüme maliyeti sıralamada zaten cezalandırıldığından abartılı yürüyüşler öne çıkmaz.
+VARSAYILAN_ISTASYON_YARICAP_M = 900.0
 # İstasyon türü bir durak (metrobüs, metro ...) ile yakındaki OTOBÜS durakları arasındaki yürüme: metrobüs istasyonları
 # E-5/D-100 ortasında, otobüs durakları servis yollarında olduğundan çoğu kez 150 m'den uzaktır (üst geçit/yürüyüş).
 VARSAYILAN_ISTASYON_CEVRE_YARICAP_M = 300.0
