@@ -109,6 +109,7 @@ def main(argv=None) -> int:
     ap.add_argument("--dosya", default=os.path.join("gtfs_data", "iett-hat-guzergahlari.geojson"),
                     help="`guzergah`: İETT hat güzergahları GeoJSON dosyası (yoksa portaldan indirilir)")
     ap.add_argument("--ad", help="`durak`: aranacak durak adı (parça)")
+    ap.add_argument("--komsu", type=float, default=0.0, help="`durak`: bu mesafe (m) içindeki komşu durakları ve yürüme kenarı olup olmadığını da göster")
     ap.add_argument("--nereden", help="`rota`: başlangıç \"enlem,boylam\" (örn. 40.9903,29.0260)")
     ap.add_argument("--nereye", help="`rota`: varış \"enlem,boylam\"")
     ap.add_argument("--saat", help="`rota`: kalkış saati SS:DD (varsayılan: şimdi)")
@@ -195,7 +196,7 @@ def main(argv=None) -> int:
                     return 2
                 from app.routing import graph, plan
                 g = graph.yukle(oturum, a.graf, log=lambda m: print("  " + m))
-                print(plan.durak_ozeti(g, a.ad, a.gun, modlar=a.modlar))
+                print(plan.durak_ozeti(g, a.ad, a.gun, modlar=a.modlar, komsu_m=a.komsu))
                 return 0
             if a.komut == "aktarma":
                 from app.gtfs import transfers

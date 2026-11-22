@@ -469,3 +469,15 @@ def test_planla_hizli_siralama_aktarma_cezasini_hesaba_katar(ag):  # noqa: F811
     s = plan.planla(g, yer(0, 0), yer(5000, 0), 0, hm("08:00"))
     assert [sec.aktarma for sec in s] == [0, 2]
     assert s[1].varis < s[0].varis and s[0].maliyet < s[1].maliyet
+
+
+def test_planla_kumulatif_yasak_ucuncu_alternatifi_bulur(ag):  # noqa: F811
+    # Üç paralel hat: HIZLI, ORTA (otobüs) ve METRO. Hatlar tek tek yasaklanınca yalnızca HIZLI->ORTA çıkar; HIZLI ve ORTA birlikte
+    # yasaklanınca METRO ortaya çıkmalı (Google'ın sunduğu "farklı mod" alternatifi).
+    ag.durak("A", 0, 0); ag.durak("B", 6000, 0)
+    ag.sefer("HIZLI", "bus", [("A", "08:10"), ("B", "08:25")], kimlik="h1")
+    ag.sefer("ORTA", "bus", [("A", "08:12"), ("B", "08:40")], kimlik="o1")
+    ag.sefer("METRO", "metro", [("A", "08:15"), ("B", "08:55")], kimlik="m1")
+    g = ag.graf()
+    s = plan.planla(g, yer(0, 0), yer(6000, 0), 0, hm("08:00"))
+    assert [g.hat_kisa[sec.etaplar[1].hat] for sec in s] == ["HIZLI", "ORTA", "METRO"]
