@@ -346,8 +346,8 @@ metrobüs hatları dahil). Seyrek duraklı metrobüsü Google Directions'a oturt
 - **Kaynak:** TCDD Taşımacılık, "Gayrettepe - İstanbul Havalimanı - Halkalı Metro Hattı İlk ve Son Tren Saatleri" tablosu
   (tcddtasimacilik.gov.tr/marmaray/tr/gayrettepetrensaatleri). 15 istasyon; Gayrettepe 05:58-23:58 (Halkalı yönü), Halkalı 06:03-23:48
   (Gayrettepe yönü); son trenle uçtan uca 64 dk.
-- **Üretim:** `python scripts/m11_olustur.py --aralik-dk <dakika>` -> `data/m11.json`. İstasyon konumları OpenStreetMap'ten (Overpass)
-  alınır, tablo süreleriyle hız denetimi yapılır; belirsizlikte `--koordinat` CSV'si ile elle düzeltilir. Sıklık tabloda yoktur; TCDD sayfasındaki değer
+- **Üretim:** `python scripts/m11_olustur.py --aralik-dk <dakika>` -> `data/m11.json`. İstasyon konumları `data/m11_koordinat.csv`'den (Vikipedi M11 istasyon listesi; Gayrettepe, İhsaniye, İstanbul Havalimanı ve Arnavutköy Hastane Google Maps ile
+  karşılaştırıldı; betik OpenStreetMap'ten de alabilir), tablo süreleriyle hız denetimi yapılır; belirsizlikte `--koordinat` CSV'si ile elle düzeltilir. Sıklık tabloda yoktur; TCDD sayfasındaki değer
   verilir: **15 dk** ("trafiğin durumuna göre değişebilir"). Doğrulama: 05:58-23:58 (73 sefer) + 06:03-23:48 (72 sefer) = 145,
   TCDD'nin günlük sefer sayısıyla (145) birebir uyuşur; işletmede 9 tren, 4 vagonluk setler.
 - **Varsayımlar:** seferler uçtan uca kabul edilir (TCDD: ara istasyonlardan da tren başlar ve son istasyona kadar gider; bu kısmi seferler modellenmedi);

@@ -32,6 +32,8 @@ from app.gtfs.textfix import ascii_katla  # noqa: E402
 
 OVERPASS_ADRESLERI = ("https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter",
                       "https://overpass.kumi.systems/api/interpreter")
+NOMINATIM = "https://nominatim.openstreetmap.org/search"
+NOMINATIM_BEKLEME_SN = 1.1        # Nominatim kullanım kuralı: saniyede en çok 1 istek
 TUR_SAYISI = 3                    # tüm sunucular başarısız olursa bu kadar tur denenir (aralarında bekleme)
 ZAMAN_ASIMI = (10, 70)            # (bağlanma, okuma) sn: kalabalık sunucuda sonsuz beklemez
 # Overpass, tanımlayıcı bir User-Agent olmayan istemcilere 406 döner; kişisel bilgi içermeyen genel bir ad kullanılır.
@@ -121,6 +123,23 @@ def konum_sec(kimlik: str, adaylar: List[dict]) -> Optional[Tuple[float, float]]
     return None
 
 
+def nominatim_adaylari(kimlik: str, ad: str, parca: str, http_get) -> List[dict]:
+    """Yedek yol (Overpass çalışmazsa): Nominatim ile istasyon adı araması; kutu içindeki raylı/istasyon sonuçları aday olur."""
+    s, w, n, e = KUTU
+    yanit = http_get(NOMINATIM, params={"q": f"{ad} istasyonu İstanbul", "format": "json", "limit": 8,
+                                        "viewbox": f"{w},{n},{e},{s}", "bounded": 1}, headers=BASLIKLAR, timeout=30)
+    yanit.raise_for_status()
+    adaylar = []
+    for r in yanit.json():
+        if r.get("class") not in ("railway", "public_transport") and r.get("type") not in ("station", "subway", "halt"):
+            continue
+        if parca not in ascii_katla(r.get("display_name", "")):
+            continue
+        adaylar.append({"ad": r.get("display_name", "")[:60], "lat": float(r["lat"]), "lon": float(r["lon"]),
+                        "etiketler": {"class": r.get("class", ""), "type": r.get("type", "")}})
+    return adaylar
+
+
 def hiz_kontrolu(koordinatlar: Dict[str, Tuple[float, float]]) -> List[str]:
     """Ardışık istasyonlar arası ortalama hız (kuş uçuşu / tablo süresi) makul mü? Sorunları döndürür."""
     sorunlar = []
@@ -133,14 +152,15 @@ def hiz_kontrolu(koordinatlar: Dict[str, Tuple[float, float]]) -> List[str]:
     return sorunlar
 
 
-def tanim_uret(koordinatlar: Dict[str, Tuple[float, float]], aralik_dk: int, veri_tarihi: str) -> dict:
+def tanim_uret(koordinatlar: Dict[str, Tuple[float, float]], aralik_dk: int, veri_tarihi: str,
+               konum_kaynagi: str = "OpenStreetMap") -> dict:
     return {
         "besleme": {
             "id": "m11", "ad": "M11 Gayrettepe - İstanbul Havalimanı - Halkalı (TCDD, elle tanımlı)", "veri_tarihi": veri_tarihi,
             "kaynak": (f"TCDD Taşımacılık, Gayrettepe - İstanbul Havalimanı - Halkalı Metro Hattı ilk ve son tren saatleri ({KAYNAK_ADRES}). "
-                       "Seferler uçtan uca varsayılır (tablodaki ara istasyon ilk tren saatleri kısa hatlı seferleri de içerir, modellenmedi); "
+                       "Seferler uçtan uca varsayılır (TCDD: ara istasyonlardan da tren başlar ve son istasyona kadar gider; bu kısmi seferler modellenmedi); "
                        f"istasyonlar arası süreler son tren sütunundan; sıklık {aralik_dk} dk (TCDD'den okunan değer). "
-                       "İstasyon konumları: OpenStreetMap."),
+                       f"İstasyon konumları: {konum_kaynagi}."),
         },
         "kurum": {"id": "tcdd", "ad": "TCDD Taşımacılık", "url": "https://www.tcddtasimacilik.gov.tr"},
         "istasyonlar": [{"id": i, "ad": ad, "enlem": round(koordinatlar[i][0], 6), "boylam": round(koordinatlar[i][1], 6),
@@ -165,10 +185,12 @@ def koordinat_dosyasi_oku(yol: str) -> Dict[str, Tuple[float, float]]:
     return sonuc
 
 
-def main(argv=None, *, http_post=requests.post) -> int:
+def main(argv=None, *, http_post=requests.post, http_get=requests.get) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--aralik-dk", type=int, required=True, help="Sefer sıklığı (dakika); TCDD sayfasından okunan değer")
     ap.add_argument("--koordinat", help="id;enlem;boylam CSV: OSM yerine/eksik istasyonlar için elle koordinat")
+    ap.add_argument("--konum-kaynagi", default=None, help="data/m11.json'a yazılacak konum kaynağı notu (varsayılan: OpenStreetMap; "
+                    "tüm koordinatlar --koordinat ile verildiyse 'elle verilen koordinatlar')")
     ap.add_argument("--veri-tarihi", default=datetime.date.today().isoformat())
     ap.add_argument("--cikti", default=os.path.join(KOK, "data", "m11.json"))
     a = ap.parse_args(argv)
@@ -197,11 +219,22 @@ def main(argv=None, *, http_post=requests.post) -> int:
             if tur + 1 < TUR_SAYISI:
                 print("  Tüm sunucular meşgul; 10 sn sonra yeniden denenecek...")
                 time.sleep(10)
-        if yanit is None:
-            print("Overpass'a ulaşılamadı (sunucular yoğun olabilir; birkaç dakika sonra yeniden deneyin). "
-                  "Ya da koordinatları Google Maps'ten `--koordinat dosya.csv` ile verin.")
-            raise SystemExit(4) from son_hata
-        adaylar = adaylari_ayikla(yanit.json())
+        if yanit is not None:
+            adaylar = adaylari_ayikla(yanit.json())
+        else:
+            print("Overpass'a ulaşılamadı; yedek yol: Nominatim ile istasyon adları tek tek aranıyor (15 istek, ~20 sn)...")
+            adaylar = {i: [] for i, *_ in ISTASYONLAR}
+            ayrinti = {i: (ad, parca) for i, ad, parca, _, _ in ISTASYONLAR}
+            try:
+                for kimlik in eksik:
+                    ad, parca = ayrinti[kimlik]
+                    adaylar[kimlik] = nominatim_adaylari(kimlik, ad, parca, http_get)
+                    time.sleep(NOMINATIM_BEKLEME_SN)
+            except requests.RequestException as e:
+                print(f"Nominatim da başarısız: {type(e).__name__}: {str(e)[:120]}")
+                print("Koordinatları Google Maps'ten `--koordinat dosya.csv` ile verin (şablon: data/m11_koordinat_sablon.csv) "
+                      "ya da birkaç dakika sonra yeniden deneyin.")
+                raise SystemExit(4) from e
         belirsiz = []
         for kimlik in eksik:
             nokta = konum_sec(kimlik, adaylar[kimlik])
@@ -227,7 +260,8 @@ def main(argv=None, *, http_post=requests.post) -> int:
             print("  -", s)
         print("İlgili istasyonları `--koordinat` ile elle düzeltin.")
         return 3
-    tanim = tanim_uret(koordinat, a.aralik_dk, a.veri_tarihi)
+    kaynak = a.konum_kaynagi or ("elle verilen koordinatlar" if a.koordinat and not eksik else "OpenStreetMap")
+    tanim = tanim_uret(koordinat, a.aralik_dk, a.veri_tarihi, kaynak)
     dogrula(tanim)
     with open(a.cikti, "w", encoding="utf-8") as f:
         json.dump(tanim, f, ensure_ascii=False, indent=2)
