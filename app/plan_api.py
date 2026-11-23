@@ -2,11 +2,13 @@
 from datetime import datetime, timedelta, timezone
 from typing import List, Literal, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, model_validator
 
 from app.routing import plan, servis
 from app.routing.graph import mesafe_m
+
+from app.guvenlik import hiz_siniri  # noqa: E402
 
 router = APIRouter()
 
@@ -154,7 +156,8 @@ def plan_durum():
     return servis.durum()
 
 
-@router.post("/api/plan", response_model=PlanYaniti, response_model_exclude_none=True)
+@router.post("/api/plan", response_model=PlanYaniti, response_model_exclude_none=True,
+             dependencies=[Depends(hiz_siniri("plan", 60))])
 def plan_et(istek: PlanIstegi):
     g = servis.graf_al()
     if g is None or g.durak_sayisi == 0:

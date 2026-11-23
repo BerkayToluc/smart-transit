@@ -13,6 +13,8 @@ from sqlalchemy.orm import Session
 from app.db import Durak, get_db
 from app.utils import mesafe_hesapla_km
 
+from app.guvenlik import hiz_siniri  # noqa: E402
+
 router = APIRouter()
 
 # 🚀 15 SANİYELİK İETT ÖNBELLEĞİ (CACHE SİSTEMİ)
@@ -140,7 +142,7 @@ def iett_verisi_cek(hat_kodu: str):
         return []
 
 
-@router.get("/api/canli-otobus/{hat_kodu}")
+@router.get("/api/canli-otobus/{hat_kodu}", dependencies=[Depends(hiz_siniri("canli", 60))])
 def canli_otobus_getir(hat_kodu: str):
     otobusler = iett_verisi_cek(hat_kodu)
     if not otobusler:
@@ -148,7 +150,7 @@ def canli_otobus_getir(hat_kodu: str):
     return {"mesaj": f"{hat_kodu} hattında {len(otobusler)} araç bulundu", "araclar": otobusler}
 
 
-@router.get("/api/moovit/{hat_kodu}/{durak_id}/{hedef_yon}")
+@router.get("/api/moovit/{hat_kodu}/{durak_id}/{hedef_yon}", dependencies=[Depends(hiz_siniri("moovit", 60))])
 def moovit_dinamik_algoritma(hat_kodu: str, durak_id: int, hedef_yon: str, db: Session = Depends(get_db)):
     durak = db.query(Durak).filter(Durak.id == durak_id).first()
     if not durak:
