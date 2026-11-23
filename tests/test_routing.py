@@ -507,3 +507,15 @@ def test_planla_otobus_sinirli_arama_metro_alternatifi_cikarir(ag):  # noqa: F81
     s = plan.planla(g, yer(0, 0), yer(6000, 0), 0, hm("08:00"))
     zincirler = [[g.hat_kisa[e.hat] for e in sec.etaplar if e.tip == "arac"] for sec in s]
     assert ["L1", "L2", "L3"] in zincirler and ["L1", "L2", "METRO"] in zincirler
+
+
+def test_planla_gereksiz_derecede_uzun_alternatif_listelenmez(ag):  # noqa: F811
+    # En iyi seçenek 25 dk; aynı hattın akşam sefer yerine 3 saat sonraki tek seferi (195 dk) hem >90 dk fazla hem >2 kat: listelenmez.
+    # 38 dk'lık yavaş alternatif ise (fark < 90 dk) kalır.
+    ag.durak("A", 0, 0); ag.durak("B", 6000, 0)
+    ag.sefer("HIZLI", "bus", [("A", "08:10"), ("B", "08:25")], kimlik="h1")
+    ag.sefer("YAVAS", "bus", [("A", "08:12"), ("B", "08:50")], kimlik="y1")
+    ag.sefer("GEC", "bus", [("A", "11:00"), ("B", "11:15")], kimlik="g1")
+    g = ag.graf()
+    s = plan.planla(g, yer(0, 0), yer(6000, 0), 0, hm("08:00"))
+    assert [g.hat_kisa[sec.etaplar[1].hat] for sec in s] == ["HIZLI", "YAVAS"]
