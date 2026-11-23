@@ -29,7 +29,9 @@ sys.path.insert(0, KOK)
 from app.gtfs.manual import dogrula  # noqa: E402
 from app.gtfs.textfix import ascii_katla  # noqa: E402
 
-OVERPASS = "https://overpass-api.de/api/interpreter"
+OVERPASS_ADRESLERI = ("https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter")
+# Overpass, tanımlayıcı bir User-Agent olmayan istemcilere 406 döner; kişisel bilgi içermeyen genel bir ad kullanılır.
+BASLIKLAR = {"User-Agent": "smarttransit-m11-olustur/1.0", "Accept": "application/json"}
 KUTU = (40.95, 28.45, 41.40, 29.10)          # güney, batı, kuzey, doğu (İstanbul kuzeybatısı)
 KAYNAK_ADRES = "https://www.tcddtasimacilik.gov.tr/marmaray/tr/gayrettepetrensaatleri"
 
@@ -175,8 +177,18 @@ def main(argv=None, *, http_post=requests.post) -> int:
     eksik = [i for i, *_ in ISTASYONLAR if i not in koordinat]
     if eksik:
         print("OpenStreetMap'ten (Overpass) konumlar alınıyor...")
-        yanit = http_post(OVERPASS, data={"data": overpass_sorgusu()}, timeout=90)
-        yanit.raise_for_status()
+        yanit, son_hata = None, None
+        for adres in OVERPASS_ADRESLERI:                  # biri yoğun/reddederse diğer sunucu denenir
+            try:
+                yanit = http_post(adres, data={"data": overpass_sorgusu()}, headers=BASLIKLAR, timeout=90)
+                yanit.raise_for_status()
+                break
+            except requests.RequestException as e:
+                son_hata, yanit = e, None
+                print(f"  {adres}: {e}")
+        if yanit is None:
+            print("Overpass'a ulaşılamadı. Koordinatları Google Maps'ten `--koordinat dosya.csv` ile verebilirsiniz.")
+            raise SystemExit(4) from son_hata
         adaylar = adaylari_ayikla(yanit.json())
         belirsiz = []
         for kimlik in eksik:
