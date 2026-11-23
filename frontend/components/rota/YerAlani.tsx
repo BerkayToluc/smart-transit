@@ -1,9 +1,13 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Autocomplete } from "@react-google-maps/api";
 import { ISTANBUL_SINIRLARI } from "@/lib/google";
 import type { Nokta } from "@/lib/plan";
 import { Konum } from "@/components/rota/Ikonlar";
+import YerKaydet from "@/components/rota/YerKaydet";
+import YerOnerileri from "@/components/rota/YerOnerileri";
+import { useYerler, yerOlustur, type KayitliYer } from "@/lib/yerler";
+import { bos } from "@/lib/yerlerMantik";
 
 const KOORDINAT = /^\s*(-?\d{1,2}[.,]\d+)\s*[,;\s]\s*(-?\d{1,3}[.,]\d+)\s*$/;
 
@@ -40,6 +44,8 @@ async function ilkOneriyiCoz(metin: string): Promise<(Nokta & { name: string }) 
 interface Props {
   /** Bu alanda bir nokta seçili mi (üst bileşen bilir) */
   secili: boolean;
+  /** Seçili nokta (kaydetme menüsü için) */
+  nokta?: Nokta | null;
   id: string;
   etiket: string;
   yerTutucu: string;
@@ -51,8 +57,19 @@ interface Props {
   onKonumum?: () => void;
 }
 
-export default function YerAlani({ secili, id, etiket, yerTutucu, deger, googleHazir, onDeger, onSecim, konumumDestegi, onKonumum }: Props) {
+export default function YerAlani({ secili, nokta, id, etiket, yerTutucu, deger, googleHazir, onDeger, onSecim, konumumDestegi, onKonumum }: Props) {
   const ac = useRef<google.maps.places.Autocomplete | null>(null);
+  const yerler = useYerler();
+  const [oneriAcik, setOneriAcik] = useState(false);
+  const oneriGoster = oneriAcik && deger.trim() === "" && !bos(yerler.depo);
+  const kayitli = (y: KayitliYer) => {
+    onDeger(y.ad);
+    onSecim({ lat: y.lat, lng: y.lng, name: y.ad });
+    setOneriAcik(false);
+    (document.activeElement as HTMLElement | null)?.blur();
+  };
+  const kaydedilecek: KayitliYer | null =
+    yerler.kullanilabilir && nokta && deger.trim() ? yerOlustur(deger.trim() || nokta.name || "Seçilen nokta", nokta.lat, nokta.lng) : null;
 
   const bekleyen = useRef<ReturnType<typeof setTimeout> | null>(null);
   const seciliRef = useRef(secili);
@@ -99,11 +116,13 @@ export default function YerAlani({ secili, id, etiket, yerTutucu, deger, googleH
       autoComplete="off"
       placeholder={yerTutucu}
       aria-label={etiket}
+      onFocus={() => setOneriAcik(true)}
       onChange={(e) => {
         onDeger(e.target.value);
         onSecim(null); // metin değişti: önceki seçim geçersiz
       }}
       onKeyDown={(e) => {
+        if (e.key === "Escape") setOneriAcik(false);
         if (e.key !== "Enter") return;
         e.preventDefault();
         void metniCoz();
@@ -117,7 +136,12 @@ export default function YerAlani({ secili, id, etiket, yerTutucu, deger, googleH
   );
 
   return (
-    <div className="flex min-w-0 flex-1 items-center">
+    <div
+      className="flex min-w-0 flex-1 items-center"
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOneriAcik(false); // odak bu alanın dışına çıktı
+      }}
+    >
       {googleHazir ? (
         <div className="min-w-0 flex-1">
           <Autocomplete
@@ -137,6 +161,27 @@ export default function YerAlani({ secili, id, etiket, yerTutucu, deger, googleH
         </div>
       ) : (
         <div className="min-w-0 flex-1">{girdi}</div>
+      )}
+      {kaydedilecek && (
+        <YerKaydet
+          yer={kaydedilecek}
+          depo={yerler.depo}
+          onEv={() => yerler.evKaydet(kaydedilecek)}
+          onIs={() => yerler.isKaydet(kaydedilecek)}
+          onFavori={() => yerler.favoriEkle(kaydedilecek)}
+          onFavoriKaldir={() => yerler.favoriSil(kaydedilecek)}
+        />
+      )}
+      {oneriGoster && (
+        <YerOnerileri
+          depo={yerler.depo}
+          onSec={kayitli}
+          onEvSil={() => yerler.evKaydet(null)}
+          onIsSil={() => yerler.isKaydet(null)}
+          onFavoriSil={yerler.favoriSil}
+          onSonlariSil={yerler.sonlariSil}
+          onHepsiniSil={yerler.hepsiniSil}
+        />
       )}
       {konumumDestegi && (
         <button
