@@ -9,7 +9,9 @@ from sqlalchemy.orm import Session
 from app.db import Durak, Guzergah, Hat, get_db
 from app.gtfs.textfix import _ayrac_tespit_et, _koordinat_duzelt, _mojibake_duzelt  # noqa: F401
 
-router = APIRouter()
+from app.guvenlik import yonetici_anahtari_gerekli  # noqa: E402
+
+router = APIRouter(dependencies=[Depends(yonetici_anahtari_gerekli)])
 
 GTFS_KLASORU = "./gtfs_data"  # çalışma dizinine göre göreceli yol
 GEOJSON_DOSYA = os.path.join(GTFS_KLASORU, "iett-hat-guzergahlari.geojson")

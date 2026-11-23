@@ -44,6 +44,8 @@ def _yaz(yol, satirlar):
     with open(yol, "w", encoding="utf-8-sig", newline="") as f:
         csv.writer(f, delimiter=";").writerows(satirlar)
 
+YONETICI = {"X-Admin-Key": "test-yonetici-anahtari"}
+
 
 @pytest.fixture
 def gtfs_klasoru(tmp_path, monkeypatch):
@@ -58,7 +60,7 @@ def gtfs_klasoru(tmp_path, monkeypatch):
 
 
 def test_tum_hatlari_listele(client, gtfs_klasoru):
-    r = client.get("/api/admin/tum-hatlari-listele")
+    r = client.get("/api/admin/tum-hatlari-listele", headers=YONETICI)
     assert r.status_code == 200
     assert r.json() == {"toplam_hat_sayisi": 2, "hatlar": ["T200", "T201"]}
 
@@ -66,7 +68,7 @@ def test_tum_hatlari_listele(client, gtfs_klasoru):
 def test_gtfs_aktar_uctan_uca(client, db, gtfs_klasoru):
     import main
 
-    r = client.get("/api/admin/gtfs-aktar/T200")
+    r = client.get("/api/admin/gtfs-aktar/T200", headers=YONETICI)
     assert r.status_code == 200
     g = r.json()
     assert "hata" not in g, g
@@ -93,8 +95,8 @@ def test_gtfs_aktar_uctan_uca(client, db, gtfs_klasoru):
 def test_gtfs_aktar_tekrar_calisinca_cogaltmaz(client, db, gtfs_klasoru):
     import main
 
-    client.get("/api/admin/gtfs-aktar/T200")
-    r = client.get("/api/admin/gtfs-aktar/T200")
+    client.get("/api/admin/gtfs-aktar/T200", headers=YONETICI)
+    r = client.get("/api/admin/gtfs-aktar/T200", headers=YONETICI)
     assert "hata" not in r.json()
     db.expire_all()
     hat = db.query(main.Hat).filter(main.Hat.hat_kodu == "T200").one()
@@ -102,13 +104,13 @@ def test_gtfs_aktar_tekrar_calisinca_cogaltmaz(client, db, gtfs_klasoru):
 
 
 def test_gtfs_aktar_bilinmeyen_hat(client, gtfs_klasoru):
-    r = client.get("/api/admin/gtfs-aktar/YOKTUR")
+    r = client.get("/api/admin/gtfs-aktar/YOKTUR", headers=YONETICI)
     assert r.status_code == 200
     assert r.json() == {"hata": "routes.csv içinde 'YOKTUR' kodlu hat bulunamadı."}
 
 
 def test_gtfs_aktar_dosya_yoksa_anlamli_hata(client, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)   # içinde gtfs_data yok
-    r = client.get("/api/admin/gtfs-aktar/T200")
+    r = client.get("/api/admin/gtfs-aktar/T200", headers=YONETICI)
     assert r.status_code == 200
     assert "GTFS dosyası bulunamadı" in r.json()["hata"]

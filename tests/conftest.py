@@ -16,6 +16,8 @@ import json
 # --- main import edilmeden önce ayarlanmalı -----------------------------------
 _TEST_DB_DIZINI = tempfile.mkdtemp(prefix="smarttransit-test-")
 os.environ["DATABASE_URL"] = f"sqlite:///{os.path.join(_TEST_DB_DIZINI, 'test.db')}"
+os.environ["RATE_LIMIT_DEVRE_DISI"] = "1"        # hız sınırı testte kapalı (kendi testi açar)
+os.environ["ADMIN_API_KEY"] = "test-yonetici-anahtari"
 os.environ["ROTA_GRAF_ARKA_PLAN"] = "0"       # testlerde rota grafı arka planda yüklenmez (testler kendi grafını koyar)
 
 import pytest  # noqa: E402

@@ -23,7 +23,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text  # noqa: F401  (eski betikler `from main import text` kullanıyor)
 
-from app import catalog, gtfs_admin, live, nearest, plan_api, yaklasan
+from app import catalog, gtfs_admin, guvenlik, live, nearest, plan_api, yaklasan
 from app.routing import servis
 from app.gtfs import models as _gtfs_models  # noqa: F401  (gtfs_* tablolarının açılışta oluşması için)
 from app.db import (  # noqa: F401
@@ -53,13 +53,13 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="SmartTransit API", lifespan=lifespan)
 
-# 🚨 GÜVENLİK DUVARI AÇIK (kısıtlama #29'da yapılacak)
+_izinli_originler, _kimlik_bilgisi = guvenlik.cors_ayarlari()      # CORS_ORIGINS ortam değişkeni (#29)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_izinli_originler,
+    allow_credentials=_kimlik_bilgisi,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "X-Admin-Key"],
 )
 
 app.include_router(catalog.router)

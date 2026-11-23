@@ -1,23 +1,25 @@
 """Seçilen hat üzerinde başlangıç noktasına en yakın durak ve yön."""
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.db import Durak, Hat, get_db
 from app.utils import mesafe_hesapla_km
 
+from app.guvenlik import hiz_siniri  # noqa: E402
+
 router = APIRouter()
 
 
 class EvrenselRotaIstegi(BaseModel):
-    hat_kodu: str
-    baslangic_lat: float
-    baslangic_lng: float
-    hedef_lat: float
-    hedef_lng: float
+    hat_kodu: str = Field(..., min_length=1, max_length=20)
+    baslangic_lat: float = Field(..., ge=-90, le=90)
+    baslangic_lng: float = Field(..., ge=-180, le=180)
+    hedef_lat: float = Field(..., ge=-90, le=90)
+    hedef_lng: float = Field(..., ge=-180, le=180)
 
 
-@router.post("/api/en-yakin-durak")
+@router.post("/api/en-yakin-durak", dependencies=[Depends(hiz_siniri("en_yakin", 60))])
 def en_yakin_durak_bul(istek: EvrenselRotaIstegi, db: Session = Depends(get_db)):
     hat = db.query(Hat).filter(Hat.hat_kodu == istek.hat_kodu.upper()).first()
     if not hat:

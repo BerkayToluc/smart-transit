@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.live import (
     ETKIN_HIZ_MAX_KMH, ETKIN_HIZ_MIN_KMH, GECTI_TOLERANS_KM, MAKS_MAKUL_HIZ_KMH, ROTADAN_MAKS_SAPMA_KM,
@@ -18,6 +18,8 @@ from app.routing import servis
 from app.routing.graph import Graf
 from app.routing.raptor import _sonraki
 from app.utils import mesafe_hesapla_km
+
+from app.guvenlik import hiz_siniri  # noqa: E402
 
 router = APIRouter()
 TR = timezone(timedelta(hours=3))
@@ -148,11 +150,11 @@ def hat_araclari(g: Graf, hat: str, bilgi: dict, simdi: datetime) -> dict:
     }
 
 
-@router.get("/api/yaklasan")
+@router.get("/api/yaklasan", dependencies=[Depends(hiz_siniri("yaklasan", 30))])
 def yaklasan_otobusler(
     bas: str = Query(..., description="biniş durağı kimliği (örn. iett:123)"),
     bit: str = Query(..., description="iniş durağı kimliği"),
-    hatlar: Optional[str] = Query(None, description="virgülle ayrılmış hat kısa adları; boşsa bu iki durak arasındaki tüm hatlar"),
+    hatlar: Optional[str] = Query(None, max_length=200, description="virgülle ayrılmış hat kısa adları; boşsa bu iki durak arasındaki tüm hatlar"),
     oncelik: Optional[str] = Query(None, description="listede başa alınacak hat (rotadaki hat)"),
 ):
     g = servis.graf_al()
