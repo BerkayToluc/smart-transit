@@ -108,3 +108,16 @@ MARMARAY = FeedConfig(
         "(data/marmaray.json); istasyon konumları ve süreleri İBB çok modlu GTFS'ten (2019)."
     ),
 )
+
+# M11 (Gayrettepe - İstanbul Havalimanı - Halkalı): İBB çok modlu beslemesinde yok; TCDD'nin ilk/son tren saatlerinden elle
+# tanımlanır (data/m11.json, scripts/m11_olustur.py). Mod: kısa ada göre metro (route_type 2 olarak üretilir).
+M11 = FeedConfig(
+    feed_id="m11",
+    name="M11 Gayrettepe - İstanbul Havalimanı - Halkalı (TCDD, elle tanımlı)",
+    data_date=date(2026, 11, 24),
+    source_note=(
+        "TCDD Taşımacılık Gayrettepe - İstanbul Havalimanı - Halkalı Metro Hattı ilk ve son tren saatleri "
+        "(tcddtasimacilik.gov.tr/marmaray/tr/gayrettepetrensaatleri). Çizelge kurallardan üretilir (data/m11.json)."
+    ),
+    mode_rules=ModeRules(name_modes=((r"^M11$", "metro"),)),
+)
