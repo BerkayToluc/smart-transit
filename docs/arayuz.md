@@ -70,3 +70,18 @@ kalkışlar gösterilir. Uç nokta: `GET /api/yaklasan` (docs/schema.md).
   `arrive_by`, en geç uygun kalkışı 1 dk çözünürlükle bulur).
 - **Ulaşım türleri** açılır bölümü: rotada kullanmak istemediğiniz türlerin işaretini kaldırırsınız; kapalı türler hiç
   önerilmez.
+
+
+## Kayıtlı yerler: Eve / İşe / favoriler / son aramalar (#24)
+
+- Yalnızca kullanıcının cihazında (`localStorage`, anahtar `smarttransit-yerler`); hesap ve sunucu kaydı yok. Depolama yazılamıyorsa
+  (gizli pencere, engelli çerez) kaydetme düğmeleri gizlenir, uygulama aynen çalışır.
+- Yer alanı **boşken** odaklanınca liste açılır (Eve, İşe, favoriler, son aramalar); bir satıra dokunmak alanı doldurur. Her kayıtta
+  silme düğmesi, "Son aramalar"da "Temizle", altta "Kayıtlı yerleri sil" ve "Yalnızca bu cihazda saklanır" notu var. Yazmaya başlayınca
+  Google önerileri devreye girer, liste kapanır.
+- Bir yer seçilince alanın yanındaki yer imi düğmesi menü açar: Eve / İşe olarak kaydet, favorilere ekle ya da çıkar (klavye: ok
+  tuşları, Esc).
+- Rota bulununca iki uç nokta son aramalara eklenir (en çok 5, aynı yer tekilleşir; "Konumum" eklenmez). Favoriler en çok 20.
+- "Eve git" / "İşe git" kısayolları (kayıt varsa): varışı doldurur; başlangıç boşsa konumunuzu alır.
+- Mantık `lib/yerlerMantik.ts` (saf, depolamasız) ve testi `lib/yerlerMantik.test.ts` (`npm test`, Node'un yerleşik test koşucusu); React
+  bağlayıcısı `lib/yerler.ts`. Bozuk ya da İstanbul dışı kayıtlar okunurken atılır.

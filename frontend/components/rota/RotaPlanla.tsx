@@ -8,12 +8,13 @@ import {
 import HaritaHataSiniri from "@/components/rota/HaritaHataSiniri";
 import Cekmece, { type Olcu } from "@/components/rota/Cekmece";
 import { ModSecici, TercihSecici, ZamanSecici, type ZamanDurumu } from "@/components/rota/Kontroller";
-import { Degistir, Uyari } from "@/components/rota/Ikonlar";
+import { Degistir, Ev, Is, Uyari } from "@/components/rota/Ikonlar";
 import RotaHaritasi from "@/components/rota/RotaHaritasi";
 import SecenekListesi from "@/components/rota/SecenekListesi";
 import CanliSerit from "@/components/rota/CanliSerit";
 import YaklasanPanel from "@/components/rota/Yaklasan";
 import TemaSecici from "@/components/rota/TemaSecici";
+import { useYerler, yerOlustur } from "@/lib/yerler";
 import YerAlani from "@/components/rota/YerAlani";
 
 interface Yer {
@@ -39,6 +40,7 @@ export default function RotaPlanla() {
   const [detayAcik, setDetayAcik] = useState(true);
   const [olcu, setOlcu] = useState<Olcu>({ sol: 416, alt: 0 });
   const [konumHatasi, setKonumHatasi] = useState<string | null>(null);
+  const yerler = useYerler();
 
   // "Otobüsleri gör": açık bacak (indeks), seçili hatlar ve son canlı yanıt
   const [canli, setCanli] = useState<{ anahtar: string; bas: string; bit: string; hat: string } | null>(null);
@@ -184,6 +186,23 @@ export default function RotaPlanla() {
     );
   }, []);
 
+  // Rota bulununca iki uç nokta "son aramalar"a eklenir (Konumum hariç: her seferinde değişir)
+  const sonEkle = yerler.sonEkle;
+  useEffect(() => {
+    if (!veri?.sonuc?.itineraries.length) return;
+    for (const y of [bas, bit]) {
+      if (y.nokta && y.metin.trim() && y.metin.trim() !== "Konumum") sonEkle(yerOlustur(y.metin.trim(), y.nokta.lat, y.nokta.lng));
+    }
+    // yalnızca yeni bir sonuç geldiğinde çalışır
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [veri]);
+
+  // "Eve git" / "İşe git": varış kayıtlı yer olur; başlangıç boşsa konumunuz alınır
+  const hizliGit = (y: { ad: string; lat: number; lng: number }) => {
+    setBit({ metin: y.ad, nokta: { lat: y.lat, lng: y.lng, name: y.ad } });
+    if (!bas.nokta) konumum();
+  };
+
   // Yeni sonuçlar gelince liste görünür olsun (telefonda çekmecenin altında kalmasın)
   useEffect(() => {
     if (veri?.sonuc?.itineraries.length) sonucRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -208,7 +227,7 @@ export default function RotaPlanla() {
           </header>
 
           <section aria-label="Nereden nereye" className="px-5 pt-4">
-            <div className="flex items-stretch gap-1 rounded-2xl bg-yuzey p-2 shadow-[var(--gol)]">
+            <div className="relative flex items-stretch gap-1 rounded-2xl bg-yuzey p-2 shadow-[var(--gol)]">
               <div className="relative flex w-7 shrink-0 flex-col items-center justify-center" aria-hidden="true">
                 <span className="h-3 w-3 rounded-full border-[3px] border-murekkep bg-yuzey" />
                 <span className="my-1 h-7 w-0 border-l-[3px] border-dotted border-murekkep-3" />
@@ -217,6 +236,7 @@ export default function RotaPlanla() {
               <div className="min-w-0 flex-1 divide-y divide-cizgi">
                 <YerAlani
                   secili={!!bas.nokta}
+                  nokta={bas.nokta}
                   id="nereden"
                   etiket="Nereden"
                   yerTutucu="Nereden: adres, yer ya da enlem,boylam"
@@ -229,6 +249,7 @@ export default function RotaPlanla() {
                 />
                 <YerAlani
                   secili={!!bit.nokta}
+                  nokta={bit.nokta}
                   id="nereye"
                   etiket="Nereye"
                   yerTutucu="Nereye"
@@ -248,6 +269,28 @@ export default function RotaPlanla() {
                 <Degistir />
               </button>
             </div>
+            {(yerler.depo.ev || yerler.depo.is) && (
+              <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Kayıtlı yerlere git">
+                {yerler.depo.ev && (
+                  <button
+                    type="button"
+                    onClick={() => hizliGit(yerler.depo.ev!)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-yuzey px-3.5 py-1.5 text-[13px] font-semibold text-murekkep shadow-[var(--gol)] transition-colors hover:bg-yuzey-2"
+                  >
+                    <Ev className="text-base text-bogaz" /> Eve git
+                  </button>
+                )}
+                {yerler.depo.is && (
+                  <button
+                    type="button"
+                    onClick={() => hizliGit(yerler.depo.is!)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-yuzey px-3.5 py-1.5 text-[13px] font-semibold text-murekkep shadow-[var(--gol)] transition-colors hover:bg-yuzey-2"
+                  >
+                    <Is className="text-base text-bogaz" /> İşe git
+                  </button>
+                )}
+              </div>
+            )}
             {((bas.metin.trim() && !bas.nokta) || (bit.metin.trim() && !bit.nokta)) && (
               <p className="mt-2 text-[13px] text-murekkep-2">Yazdığınız yeri listeden seçin ya da Enter&apos;a basın; ilk öneri seçilir.</p>
             )}

@@ -154,3 +154,25 @@ export const Otomatik = (p: P) => (
     <path d="M12 3.8a8.2 8.2 0 0 1 0 16.4Z" fill="currentColor" stroke="none" />
   </Taban>
 );
+
+export const Ev = (p: P) => (
+  <Taban {...p}>
+    <path d="M3.5 11.2 12 4l8.5 7.2M5.8 9.8V20h12.4V9.8M10 20v-5.5h4V20" />
+  </Taban>
+);
+export const Is = (p: P) => (
+  <Taban {...p}>
+    <rect x="3.5" y="7.5" width="17" height="12" rx="2.5" />
+    <path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5M3.5 13h17" />
+  </Taban>
+);
+export const Yildiz = ({ dolu, ...p }: P & { dolu?: boolean }) => (
+  <Taban {...p} fill={dolu ? "currentColor" : "none"}>
+    <path d="m12 3.8 2.5 5.1 5.6.8-4 4 .9 5.6L12 16.6 7 19.3l1-5.6-4.1-4 5.6-.8Z" />
+  </Taban>
+);
+export const Yerimi = (p: P) => (
+  <Taban {...p}>
+    <path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.8L6 20V5.5a1 1 0 0 1 1-1Z" />
+  </Taban>
+);
