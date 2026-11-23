@@ -22,16 +22,22 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#eaf0f2" },
-    { media: "(prefers-color-scheme: dark)", color: "#08141b" },
+    { media: "(prefers-color-scheme: light)", color: "#e8eff1" },
+    { media: "(prefers-color-scheme: dark)", color: "#06121a" },
   ],
   width: "device-width",
   initialScale: 1,
 };
 
+// Sayfa boyanmadan önce kayıtlı temayı uygular (yanlış temada parlama olmasın). Depolama erişilemezse sistem teması kalır.
+const ERKEN_TEMA = `try{var t=localStorage.getItem("smarttransit-tema");if(t==="acik"||t==="koyu"){document.documentElement.setAttribute("data-theme",t==="acik"?"light":"dark")}}catch(e){}`;
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="tr" className={`${baslik.variable} ${govde.variable} h-full antialiased`}>
+    <html lang="tr" className={`${baslik.variable} ${govde.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: ERKEN_TEMA }} />
+      </head>
       <body className="h-full">{children}</body>
     </html>
   );

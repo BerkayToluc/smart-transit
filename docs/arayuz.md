@@ -20,7 +20,14 @@ yerine açıklayıcı bir mesaj görünür; rota listesi çalışmaya devam eder
 - **Akılda kalan öğe: zaman şeridi.** Her seçenek, süresine orantılı renkli bir şerit (yürüme noktalı, hatlar kendi
   renginde); çubuğun toplam uzunluğu en uzun seçeneğe göredir. Detayda tren içindeki istasyon şeritleri gibi dikey hat şeması.
 - **Renkler** (`app/globals.css`): Sis (zemin), Mürekkep (metin), Boğaz (vurgu), İskele (`#F59F0F`, Şehir Hatları
-  tarife kitapçığından ölçülen turuncu; yalnız "şimdi/seçili"). Koyu tema `prefers-color-scheme` ile gelir.
+  tarife kitapçığından ölçülen turuncu; yalnız "şimdi/seçili"). Gündüz teması "Sis", gece teması "Liman".
+
+  **Tema seçimi (#59):** başlıktaki açık / sistem / koyu seçici (`TemaSecici`, radyo grubu, ok tuşlarıyla gezilir). Seçim
+  `localStorage` (`smarttransit-tema`) ve `<html data-theme="light|dark">` ile tutulur; "sistem"de öznitelik yoktur ve CSS
+  `prefers-color-scheme`'i izler. `app/layout.tsx` içindeki satır içi betik öznitelik sayfa boyanmadan önce koyar (parlama
+  olmaz), depolama erişilemezse sistem teması kalır. `lib/tema.ts` (`useTema`) seçimi, gerçekten uygulanan temayı ve
+  `theme-color` meta etiketlerini yönetir. Harita stilleri `lib/haritaStili.ts` (`GUNDUZ_STILI` / `GECE_STILI`), temaya göre
+  değişir. Rozet yazıları `--mod-*-on` belirteçleriyle her temada AA kontrastlıdır (metin çiftleri ≥4,5:1).
 - **Yazı:** Bricolage Grotesque (başlık, süreler, marka) + Instrument Sans (arayüz), `latin-ext` ile Türkçe karakterler.
 - Metro/tramvay hat renkleri yaklaşık işletme renkleridir (`lib/modes.ts`); eşleşmeyen hatlar mod rengini alır.
 - Masaüstünde 26 rem sol panel, telefonda üç duruşlu sürüklenebilir alt çekmece (`Cekmece.tsx`).

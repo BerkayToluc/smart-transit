@@ -13,6 +13,7 @@ import RotaHaritasi from "@/components/rota/RotaHaritasi";
 import SecenekListesi from "@/components/rota/SecenekListesi";
 import CanliSerit from "@/components/rota/CanliSerit";
 import YaklasanPanel from "@/components/rota/Yaklasan";
+import TemaSecici from "@/components/rota/TemaSecici";
 import YerAlani from "@/components/rota/YerAlani";
 
 interface Yer {
@@ -198,9 +199,12 @@ export default function RotaPlanla() {
       </HaritaHataSiniri>
       <Cekmece onOlcu={setOlcu}>
         <div className="kaydir flex-1 overflow-y-auto pb-6" >
-          <header className="px-5 pb-1 pt-1 md:pt-8">
+          <header className="flex items-start justify-between gap-3 px-5 pb-1 pt-1 md:pt-8">
+            <div className="min-w-0">
             <h1 className="font-display text-[1.7rem] font-extrabold leading-none text-murekkep">smarttransit</h1>
             <p className="mt-1.5 hidden text-[15px] text-murekkep-2 md:block">Metro, tramvay, Marmaray, vapur ve otobüsle İstanbul&apos;da nereye gidiyorsunuz?</p>
+            </div>
+            <TemaSecici />
           </header>
 
           <section aria-label="Nereden nereye" className="px-5 pt-4">
