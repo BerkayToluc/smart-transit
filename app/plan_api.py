@@ -1,16 +1,22 @@
 """POST /api/plan: koordinattan koordinata aktarmalı rota (RAPTOR, bkz. app/routing/)."""
+import threading
+import time
 from datetime import datetime, timedelta, timezone
 from typing import List, Literal, Optional
 
+from cachetools import TTLCache
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, model_validator
 
+from app import saglik
 from app.routing import plan, servis
 from app.routing.graph import mesafe_m
 
 from app.guvenlik import hiz_siniri  # noqa: E402
 
 router = APIRouter()
+_plan_onbellek = TTLCache(maxsize=256, ttl=30)
+_plan_kilit = threading.Lock()
 
 # Türkiye kalıcı UTC+3 (2016'dan beri yaz saati yok); Windows'ta tz veritabanı olmadığından sabit ofset.
 TR = timezone(timedelta(hours=3))
@@ -159,6 +165,22 @@ def plan_durum():
 @router.post("/api/plan", response_model=PlanYaniti, response_model_exclude_none=True,
              dependencies=[Depends(hiz_siniri("plan", 60))])
 def plan_et(istek: PlanIstegi):
+    # Kısa TTL önbellek (aynı graf sürümü + aynı istek; "şimdi" istekleri dakikaya göre ayrılır). Hata yanıtları önbelleklenmez.
+    anahtar = (servis.surum(), istek.model_dump_json(),
+               int(time.time() // 60) if istek.depart_at is None and istek.arrive_by is None else None)
+    with _plan_kilit:
+        bulunan = _plan_onbellek.get(anahtar)
+    if bulunan is not None:
+        saglik.plan_onbellek["isabet"] += 1
+        return bulunan
+    saglik.plan_onbellek["iskalama"] += 1
+    sonuc = _plan_hesapla(istek)
+    with _plan_kilit:
+        _plan_onbellek[anahtar] = sonuc
+    return sonuc
+
+
+def _plan_hesapla(istek: PlanIstegi):
     g = servis.graf_al()
     if g is None or g.durak_sayisi == 0:
         d = servis.durum()

@@ -127,6 +127,7 @@ SOAP_ZAMAN_ASIMI = (3.05, 8)         # (bağlanma, okuma) sn: servis yanıt verm
 SOAP_DENEME = 3                      # toplam deneme sayısı (üstel geri çekilmeyle: 0,3 sn, 0,6 sn)
 HATA_ONBELLEK_SN = 5                 # başarısız çağrı bu kadar sn tekrarlanmaz (fırtına etkisi)
 _iett_kilit = threading.Lock()
+iett_son = {"ok": None, "an": None}          # son canlı veri denemesinin sonucu (/health gösterir)
 
 
 class IettHatasi(Exception):
@@ -174,6 +175,7 @@ def iett_durum(hat_kodu: str) -> dict:
         kayit = {"araclar": _iett_istegi(hat_kodu), "erisilemiyor": False, "an": time.monotonic()}
     except IettHatasi:
         kayit = {"araclar": [], "erisilemiyor": True, "an": time.monotonic()}
+    iett_son.update(ok=not kayit["erisilemiyor"], an=kayit["an"])
     with _iett_kilit:
         iett_cache[hat_kodu] = kayit
     return kayit
