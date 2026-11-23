@@ -6,7 +6,7 @@ yoktur: `--aralik-dk` ile TCDD sayfasından/uygulamasından okunan değer verili
 
     python scripts/m11_olustur.py --aralik-dk 10
 
-Belirsiz istasyon (OSM'de birden çok farklı konum) olursa betik adayları yazıp durur; `--koordinat dosya.csv`
+Overpass yoğunsa betik 3 sunucuyu 3 tur dener. Belirsiz istasyon (OSM'de birden çok farklı konum) olursa betik adayları yazıp durur; `--koordinat dosya.csv`
 (id;enlem;boylam) ile elle düzeltilebilir. Üretilen dosya `data/m11.json`'a yazılır ve doğrulanır; ardından:
 
     python scripts/build_gtfs.py hepsi m11 --hedef sqlite:///gtfs_data/gtfs.db
@@ -19,6 +19,7 @@ import json
 import math
 import os
 import sys
+import time
 from typing import Dict, List, Optional, Tuple
 
 import requests
@@ -29,7 +30,10 @@ sys.path.insert(0, KOK)
 from app.gtfs.manual import dogrula  # noqa: E402
 from app.gtfs.textfix import ascii_katla  # noqa: E402
 
-OVERPASS_ADRESLERI = ("https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter")
+OVERPASS_ADRESLERI = ("https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter",
+                      "https://overpass.kumi.systems/api/interpreter")
+TUR_SAYISI = 3                    # tüm sunucular başarısız olursa bu kadar tur denenir (aralarında bekleme)
+ZAMAN_ASIMI = (10, 70)            # (bağlanma, okuma) sn: kalabalık sunucuda sonsuz beklemez
 # Overpass, tanımlayıcı bir User-Agent olmayan istemcilere 406 döner; kişisel bilgi içermeyen genel bir ad kullanılır.
 BASLIKLAR = {"User-Agent": "smarttransit-m11-olustur/1.0", "Accept": "application/json"}
 KUTU = (40.95, 28.45, 41.40, 29.10)          # güney, batı, kuzey, doğu (İstanbul kuzeybatısı)
@@ -69,10 +73,10 @@ def mesafe_m(a: Tuple[float, float], b: Tuple[float, float]) -> float:
 
 
 def overpass_sorgusu() -> str:
-    desen = "|".join(r for _, _, _, r, _ in ISTASYONLAR)
+    """Kutudaki TÜM raylı durak düğümleri (hafif sorgu; ad süzgeci sunucuda değil burada yapılır: kalabalık sunucuda zaman aşımını önler)."""
     s, w, n, e = KUTU
-    return (f'[out:json][timeout:60];(node["railway"~"station|halt|stop"]["name"~"{desen}",i]({s},{w},{n},{e});'
-            f'node["station"~"subway|train"]["name"~"{desen}",i]({s},{w},{n},{e}););out body;')
+    return (f'[out:json][timeout:40];(node["railway"~"^(station|halt|stop)$"]({s},{w},{n},{e});'
+            f'node["station"~"^(subway|train)$"]({s},{w},{n},{e}););out body;')
 
 
 def adaylari_ayikla(yanit: dict) -> Dict[str, List[dict]]:
@@ -156,7 +160,7 @@ def koordinat_dosyasi_oku(yol: str) -> Dict[str, Tuple[float, float]]:
     sonuc = {}
     with open(yol, encoding="utf-8-sig", newline="") as f:
         for satir in csv.reader(f, delimiter=";"):
-            if len(satir) >= 3 and satir[0] != "id":
+            if len(satir) >= 3 and satir[0] != "id" and satir[1].strip() and satir[2].strip():     # boş şablon satırları atlanır
                 sonuc[satir[0].strip()] = (float(satir[1].replace(",", ".")), float(satir[2].replace(",", ".")))
     return sonuc
 
@@ -178,16 +182,24 @@ def main(argv=None, *, http_post=requests.post) -> int:
     if eksik:
         print("OpenStreetMap'ten (Overpass) konumlar alınıyor...")
         yanit, son_hata = None, None
-        for adres in OVERPASS_ADRESLERI:                  # biri yoğun/reddederse diğer sunucu denenir
-            try:
-                yanit = http_post(adres, data={"data": overpass_sorgusu()}, headers=BASLIKLAR, timeout=90)
-                yanit.raise_for_status()
+        for tur in range(TUR_SAYISI):
+            for adres in OVERPASS_ADRESLERI:              # biri yoğun/reddederse diğer sunucu denenir
+                try:
+                    print(f"  {adres} (tur {tur + 1}/{TUR_SAYISI})...")
+                    yanit = http_post(adres, data={"data": overpass_sorgusu()}, headers=BASLIKLAR, timeout=ZAMAN_ASIMI)
+                    yanit.raise_for_status()
+                    break
+                except requests.RequestException as e:
+                    son_hata, yanit = e, None
+                    print(f"    başarısız: {type(e).__name__}: {str(e)[:120]}")
+            if yanit is not None:
                 break
-            except requests.RequestException as e:
-                son_hata, yanit = e, None
-                print(f"  {adres}: {e}")
+            if tur + 1 < TUR_SAYISI:
+                print("  Tüm sunucular meşgul; 10 sn sonra yeniden denenecek...")
+                time.sleep(10)
         if yanit is None:
-            print("Overpass'a ulaşılamadı. Koordinatları Google Maps'ten `--koordinat dosya.csv` ile verebilirsiniz.")
+            print("Overpass'a ulaşılamadı (sunucular yoğun olabilir; birkaç dakika sonra yeniden deneyin). "
+                  "Ya da koordinatları Google Maps'ten `--koordinat dosya.csv` ile verin.")
             raise SystemExit(4) from son_hata
         adaylar = adaylari_ayikla(yanit.json())
         belirsiz = []

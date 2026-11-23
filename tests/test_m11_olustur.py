@@ -150,12 +150,50 @@ def test_overpass_tanimlayici_baslik_ve_yedek_sunucu(tmp_path):
     assert all("User-Agent" in h and h["User-Agent"] for _, h in gorulen)
 
 
-def test_overpass_hic_ulasilamazsa_net_cikis(tmp_path, capsys):
+def test_overpass_hic_ulasilamazsa_net_cikis(tmp_path, capsys, monkeypatch):
     import requests
+    monkeypatch.setattr(m11.time, "sleep", lambda s: None)
+    cagri = []
 
     def post(*a, **kw):
+        cagri.append(1)
         raise requests.ConnectionError("yok")
 
     with pytest.raises(SystemExit) as e:
         m11.main(["--aralik-dk", "15", "--cikti", str(tmp_path / "x.json")], http_post=post)
     assert e.value.code == 4 and "--koordinat" in capsys.readouterr().out
+    assert len(cagri) == m11.TUR_SAYISI * len(m11.OVERPASS_ADRESLERI)           # her tur tüm sunucuları dener
+
+
+def test_sorgu_hafif_ad_suzgeci_sunucuda_yok():
+    q = m11.overpass_sorgusu()
+    assert "railway" in q and "name" not in q and "timeout:40" in q            # ad regex'i sunucuyu yormasın
+
+
+def test_yavas_birinci_sunucu_zaman_asimi_ikinciye_gecer(tmp_path):
+    import requests
+    k = hat_koordinatlari()
+
+    class Yanit:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return sahte_overpass(k)
+
+    sayac = []
+
+    def post(adres, data=None, headers=None, timeout=None):
+        sayac.append(timeout)
+        if len(sayac) == 1:
+            raise requests.ReadTimeout("read timed out")
+        return Yanit()
+
+    assert m11.main(["--aralik-dk", "15", "--cikti", str(tmp_path / "m.json")], http_post=post) == 0
+    assert sayac[0] == m11.ZAMAN_ASIMI and len(sayac) == 2
+
+
+def test_sablon_bos_satirlar_atlanir_dolu_okunur():
+    yol = os.path.join(KOK, "data", "m11_koordinat_sablon.csv")
+    assert m11.koordinat_dosyasi_oku(yol) == {}                      # şablon boş: hiçbir koordinat yok
+    assert len(open(yol, encoding="utf-8-sig").read().splitlines()) == 16 and "gayrettepe;;;" in open(yol, encoding="utf-8-sig").read()
