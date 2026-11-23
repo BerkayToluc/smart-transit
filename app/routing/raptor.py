@@ -75,12 +75,13 @@ def _sonraki(p, sira: int, esik: int, gun: int):
 
 def ara(g: Graf, kaynaklar: Dict[int, int], hedefler: Dict[int, int], gun: int, *, max_aktarma: int = 3,
         izinli_modlar: Optional[Iterable[str]] = None, aktarma_payi_sn: int = 60,
-        yasak_hatlar: Optional[Iterable[int]] = None) -> List[Yolculuk]:
+        yasak_hatlar: Optional[Iterable[int]] = None, otobus_tur_siniri: Optional[int] = None) -> List[Yolculuk]:
     """Kaynak duraklardan (durak -> oradaki varış saati, sn) hedef duraklara (durak -> çıkış yürümesi, sn).
 
     Pareto sonuçları (erken varış / az aktarma) döner; aktarma sayısına göre artan sıralıdır."""
     izinli = set(izinli_modlar) if izinli_modlar is not None else None
     yasak = set(yasak_hatlar) if yasak_hatlar else None       # bu hatlar (graf.hat_* indeksi) hiç kullanılmaz (alternatif arama)
+    # otobus_tur_siniri=N: otobüs (mod `bus`) yalnızca ilk N araç turunda kullanılabilir; sonrasında raylı/metrobüs/vapur öne çıkar
     n = g.durak_sayisi
     tur_sayisi = max_aktarma + 1
     en_iyi = [INF] * n
@@ -129,6 +130,8 @@ def ara(g: Graf, kaynaklar: Dict[int, int], hedefler: Dict[int, int], gun: int, 
                 if izinli is not None and g.paternler[p].mod not in izinli:
                     continue
                 if yasak is not None and g.paternler[p].hat in yasak:
+                    continue
+                if otobus_tur_siniri is not None and k > otobus_tur_siniri and g.paternler[p].mod == "bus":
                     continue
                 if p not in kuyruk or sira < kuyruk[p]:
                     kuyruk[p] = sira

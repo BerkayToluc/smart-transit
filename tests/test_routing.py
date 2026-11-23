@@ -492,3 +492,18 @@ def test_planla_ayni_gorunen_metrobus_varyantlari_tek_secenek(ag):  # noqa: F811
     g = ag.graf()
     s = plan.planla(g, yer(0, 0), yer(6000, 0), 0, hm("08:00"))
     assert [g.hat_kisa[sec.etaplar[1].hat] for sec in s] == ["34BZ", "ORTA"]
+
+
+def test_planla_otobus_sinirli_arama_metro_alternatifi_cikarir(ag):  # noqa: F811
+    # Üç otobüs (L1,L2,L3) ya da son bacakta metro. Otobüs zinciri daha erken vardığından aynı turda metroyu Pareto eler ve ilk iki hat
+    # yasaklansa da L3 yasaklanmaz; otobüsü yalnızca ilk iki turda serbest bırakan arama metro seçeneğini ortaya çıkarmalı.
+    for ad, k in (("A", 0), ("M", 2000), ("N", 4000), ("B", 6000)):
+        ag.durak(ad, k, 0)
+    ag.sefer("L1", "bus", [("A", "08:10"), ("M", "08:15")], kimlik="l1")
+    ag.sefer("L2", "bus", [("M", "08:17"), ("N", "08:22")], kimlik="l2")
+    ag.sefer("L3", "bus", [("N", "08:24"), ("B", "08:32")], kimlik="l3")
+    ag.sefer("METRO", "metro", [("N", "08:26"), ("B", "08:40")], kimlik="mt")
+    g = ag.graf()
+    s = plan.planla(g, yer(0, 0), yer(6000, 0), 0, hm("08:00"))
+    zincirler = [[g.hat_kisa[e.hat] for e in sec.etaplar if e.tip == "arac"] for sec in s]
+    assert ["L1", "L2", "L3"] in zincirler and ["L1", "L2", "METRO"] in zincirler
