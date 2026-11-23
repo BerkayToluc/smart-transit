@@ -227,7 +227,8 @@ def test_overpass_calismazsa_nominatim_yedegi(tmp_path, monkeypatch):
         ad = params["q"].replace(" istasyonu İstanbul", "")
         lat, lon = ad_koor[ad]
         return Yanit([{"class": "railway", "type": "station", "display_name": f"{ad}, İstanbul, Türkiye", "lat": str(lat), "lon": str(lon)},
-                      {"class": "highway", "type": "bus_stop", "display_name": f"{ad} Otobüs Durağı", "lat": "41.0", "lon": "28.9"}])
+                      {"class": "highway", "type": "bus_stop", "display_name": f"{ad} Otobüs Durağı", "lat": "41.0", "lon": "28.9"},
+                      {"class": "railway", "type": "station", "display_name": "Alakasız İstasyon, İstanbul", "lat": "41.3", "lon": "28.5"}])
 
     cikti = tmp_path / "m11.json"
     assert m11.main(["--aralik-dk", "15", "--cikti", str(cikti)], http_post=post, http_get=get) == 0
