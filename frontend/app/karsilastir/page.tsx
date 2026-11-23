@@ -98,7 +98,9 @@ export default function Karsilastir() {
           provideRouteAlternatives: true,
           region: "tr",
         });
-        const rota = r.routes[0]?.legs[0];
+        // Google'ın ilk önerisi en hızlısı olmayabilir (az aktarmayı önceler); adil karşılaştırma için en erken varan alternatif alınır.
+        const bacaklar = r.routes.map((x) => x.legs[0]).filter((b) => b?.arrival_time);
+        const rota = bacaklar.reduce((a, b) => (b.arrival_time!.value < a.arrival_time!.value ? b : a), bacaklar[0]);
         if (rota?.arrival_time) {
           const adimlar = rota.steps.filter((a) => a.travel_mode === google.maps.TravelMode.TRANSIT);
           s.google = {
@@ -128,7 +130,7 @@ export default function Karsilastir() {
     <main className="mx-auto max-w-5xl p-6 text-murekkep">
       <h1 className="font-display text-2xl font-bold">Rota karşılaştırma (geliştirici aracı)</h1>
       <p className="mt-2 max-w-2xl text-sm text-murekkep-2">
-        {CIFTLER.length} çift için bizim rota sonucunu Google Directions toplu taşıma sonucuyla karşılaştırır. Süre, sorgu anından
+        {CIFTLER.length} çift için bizim rota sonucunu Google Directions toplu taşıma sonucuyla karşılaştırır. Google tarafında en erken varan alternatif alınır (ilk öneri en hızlısı olmayabilir). Süre, sorgu anından
         varışa kadardır (bekleme dahil). Her çift 1 Google Directions isteği harcar; aylık ücretsiz sınır 10.000 olduğundan bu araç
         sınırın binde birkaçını kullanır. Bu sayfa yalnızca geliştirme sürümünde açılır.
       </p>
