@@ -339,3 +339,17 @@ metrobüs hatları dahil). Seyrek duraklı metrobüsü Google Directions'a oturt
 - Arayüzde **veri tarihi gösterimi**: şimdilik **yok**, sonra bakılacak.
 - Metro/vapur verisinin tazelenmesi (canlı Metro İstanbul API, 2026 GeoJSON'lar): temel akış
   çalıştıktan sonra.
+
+
+## M11 (Gayrettepe - İstanbul Havalimanı - Halkalı), elle tanımlı (#42)
+
+- **Kaynak:** TCDD Taşımacılık, "Gayrettepe - İstanbul Havalimanı - Halkalı Metro Hattı İlk ve Son Tren Saatleri" tablosu
+  (tcddtasimacilik.gov.tr/marmaray/tr/gayrettepetrensaatleri). 15 istasyon; Gayrettepe 05:58-23:58 (Halkalı yönü), Halkalı 06:03-23:48
+  (Gayrettepe yönü); son trenle uçtan uca 64 dk.
+- **Üretim:** `python scripts/m11_olustur.py --aralik-dk <dakika>` -> `data/m11.json`. İstasyon konumları OpenStreetMap'ten (Overpass)
+  alınır, tablo süreleriyle hız denetimi yapılır; belirsizlikte `--koordinat` CSV'si ile elle düzeltilir. Sıklık tabloda yoktur; TCDD sayfasındaki değer
+  verilir: **15 dk** ("trafiğin durumuna göre değişebilir"). Doğrulama: 05:58-23:58 (73 sefer) + 06:03-23:48 (72 sefer) = 145,
+  TCDD'nin günlük sefer sayısıyla (145) birebir uyuşur; işletmede 9 tren, 4 vagonluk setler.
+- **Varsayımlar:** seferler uçtan uca kabul edilir (TCDD: ara istasyonlardan da tren başlar ve son istasyona kadar gider; bu kısmi seferler modellenmedi);
+  iki yönde aynı istasyonlar arası süreler (son tren sütunundaki farklar) kullanılır; her gün aynı tarife.
+- **Yükleme:** `build_gtfs.py hepsi m11` ve `aktarma` (Gayrettepe M2 ile bağlanır).

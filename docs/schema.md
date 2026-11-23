@@ -220,6 +220,15 @@ olarak `route_short_name`, `route_long_name`, `route_id`, `trip_id`, `headsign`,
 Rota bulunamazsa 200 ve `itineraries: []` + `neden` (`baslangicta_durak_yok` | `varista_durak_yok` | `baglanti_yok`)
 ve Türkçe `mesaj`. Mevcut `/api/en-yakin-durak` ve `/api/moovit` değişmedi.
 
+## `GET /api/stops/search` ve `GET /api/stops/nearby` (#14)
+
+Rota grafı bellekten; veritabanına gitmez. Aynı fiziksel istasyonun durakları (aynı Türkçe karakterden bağımsız ad, ≤400 m) tek satırda gruplanır.
+
+- `search?q=&limit=`: `q` en az 3 harf; önek/sözcük başı eşleşmeleri önde; istasyon türleri (metro, tramvay, vapur, Marmaray, metrobüs) önde,
+  yalnızca otobüs durakları en çok 5 satır. Satır: `name, lat, lng, stop_id, stop_ids[], modes[], routes[]` (en çok 12 hat, raylı/vapur önde).
+- `nearby?lat=&lng=&radius_m=500&limit=20`: İstanbul sınırları içinde; `distance_m` ile mesafeye göre sıralı.
+- Graf hazır değilse 503; hız sınırı dakikada 120 (#29).
+
 ## `GET /api/yaklasan` (canlı yaklaşan otobüsler)
 `?bas=<biniş durağı kimliği>&bit=<iniş durağı kimliği>[&hatlar=401,345][&oncelik=401]`. Bu iki durak arasında (aynı örüntüde,
 biniş önce) giden otobüs/metrobüs hatlarını ve her hat için İETT canlı araçlarının biniş durağına varış tahminini döner

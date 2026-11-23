@@ -20,7 +20,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from app.gtfs import manual, vapur
-from app.gtfs.feeds import IBB_MULTIMODAL, IETT, MARMARAY, VAPUR, FeedConfig
+from app.gtfs.feeds import IBB_MULTIMODAL, IETT, M11, MARMARAY, VAPUR, FeedConfig
 from app.gtfs.loader import EXCEL_SATIR_SINIRI, _veri_satiri_say
 from app.gtfs.rules import expand_frequency_starts
 from app.gtfs.textfix import ascii_katla
@@ -53,6 +53,7 @@ BESLEMELER: Dict[str, BeslemeKaynagi] = {
     "ibb": BeslemeKaynagi(IBB_MULTIMODAL, "public-transport-gtfs-data", os.path.join("gtfs_data", "multimodal")),
     "marmaray": BeslemeKaynagi(MARMARAY, "", os.path.join("gtfs_data", "marmaray"),
                                manuel=os.path.join(KOK, "data", "marmaray.json")),
+    "m11": BeslemeKaynagi(M11, "", os.path.join("gtfs_data", "m11"), manuel=os.path.join(KOK, "data", "m11.json")),
     "vapur": BeslemeKaynagi(VAPUR, "", os.path.join("gtfs_data", "vapur"),
                             manuel=os.path.join(KOK, "data", "vapur.json"), bicim="sefer"),
 }
