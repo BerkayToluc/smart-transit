@@ -122,3 +122,40 @@ def test_main_belirsiz_istasyonda_durur_ve_koordinat_dosyasi_calisir(tmp_path, c
 def test_aralik_zorunlu():
     with pytest.raises(SystemExit):
         m11.main([])
+
+
+def test_overpass_tanimlayici_baslik_ve_yedek_sunucu(tmp_path):
+    import requests
+    k = hat_koordinatlari()
+    gorulen = []
+
+    class Yanit:
+        def __init__(self, hata):
+            self.hata = hata
+
+        def raise_for_status(self):
+            if self.hata:
+                raise requests.HTTPError("406 Client Error: Not Acceptable")
+
+        def json(self):
+            return sahte_overpass(k)
+
+    def post(adres, data=None, headers=None, timeout=None):
+        gorulen.append((adres, headers))
+        return Yanit(hata=len(gorulen) == 1)               # ilk sunucu 406 verir, ikincisi çalışır
+
+    cikti = tmp_path / "m11.json"
+    assert m11.main(["--aralik-dk", "15", "--cikti", str(cikti)], http_post=post) == 0
+    assert len(gorulen) == 2 and gorulen[0][0] != gorulen[1][0]
+    assert all("User-Agent" in h and h["User-Agent"] for _, h in gorulen)
+
+
+def test_overpass_hic_ulasilamazsa_net_cikis(tmp_path, capsys):
+    import requests
+
+    def post(*a, **kw):
+        raise requests.ConnectionError("yok")
+
+    with pytest.raises(SystemExit) as e:
+        m11.main(["--aralik-dk", "15", "--cikti", str(tmp_path / "x.json")], http_post=post)
+    assert e.value.code == 4 and "--koordinat" in capsys.readouterr().out
