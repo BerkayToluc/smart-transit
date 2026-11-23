@@ -22,6 +22,7 @@ AKTARMA_CEZASI_SN = 480       # her aktarma, süreye eşdeğer ~8 dk "zahmet" ek
 YURUME_EK_KATSAYI = 0.5       # yürüme süresi 1,5 kat sayılır (süre + 0,5 × yürüme)
 DEGER_ESIGI_SN = 300          # fazladan aktarma, varışı en az 5 dk öne çekmiyorsa seçenek elenir
 BAN_SAYISI = 2                # çeşitlilik: en iyi rotanın ilk bu kadar hattı sırayla yasaklanıp yeniden aranır
+OTOBUS_TUR_SINIRI = 2         # çeşitlilik: otobüs yalnızca ilk bu kadar araç turunda kullanılabilen ek arama
 KUMULATIF_TEKRAR = 2           # çeşitlilik: bulunan seçeneklerin ortak olmayan hatları birlikte yasaklanarak en çok bu kadar ek arama
 SONRAKI_KALKIS_DK = (20,)     # çeşitlilik: bu kadar dk sonraki kalkışlar da aranır (farklı hat dizisi çıkarsa listelenir)
 
@@ -85,7 +86,7 @@ def planla(g: Graf, bas: tuple, bit: tuple, gun: int, saat_sn: int, *, izinli_mo
         sn = yurume_sn(dogrudan_m)
         ekle(saat_sn, saat_sn + sn, 0, dogrudan_m * YURUME_KATSAYISI, [Etap("yurume", -1, -1, saat_sn, saat_sn + sn)])
 
-    def calistir(erisim_l, cikis_l, kalkis=None, yasak=None):
+    def calistir(erisim_l, cikis_l, kalkis=None, yasak=None, otobus_siniri=None):
         kalkis = saat_sn if kalkis is None else kalkis
         kaynaklar, hedefler, giris_sn = {}, {}, {}
         for i, m in erisim_l:
@@ -95,7 +96,7 @@ def planla(g: Graf, bas: tuple, bit: tuple, gun: int, saat_sn: int, *, izinli_mo
         for i, m in cikis_l:
             hedefler[i] = yurume_sn(m)
         for y in raptor.ara(g, kaynaklar, hedefler, gun, max_aktarma=max_aktarma, izinli_modlar=izinli_modlar,
-                            aktarma_payi_sn=aktarma_payi_sn, yasak_hatlar=yasak):
+                            aktarma_payi_sn=aktarma_payi_sn, yasak_hatlar=yasak, otobus_tur_siniri=otobus_siniri):
             if not any(e.tip == "arac" for e in y.etaplar):
                 continue                      # araçsız (yalnız yürüyüş) sonuç: doğrudan yürüyüş zaten ayrı eklendi
             etaplar = list(y.etaplar)
@@ -134,13 +135,21 @@ def planla(g: Graf, bas: tuple, bit: tuple, gun: int, saat_sn: int, *, izinli_mo
                         break
                     yasak_toplu |= yeni
                     calistir(erisim, cikis, yasak=set(yasak_toplu))
+                # Mod çeşitliliği: otobüs yalnızca ilk OTOBUS_TUR_SINIRI turda kullanılırsa metro/metrobüs/raylı alternatifi çıkar
+                # (aynı turda otobüsle varış daha erkense Pareto metroyu eler; Moovit/Google yine de önerir).
+                calistir(erisim, cikis, otobus_siniri=OTOBUS_TUR_SINIRI)
                 for dk in SONRAKI_KALKIS_DK:          # sonraki seferlerle (farklı hat dizisi çıkarsa listelenir)
                     calistir(erisim, cikis, kalkis=saat_sn + dk * 60)
 
     # aynı hat dizisinden en düşük maliyetli olan kalır
+    def imza_goster(x):
+        # Kullanıcıya aynı görünenler tek sayılır: aynı hat adı (örüntü/yön varyantları) ve metrobüs hatları (34, 34A, 34BZ, 34C,
+        # 34G... aynı koridoru paylaşır; Google da "34BZ/34C/34G" diye birleştirir) birbirinin yerine geçer.
+        return tuple("metrobus" if e.mod == "metrobus" else g.hat_kisa[e.hat] for e in x.etaplar if e.tip == "arac") or ("yaya",)
+
     en_iyi_imza = {}
     for x in secenekler:
-        k = x.imza()
+        k = imza_goster(x)
         if k not in en_iyi_imza or (x.maliyet, x.varis) < (en_iyi_imza[k].maliyet, en_iyi_imza[k].varis):
             en_iyi_imza[k] = x
     tekil = list(en_iyi_imza.values())
