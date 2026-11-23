@@ -23,7 +23,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text  # noqa: F401  (eski betikler `from main import text` kullanıyor)
 
-from app import catalog, gtfs_admin, guvenlik, live, nearest, plan_api, saglik, yaklasan
+from app import catalog, gtfs_admin, guvenlik, live, nearest, plan_api, saglik, stops_api, yaklasan
 from app.routing import servis
 from app.gtfs import models as _gtfs_models  # noqa: F401  (gtfs_* tablolarının açılışta oluşması için)
 from app.db import (  # noqa: F401
@@ -68,5 +68,6 @@ app.include_router(catalog.router)
 app.include_router(live.router)
 app.include_router(nearest.router)
 app.include_router(plan_api.router)
+app.include_router(stops_api.router)
 app.include_router(yaklasan.router)
 app.include_router(gtfs_admin.router)
