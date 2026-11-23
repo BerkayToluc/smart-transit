@@ -24,7 +24,7 @@ const CIFTLER: { ad: string; bas: Nokta; bit: Nokta }[] = [
   ["Çatalca", 41.143, 28.462, "Küçükçekmece", 41.0, 28.77],
   ["Silivri", 41.074, 28.246, "Avcılar", 40.9795, 28.724],
   ["Şişli", 41.06, 28.987, "Bakırköy", 40.9795, 28.8727],
-  ["Sabiha Gökçen", 40.8986, 29.3092, "Kadıköy", 40.9905, 29.023],
+  ["Sabiha Gökçen", 40.9086, 29.3146, "Kadıköy", 40.9905, 29.023],
   ["İstanbul Havalimanı", 41.275, 28.752, "Taksim", 41.037, 28.985],
   ["Küçükçekmece", 41.0, 28.77, "Sirkeci", 41.0146, 28.977],
   ["Kartal", 40.908, 29.185, "Üsküdar", 41.026, 29.015],
