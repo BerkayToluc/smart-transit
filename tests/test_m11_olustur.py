@@ -159,8 +159,11 @@ def test_overpass_hic_ulasilamazsa_net_cikis(tmp_path, capsys, monkeypatch):
         cagri.append(1)
         raise requests.ConnectionError("yok")
 
+    def get(*a, **kw):
+        raise requests.ConnectionError("yok")
+
     with pytest.raises(SystemExit) as e:
-        m11.main(["--aralik-dk", "15", "--cikti", str(tmp_path / "x.json")], http_post=post)
+        m11.main(["--aralik-dk", "15", "--cikti", str(tmp_path / "x.json")], http_post=post, http_get=get)
     assert e.value.code == 4 and "--koordinat" in capsys.readouterr().out
     assert len(cagri) == m11.TUR_SAYISI * len(m11.OVERPASS_ADRESLERI)           # her tur tüm sunucuları dener
 
@@ -197,3 +200,37 @@ def test_sablon_bos_satirlar_atlanir_dolu_okunur():
     yol = os.path.join(KOK, "data", "m11_koordinat_sablon.csv")
     assert m11.koordinat_dosyasi_oku(yol) == {}                      # şablon boş: hiçbir koordinat yok
     assert len(open(yol, encoding="utf-8-sig").read().splitlines()) == 16 and "gayrettepe;;;" in open(yol, encoding="utf-8-sig").read()
+
+
+def test_overpass_calismazsa_nominatim_yedegi(tmp_path, monkeypatch):
+    import requests
+    monkeypatch.setattr(m11.time, "sleep", lambda s: None)
+    k = hat_koordinatlari()
+    ad_koor = {ad: k[i] for i, ad, *_ in m11.ISTASYONLAR}
+    sorgular = []
+
+    class Yanit:
+        def __init__(self, veri):
+            self.veri = veri
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return self.veri
+
+    def post(*a, **kw):
+        raise requests.HTTPError("502 Bad Gateway")
+
+    def get(adres, params=None, headers=None, timeout=None):
+        sorgular.append((adres, params["q"], headers))
+        ad = params["q"].replace(" istasyonu İstanbul", "")
+        lat, lon = ad_koor[ad]
+        return Yanit([{"class": "railway", "type": "station", "display_name": f"{ad}, İstanbul, Türkiye", "lat": str(lat), "lon": str(lon)},
+                      {"class": "highway", "type": "bus_stop", "display_name": f"{ad} Otobüs Durağı", "lat": "41.0", "lon": "28.9"}])
+
+    cikti = tmp_path / "m11.json"
+    assert m11.main(["--aralik-dk", "15", "--cikti", str(cikti)], http_post=post, http_get=get) == 0
+    assert len(sorgular) == 15 and cikti.exists()
+    assert all(h["User-Agent"] for _, _, h in sorgular)
+    assert len(json.loads(cikti.read_text(encoding="utf-8"))["istasyonlar"]) == 15
