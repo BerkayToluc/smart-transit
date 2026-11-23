@@ -24,7 +24,7 @@ const CIFTLER: { ad: string; bas: Nokta; bit: Nokta }[] = [
   ["Çatalca", 41.143, 28.462, "Küçükçekmece", 41.0, 28.77],
   ["Silivri", 41.074, 28.246, "Avcılar", 40.9795, 28.724],
   ["Şişli", 41.06, 28.987, "Bakırköy", 40.9795, 28.8727],
-  ["Sabiha Gökçen", 40.8986, 29.3092, "Kadıköy", 40.9905, 29.023],
+  ["Sabiha Gökçen", 40.9086, 29.3146, "Kadıköy", 40.9905, 29.023],
   ["İstanbul Havalimanı", 41.275, 28.752, "Taksim", 41.037, 28.985],
   ["Küçükçekmece", 41.0, 28.77, "Sirkeci", 41.0146, 28.977],
   ["Kartal", 40.908, 29.185, "Üsküdar", 41.026, 29.015],
@@ -98,7 +98,9 @@ export default function Karsilastir() {
           provideRouteAlternatives: true,
           region: "tr",
         });
-        const rota = r.routes[0]?.legs[0];
+        // Google'ın ilk önerisi en hızlısı olmayabilir (az aktarmayı önceler); adil karşılaştırma için en erken varan alternatif alınır.
+        const bacaklar = r.routes.map((x) => x.legs[0]).filter((b) => b?.arrival_time);
+        const rota = bacaklar.reduce((a, b) => (b.arrival_time!.value < a.arrival_time!.value ? b : a), bacaklar[0]);
         if (rota?.arrival_time) {
           const adimlar = rota.steps.filter((a) => a.travel_mode === google.maps.TravelMode.TRANSIT);
           s.google = {
@@ -128,7 +130,7 @@ export default function Karsilastir() {
     <main className="mx-auto max-w-5xl p-6 text-murekkep">
       <h1 className="font-display text-2xl font-bold">Rota karşılaştırma (geliştirici aracı)</h1>
       <p className="mt-2 max-w-2xl text-sm text-murekkep-2">
-        {CIFTLER.length} çift için bizim rota sonucunu Google Directions toplu taşıma sonucuyla karşılaştırır. Süre, sorgu anından
+        {CIFTLER.length} çift için bizim rota sonucunu Google Directions toplu taşıma sonucuyla karşılaştırır. Google tarafında en erken varan alternatif alınır (ilk öneri en hızlısı olmayabilir). Süre, sorgu anından
         varışa kadardır (bekleme dahil). Her çift 1 Google Directions isteği harcar; aylık ücretsiz sınır 10.000 olduğundan bu araç
         sınırın binde birkaçını kullanır. Bu sayfa yalnızca geliştirme sürümünde açılır.
       </p>
