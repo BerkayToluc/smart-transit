@@ -7,13 +7,17 @@ from datetime import datetime, timezone
 
 import requests
 from cachetools import cached, TTLCache
-from fastapi import APIRouter, Depends
+from xml.sax.saxutils import escape as xml_kacis
+
+from fastapi import APIRouter, Depends, Path
 from sqlalchemy.orm import Session
 
 from app.db import Durak, get_db
 from app.utils import mesafe_hesapla_km
 
 from app.guvenlik import hiz_siniri  # noqa: E402
+
+HAT_KODU_DESENI = r"^[0-9A-Za-zÇĞİÖŞÜçğıöşü./\-]+$"      # SOAP gövdesine girer; XML/komut karakterlerine izin verilmez
 
 router = APIRouter()
 
@@ -121,7 +125,7 @@ def iett_verisi_cek(hat_kodu: str):
     <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
       <soap:Body>
         <GetHatOtoKonum_json xmlns="http://tempuri.org/">
-          <HatKodu>{hat_kodu}</HatKodu>
+          <HatKodu>{xml_kacis(hat_kodu)}</HatKodu>
         </GetHatOtoKonum_json>
       </soap:Body>
     </soap:Envelope>"""
@@ -143,7 +147,7 @@ def iett_verisi_cek(hat_kodu: str):
 
 
 @router.get("/api/canli-otobus/{hat_kodu}", dependencies=[Depends(hiz_siniri("canli", 60))])
-def canli_otobus_getir(hat_kodu: str):
+def canli_otobus_getir(hat_kodu: str = Path(..., min_length=1, max_length=20, pattern=HAT_KODU_DESENI)):
     otobusler = iett_verisi_cek(hat_kodu)
     if not otobusler:
         return {"mesaj": "Aktif araç bulunamadı", "araclar": []}
@@ -151,7 +155,8 @@ def canli_otobus_getir(hat_kodu: str):
 
 
 @router.get("/api/moovit/{hat_kodu}/{durak_id}/{hedef_yon}", dependencies=[Depends(hiz_siniri("moovit", 60))])
-def moovit_dinamik_algoritma(hat_kodu: str, durak_id: int, hedef_yon: str, db: Session = Depends(get_db)):
+def moovit_dinamik_algoritma(hat_kodu: str = Path(..., min_length=1, max_length=20, pattern=HAT_KODU_DESENI),
+                             durak_id: int = Path(...), hedef_yon: str = Path(..., max_length=30), db: Session = Depends(get_db)):
     durak = db.query(Durak).filter(Durak.id == durak_id).first()
     if not durak:
         return {"hata": f"{durak_id} ID numaralı durak veritabanında bulunamadı!"}
