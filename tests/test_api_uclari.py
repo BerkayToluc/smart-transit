@@ -65,7 +65,7 @@ def test_canli_otobus_arac_yok(client):
 
 
 def test_canli_otobus_iett_erisilemiyor_bos_doner(client):
-    # Mevcut davranış: servis çökse bile 200 ve boş liste (hata ayrıştırılmıyor, bkz. #30)
+    # Servis çökse bile 200 ve boş liste; ayrıca "servis_erisilemiyor" işareti (#30)
     from tests.conftest import IETT_COKUK
     IETT_COKUK["acik"] = True
     r = client.get("/api/canli-otobus/C3")

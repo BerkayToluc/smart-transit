@@ -142,6 +142,7 @@ export interface HatCanli {
   araclar: YaklasanArac[]; // biniş durağına yaklaşanlar, dakikaya göre sıralı
   tum_araclar: { kapi_no: string; enlem: number; boylam: number; yon: string }[]; // hattın tüm canlı araçları (harita)
   planli: string[]; // sıradaki planlı kalkışlar "14:20"
+  canli_erisilemiyor?: boolean; // İETT canlı veri servisi yanıt vermedi ("araç yok"tan ayrı)
 }
 
 export interface YaklasanYaniti {

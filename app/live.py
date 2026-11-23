@@ -1,12 +1,14 @@
 """İETT canlı araç verisi ve durak bazlı varış tahmini (ETA)."""
 import json
+import logging
 import math
 import threading
+import time
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
 import requests
-from cachetools import cached, TTLCache
+from cachetools import TTLCache
 from xml.sax.saxutils import escape as xml_kacis
 
 from fastapi import APIRouter, Depends, Path
@@ -20,6 +22,8 @@ from app.guvenlik import hiz_siniri  # noqa: E402
 HAT_KODU_DESENI = r"^[0-9A-Za-zÇĞİÖŞÜçğıöşü./\-]+$"      # SOAP gövdesine girer; XML/komut karakterlerine izin verilmez
 
 router = APIRouter()
+
+logger = logging.getLogger(__name__)
 
 # 🚀 15 SANİYELİK İETT ÖNBELLEĞİ (CACHE SİSTEMİ)
 iett_cache = TTLCache(maxsize=100, ttl=15)
@@ -118,9 +122,18 @@ def _otobus_rota_konumu(arac_lat, arac_lon, duraklar, kum, onceki, gecen_sn):
     return genel_en_iyi
 
 
-@cached(cache=iett_cache)
-def iett_verisi_cek(hat_kodu: str):
-    SOAP_URL = "https://api.ibb.gov.tr/iett/FiloDurum/SeferGerceklesme.asmx"
+SOAP_URL = "https://api.ibb.gov.tr/iett/FiloDurum/SeferGerceklesme.asmx"
+SOAP_ZAMAN_ASIMI = (3.05, 8)         # (bağlanma, okuma) sn: servis yanıt vermezse istek sonsuz beklemez
+SOAP_DENEME = 3                      # toplam deneme sayısı (üstel geri çekilmeyle: 0,3 sn, 0,6 sn)
+HATA_ONBELLEK_SN = 5                 # başarısız çağrı bu kadar sn tekrarlanmaz (fırtına etkisi)
+_iett_kilit = threading.Lock()
+
+
+class IettHatasi(Exception):
+    """İETT SOAP servisine ulaşılamadı ya da yanıt çözülemedi."""
+
+
+def _iett_istegi(hat_kodu: str) -> list:
     soap_body = f"""<?xml version="1.0" encoding="utf-8"?>
     <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
       <soap:Body>
@@ -133,22 +146,50 @@ def iett_verisi_cek(hat_kodu: str):
         'Content-Type': 'text/xml; charset=utf-8',
         'SOAPAction': '"http://tempuri.org/GetHatOtoKonum_json"'
     }
+    son_hata = None
+    for deneme in range(SOAP_DENEME):
+        if deneme:
+            time.sleep(0.3 * 2 ** (deneme - 1))
+        try:
+            response = requests.post(SOAP_URL, data=soap_body, headers=headers, timeout=SOAP_ZAMAN_ASIMI)
+            response.raise_for_status()
+            root = ET.fromstring(response.text)
+            result = root.find('.//ns:GetHatOtoKonum_jsonResult', {'ns': 'http://tempuri.org/'})
+            if result is None or not result.text:
+                return []
+            return json.loads(result.text)
+        except (requests.RequestException, ConnectionError, TimeoutError, ET.ParseError, ValueError) as e:
+            son_hata = e
+            logger.warning("İETT SOAP hatası (hat %s, deneme %d/%d): %r", hat_kodu, deneme + 1, SOAP_DENEME, e)
+    raise IettHatasi(str(son_hata))
+
+
+def iett_durum(hat_kodu: str) -> dict:
+    """{"araclar": [...], "erisilemiyor": bool}. Başarılı yanıt 15 sn, hata yalnızca HATA_ONBELLEK_SN sn önbelleklenir."""
+    with _iett_kilit:
+        kayit = iett_cache.get(hat_kodu)
+    if kayit is not None and (not kayit["erisilemiyor"] or time.monotonic() - kayit["an"] < HATA_ONBELLEK_SN):
+        return kayit
     try:
-        response = requests.post(SOAP_URL, data=soap_body, headers=headers)
-        response.raise_for_status()
-        root = ET.fromstring(response.text)
-        namespaces = {'ns': 'http://tempuri.org/'}
-        result = root.find('.//ns:GetHatOtoKonum_jsonResult', namespaces)
-        if result is None or not result.text:
-            return []
-        return json.loads(result.text)
-    except:
-        return []
+        kayit = {"araclar": _iett_istegi(hat_kodu), "erisilemiyor": False, "an": time.monotonic()}
+    except IettHatasi:
+        kayit = {"araclar": [], "erisilemiyor": True, "an": time.monotonic()}
+    with _iett_kilit:
+        iett_cache[hat_kodu] = kayit
+    return kayit
+
+
+def iett_verisi_cek(hat_kodu: str):
+    """Araç listesi (servis erişilemiyorsa boş). Ayrım gerekiyorsa `iett_durum` kullanın."""
+    return iett_durum(hat_kodu)["araclar"]
 
 
 @router.get("/api/canli-otobus/{hat_kodu}", dependencies=[Depends(hiz_siniri("canli", 60))])
 def canli_otobus_getir(hat_kodu: str = Path(..., min_length=1, max_length=20, pattern=HAT_KODU_DESENI)):
-    otobusler = iett_verisi_cek(hat_kodu)
+    durum = iett_durum(hat_kodu)
+    if durum["erisilemiyor"]:
+        return {"mesaj": "İETT canlı veri servisi şu an yanıt vermiyor", "araclar": [], "servis_erisilemiyor": True}
+    otobusler = durum["araclar"]
     if not otobusler:
         return {"mesaj": "Aktif araç bulunamadı", "araclar": []}
     return {"mesaj": f"{hat_kodu} hattında {len(otobusler)} araç bulundu", "araclar": otobusler}
@@ -171,7 +212,10 @@ def moovit_dinamik_algoritma(hat_kodu: str = Path(..., min_length=1, max_length=
     hedef_son_metin = " ".join([d.durak_adi.upper() for d in hedef_duraklar[-15:]])
     ters_son_metin = " ".join([d.durak_adi.upper() for d in ters_duraklar[-15:]])
 
-    otobusler = iett_verisi_cek(hat_kodu)
+    durum = iett_durum(hat_kodu)
+    if durum["erisilemiyor"]:
+        return {"mesaj": "İETT canlı veri servisi şu an yanıt vermiyor.", "servis_erisilemiyor": True}
+    otobusler = durum["araclar"]
     if not otobusler:
         return {"mesaj": "Bu hatta şu an aktif araç bulunamadı."}
 

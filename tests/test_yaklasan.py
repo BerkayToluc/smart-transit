@@ -83,3 +83,17 @@ def test_hatalar(client, ag):  # noqa: F811
         assert client.get("/api/yaklasan", params={"bas": "t:B", "bit": "t:A"}).json()["hatlar"] == []   # ters yön hat yok
     finally:
         servis.graf_ayarla(None)
+
+
+def test_iett_erisilemiyorsa_hat_bunu_isaretler(client, hat_agi, monkeypatch):
+    from app import live
+    from tests.conftest import IETT_COKUK
+    monkeypatch.setattr(live.time, "sleep", lambda s: None)
+    IETT_COKUK["acik"] = True
+    h = client.get("/api/yaklasan", params={"bas": "t:D20", "bit": "t:D30"}).json()["hatlar"][0]
+    assert h["canli_erisilemiyor"] is True and h["araclar"] == []
+    iett_cache.clear()
+    IETT_COKUK["acik"] = False
+    IETT_ARACLARI["YK1"] = []
+    h = client.get("/api/yaklasan", params={"bas": "t:D20", "bit": "t:D30"}).json()["hatlar"][0]
+    assert h["canli_erisilemiyor"] is False        # "araç yok" ile "servis yok" ayrı

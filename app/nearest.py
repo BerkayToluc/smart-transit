@@ -1,4 +1,6 @@
 """Seçilen hat üzerinde başlangıç noktasına en yakın durak ve yön."""
+import logging
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -7,6 +9,8 @@ from app.db import Durak, Hat, get_db
 from app.utils import mesafe_hesapla_km
 
 from app.guvenlik import hiz_siniri  # noqa: E402
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -58,7 +62,7 @@ def en_yakin_durak_bul(istek: EvrenselRotaIstegi, db: Session = Depends(get_db))
                                                    float(baslangic_d.latitude), float(baslangic_d.longitude))
                 break
     except Exception:
-        pass
+        logger.exception("en_yakin_durak_bul: yön hesaplanamadı (hat %s)", istek.hat_kodu)
 
     if not dogru_yon or not en_yakin_baslangic:
         return {"hata": "Seçtiğiniz rotaya uygun bu hatta bir güzergah bulunamadı."}

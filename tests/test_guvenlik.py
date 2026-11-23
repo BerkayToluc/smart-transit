@@ -66,6 +66,9 @@ def test_soap_govdesinde_hat_kodu_kacisli(monkeypatch):
         status_code = 200
         text = "<x/>"
 
+        def raise_for_status(self):
+            pass
+
     def sahte_post(url, data=None, headers=None, timeout=None, **kw):
         gonderilen["govde"] = data
         return Yanit()
