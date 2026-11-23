@@ -14,8 +14,13 @@ from app.routing.graph import Graf
 
 ONBELLEK_YOLU = os.getenv("ROTA_GRAF_ONBELLEK", os.path.join("gtfs_data", "graf.pkl"))
 GUZERGAH_YOLU = os.getenv("ROTA_GUZERGAH_ONBELLEK", os.path.join("gtfs_data", "guzergah.pkl"))
-_durum = {"graf": None, "hata": None, "yukleniyor": False, "guzergah": None}
+_durum = {"graf": None, "hata": None, "yukleniyor": False, "guzergah": None, "surum": 0}
 _kilit = threading.Lock()
+
+
+def surum() -> int:
+    """Graf her değiştiğinde artar (plan önbelleği anahtarı)."""
+    return _durum["surum"]
 
 
 def graf_al() -> Optional[Graf]:
@@ -25,6 +30,7 @@ def graf_al() -> Optional[Graf]:
 def graf_ayarla(g: Optional[Graf]) -> None:
     with _kilit:
         _durum["graf"], _durum["hata"], _durum["yukleniyor"] = g, None, False
+        _durum["surum"] += 1
 
 
 def guzergah_al():
@@ -35,6 +41,7 @@ def guzergah_al():
 def guzergah_ayarla(guz) -> None:
     with _kilit:
         _durum["guzergah"] = guz
+        _durum["surum"] += 1
 
 
 def durum() -> dict:
@@ -66,6 +73,7 @@ def yukle() -> None:
         guz = guz_modul.oku(GUZERGAH_YOLU)     # yoksa None: resmî çizgisiz de çalışır
         with _kilit:
             _durum["graf"] = g
+            _durum["surum"] += 1
             _durum["guzergah"] = guz
     except Exception as e:  # noqa: BLE001  (API ayakta kalmalı; hata /api/plan/durum'da görünür)
         with _kilit:
