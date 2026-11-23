@@ -33,7 +33,7 @@ def yonetici_anahtari_gerekli(x_admin_key: str = Header(None)) -> None:
     beklenen = os.getenv("ADMIN_API_KEY", "")
     if not beklenen:
         raise HTTPException(status_code=403, detail="Yönetici uç noktaları kapalı (ADMIN_API_KEY tanımlı değil).")
-    if not x_admin_key or not secrets.compare_digest(x_admin_key, beklenen):
+    if not x_admin_key or not secrets.compare_digest(x_admin_key.encode(), beklenen.encode()):
         raise HTTPException(status_code=401, detail="Geçersiz yönetici anahtarı.")
 
 
@@ -50,6 +50,10 @@ def hiz_siniri(ad: str, limit: int, pencere_sn: int = 60) -> Callable:
         simdi = time.monotonic()
         while kayit and simdi - kayit[0] > pencere_sn:
             kayit.popleft()
+        if not kayit and len(_ZAMANLAR) > 10000:           # bellek: eski/boş kayıtları at
+            for k in [k for k, v in _ZAMANLAR.items() if not v or simdi - v[-1] > pencere_sn]:
+                del _ZAMANLAR[k]
+            kayit = _ZAMANLAR[(ad, ip)]
         if len(kayit) >= limit:
             bekle = max(1, int(pencere_sn - (simdi - kayit[0])))
             raise HTTPException(status_code=429, detail="Çok fazla istek; biraz sonra tekrar deneyin.",
