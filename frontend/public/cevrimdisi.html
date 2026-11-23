@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#e8eff1">
+<title>Çevrimdışı: smarttransit</title>
+<style>
+  :root { color-scheme: light dark; --sis:#e8eff1; --murekkep:#0b2836; --murekkep-2:#40606e; --bogaz:#0f6682; --iskele:#f59f0f; }
+  @media (prefers-color-scheme: dark) { :root { --sis:#06121a; --murekkep:#e8f0f3; --murekkep-2:#a9bfc9; --bogaz:#55bcd9; --iskele:#ffb52e; } }
+  html,body { margin:0; height:100%; background:var(--sis); color:var(--murekkep); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { min-height:100%; display:grid; place-content:center; gap:14px; padding:24px; max-width:30rem; margin:auto; }
+  h1 { margin:0; font-size:1.6rem; letter-spacing:-0.02em; }
+  p { margin:0; line-height:1.55; color:var(--murekkep-2); }
+  button { justify-self:start; border:0; border-radius:999px; padding:12px 22px; font-size:1rem; font-weight:600; background:var(--iskele); color:#2a1a00; cursor:pointer; }
+  button:focus-visible { outline:3px solid var(--bogaz); outline-offset:3px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>İnternet bağlantısı yok</h1>
+  <p>Rota hesaplamak ve canlı otobüsleri görmek için bağlantı gerekir. Bağlantı gelince tekrar deneyin; kayıtlı yerleriniz cihazınızda duruyor.</p>
+  <button type="button" onclick="location.reload()">Tekrar dene</button>
+</main>
+</body>
+</html>
