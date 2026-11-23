@@ -152,14 +152,15 @@ def hiz_kontrolu(koordinatlar: Dict[str, Tuple[float, float]]) -> List[str]:
     return sorunlar
 
 
-def tanim_uret(koordinatlar: Dict[str, Tuple[float, float]], aralik_dk: int, veri_tarihi: str) -> dict:
+def tanim_uret(koordinatlar: Dict[str, Tuple[float, float]], aralik_dk: int, veri_tarihi: str,
+               konum_kaynagi: str = "OpenStreetMap") -> dict:
     return {
         "besleme": {
             "id": "m11", "ad": "M11 Gayrettepe - İstanbul Havalimanı - Halkalı (TCDD, elle tanımlı)", "veri_tarihi": veri_tarihi,
             "kaynak": (f"TCDD Taşımacılık, Gayrettepe - İstanbul Havalimanı - Halkalı Metro Hattı ilk ve son tren saatleri ({KAYNAK_ADRES}). "
-                       "Seferler uçtan uca varsayılır (tablodaki ara istasyon ilk tren saatleri kısa hatlı seferleri de içerir, modellenmedi); "
+                       "Seferler uçtan uca varsayılır (TCDD: ara istasyonlardan da tren başlar ve son istasyona kadar gider; bu kısmi seferler modellenmedi); "
                        f"istasyonlar arası süreler son tren sütunundan; sıklık {aralik_dk} dk (TCDD'den okunan değer). "
-                       "İstasyon konumları: OpenStreetMap."),
+                       f"İstasyon konumları: {konum_kaynagi}."),
         },
         "kurum": {"id": "tcdd", "ad": "TCDD Taşımacılık", "url": "https://www.tcddtasimacilik.gov.tr"},
         "istasyonlar": [{"id": i, "ad": ad, "enlem": round(koordinatlar[i][0], 6), "boylam": round(koordinatlar[i][1], 6),
@@ -188,6 +189,8 @@ def main(argv=None, *, http_post=requests.post, http_get=requests.get) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--aralik-dk", type=int, required=True, help="Sefer sıklığı (dakika); TCDD sayfasından okunan değer")
     ap.add_argument("--koordinat", help="id;enlem;boylam CSV: OSM yerine/eksik istasyonlar için elle koordinat")
+    ap.add_argument("--konum-kaynagi", default=None, help="data/m11.json'a yazılacak konum kaynağı notu (varsayılan: OpenStreetMap; "
+                    "tüm koordinatlar --koordinat ile verildiyse 'elle verilen koordinatlar')")
     ap.add_argument("--veri-tarihi", default=datetime.date.today().isoformat())
     ap.add_argument("--cikti", default=os.path.join(KOK, "data", "m11.json"))
     a = ap.parse_args(argv)
@@ -257,7 +260,8 @@ def main(argv=None, *, http_post=requests.post, http_get=requests.get) -> int:
             print("  -", s)
         print("İlgili istasyonları `--koordinat` ile elle düzeltin.")
         return 3
-    tanim = tanim_uret(koordinat, a.aralik_dk, a.veri_tarihi)
+    kaynak = a.konum_kaynagi or ("elle verilen koordinatlar" if a.koordinat and not eksik else "OpenStreetMap")
+    tanim = tanim_uret(koordinat, a.aralik_dk, a.veri_tarihi, kaynak)
     dogrula(tanim)
     with open(a.cikti, "w", encoding="utf-8") as f:
         json.dump(tanim, f, ensure_ascii=False, indent=2)

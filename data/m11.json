@@ -1,0 +1,183 @@
+{
+  "besleme": {
+    "id": "m11",
+    "ad": "M11 Gayrettepe - İstanbul Havalimanı - Halkalı (TCDD, elle tanımlı)",
+    "veri_tarihi": "2026-11-24",
+    "kaynak": "TCDD Taşımacılık, Gayrettepe - İstanbul Havalimanı - Halkalı Metro Hattı ilk ve son tren saatleri (https://www.tcddtasimacilik.gov.tr/marmaray/tr/gayrettepetrensaatleri). Seferler uçtan uca varsayılır (TCDD: ara istasyonlardan da tren başlar ve son istasyona kadar gider; bu kısmi seferler modellenmedi); istasyonlar arası süreler son tren sütunundan; sıklık 15 dk (TCDD'den okunan değer). İstasyon konumları: Vikipedi M11 istasyon listesi, Google Maps ile karşılaştırılarak (Gayrettepe, İhsaniye, İstanbul Havalimanı, Arnavutköy Hastane doğrulandı)."
+  },
+  "kurum": {
+    "id": "tcdd",
+    "ad": "TCDD Taşımacılık",
+    "url": "https://www.tcddtasimacilik.gov.tr"
+  },
+  "istasyonlar": [
+    {
+      "id": "gayrettepe",
+      "ad": "Gayrettepe",
+      "enlem": 41.06667,
+      "boylam": 29.01167,
+      "ofset_sn": 0
+    },
+    {
+      "id": "kagithane",
+      "ad": "Kâğıthane",
+      "enlem": 41.08028,
+      "boylam": 28.97611,
+      "ofset_sn": 240
+    },
+    {
+      "id": "hasdal_universite",
+      "ad": "Hasdal-Üniversite",
+      "enlem": 41.12139,
+      "boylam": 28.94694,
+      "ofset_sn": 540
+    },
+    {
+      "id": "kemerburgaz",
+      "ad": "Kemerburgaz",
+      "enlem": 41.15944,
+      "boylam": 28.91028,
+      "ofset_sn": 840
+    },
+    {
+      "id": "gokturk",
+      "ad": "Göktürk",
+      "enlem": 41.17694,
+      "boylam": 28.88389,
+      "ofset_sn": 1020
+    },
+    {
+      "id": "ihsaniye",
+      "ad": "İhsaniye",
+      "enlem": 41.24278,
+      "boylam": 28.80889,
+      "ofset_sn": 1500
+    },
+    {
+      "id": "istanbul_havalimani",
+      "ad": "İstanbul Havalimanı",
+      "enlem": 41.25611,
+      "boylam": 28.7425,
+      "ofset_sn": 1860
+    },
+    {
+      "id": "kargo_terminali",
+      "ad": "Kargo Terminali",
+      "enlem": 41.25538,
+      "boylam": 28.71276,
+      "ofset_sn": 2040
+    },
+    {
+      "id": "tasoluk",
+      "ad": "Taşoluk",
+      "enlem": 41.20583,
+      "boylam": 28.71611,
+      "ofset_sn": 2340
+    },
+    {
+      "id": "arnavutkoy_hastane",
+      "ad": "Arnavutköy-Hastane",
+      "enlem": 41.17917,
+      "boylam": 28.74778,
+      "ofset_sn": 2580
+    },
+    {
+      "id": "ibni_haldun_universitesi",
+      "ad": "İbni Haldun Üniversitesi",
+      "enlem": 41.13972,
+      "boylam": 28.79389,
+      "ofset_sn": 2940
+    },
+    {
+      "id": "kayasehir",
+      "ad": "Kayaşehir",
+      "enlem": 41.11833,
+      "boylam": 28.76639,
+      "ofset_sn": 3180
+    },
+    {
+      "id": "olimpiyatkoy",
+      "ad": "Olimpiyatköy",
+      "enlem": 41.07861,
+      "boylam": 28.76944,
+      "ofset_sn": 3420
+    },
+    {
+      "id": "halkali_stadi",
+      "ad": "Halkalı Stadı",
+      "enlem": 41.05639,
+      "boylam": 28.77444,
+      "ofset_sn": 3600
+    },
+    {
+      "id": "halkali",
+      "ad": "Halkalı",
+      "enlem": 41.01972,
+      "boylam": 28.76806,
+      "ofset_sn": 3840
+    }
+  ],
+  "hizmetler": {
+    "her_gun": {
+      "gunler": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "aciklama": "Her gün"
+    }
+  },
+  "hatlar": [
+    {
+      "id": "m11",
+      "kisa_ad": "M11",
+      "uzun_ad": "Gayrettepe - İstanbul Havalimanı - Halkalı"
+    }
+  ],
+  "kaliplar": [
+    {
+      "id": "gayrettepe_halkali",
+      "hat": "m11",
+      "yon": 0,
+      "baslik": "Halkalı",
+      "nereden": "gayrettepe",
+      "nereye": "halkali",
+      "seferler": [
+        {
+          "hizmet": "her_gun",
+          "araliklar": [
+            {
+              "ilk": "05:58",
+              "son": "23:58",
+              "aralik_dk": 15
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "halkali_gayrettepe",
+      "hat": "m11",
+      "yon": 1,
+      "baslik": "Gayrettepe",
+      "nereden": "halkali",
+      "nereye": "gayrettepe",
+      "seferler": [
+        {
+          "hizmet": "her_gun",
+          "araliklar": [
+            {
+              "ilk": "06:03",
+              "son": "23:48",
+              "aralik_dk": 15
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
