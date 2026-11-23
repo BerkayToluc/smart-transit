@@ -85,3 +85,18 @@ kalkışlar gösterilir. Uç nokta: `GET /api/yaklasan` (docs/schema.md).
 - "Eve git" / "İşe git" kısayolları (kayıt varsa): varışı doldurur; başlangıç boşsa konumunuzu alır.
 - Mantık `lib/yerlerMantik.ts` (saf, depolamasız) ve testi `lib/yerlerMantik.test.ts` (`npm test`, Node'un yerleşik test koşucusu); React
   bağlayıcısı `lib/yerler.ts`. Bozuk ya da İstanbul dışı kayıtlar okunurken atılır.
+
+
+## Paylaşılabilir rota bağlantısı ve PWA (#27)
+
+- **Bağlantı:** tamamlanmış arama (iki yer seçili) adres çubuğuna yazılır: `/?from=41.03700,28.98500&fn=Taksim&to=...&tn=...&t=k&d=2026-11-24T10:00&tercih=az_aktarma&modlar=metro,bus&yurume=1200`.
+  Varsayılan değerler yazılmaz; "Şimdi" ise zaman parametresi yoktur. Yeni nereden/nereye geçmişe yeni kayıt ekler (geri/ileri tuşu önceki
+  aramaya döner), seçenek değişiklikleri aynı kaydı günceller. Geçersiz/İstanbul dışı parametreler sessizce yok sayılır. Mantık: `lib/baglanti.ts`
+  (saf, `lib/baglanti.test.ts`).
+- **Konum gizliliği:** başlangıç "Konumum" ise bağlantıya yazılmaz; paylaşım sonrası "Konumunuz eklenmedi" notu gösterilir.
+- **"Rotayı paylaş" düğmesi** (sonuç başlığında): Web Share API varsa sistem paylaşım menüsü, yoksa bağlantı panoya kopyalanır.
+- **PWA:** `app/manifest.ts` (standalone, simgeler `public/icon-*.png`, maskable simge, `app/apple-icon.png`, `app/icon.svg`). Simge, uygulamadaki
+  başlangıç (halka) ve varış (turuncu kare) işaretçisinin devamıdır. Servis çalışanı `public/sw.js` yalnızca üretim sürümünde kaydedilir
+  (`PwaKayit`): uygulama kabuğu ve `_next/static` önbelleği, ağ yoksa kabuk ya da `public/cevrimdisi.html`. **API istekleri asla
+  önbelleğe alınmaz** (rota ve canlı veri sunucuda; bayat veri gösterilmesin). `next.config.ts` `sw.js` için önbelleksiz başlık verir.
+- Yayın adresi (A2) belli olunca `start_url`/`scope` ve (isteğe bağlı) paylaşım önizlemesi (OG görseli, P2) ayarlanır.

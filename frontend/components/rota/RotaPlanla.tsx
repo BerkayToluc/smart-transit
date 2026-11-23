@@ -13,7 +13,9 @@ import RotaHaritasi from "@/components/rota/RotaHaritasi";
 import SecenekListesi from "@/components/rota/SecenekListesi";
 import CanliSerit from "@/components/rota/CanliSerit";
 import YaklasanPanel from "@/components/rota/Yaklasan";
+import PaylasDugmesi from "@/components/rota/PaylasDugmesi";
 import TemaSecici from "@/components/rota/TemaSecici";
+import { baglantiCoz, baglantiOlustur, type UrlDurum, type UrlYer } from "@/lib/baglanti";
 import { useYerler, yerOlustur } from "@/lib/yerler";
 import YerAlani from "@/components/rota/YerAlani";
 
@@ -41,6 +43,7 @@ export default function RotaPlanla() {
   const [olcu, setOlcu] = useState<Olcu>({ sol: 416, alt: 0 });
   const [konumHatasi, setKonumHatasi] = useState<string | null>(null);
   const yerler = useYerler();
+  const [urlHazir, setUrlHazir] = useState(false);
 
   // "Otobüsleri gör": açık bacak (indeks), seçili hatlar ve son canlı yanıt
   const [canli, setCanli] = useState<{ anahtar: string; bas: string; bit: string; hat: string } | null>(null);
@@ -172,6 +175,42 @@ export default function RotaPlanla() {
     setBas(bit);
     setBit(bas);
   };
+
+  // Plan formu <-> adres çubuğu (paylaşılabilir bağlantı, lib/baglanti.ts). Açılışta URL okunur; sonra durum URL'ye yazılır.
+  const durumUygula = useCallback((d: UrlDurum) => {
+    const yerOf = (y: UrlYer | null): Yer =>
+      y ? { metin: y.ad || `${y.lat.toFixed(5)}, ${y.lng.toFixed(5)}`, nokta: { lat: y.lat, lng: y.lng, name: y.ad || "Seçilen nokta" } } : BOS;
+    setBas(yerOf(d.bas));
+    setBit(yerOf(d.bit));
+    setZaman(d.zaman);
+    setTercih(d.tercih);
+    setModlar(d.modlar ? new Set(d.modlar as Mod[]) : new Set(MODLAR.map((m) => m.id)));
+    setMaxYurume(d.maxYurume);
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- URL yalnızca tarayıcıda okunabilir; sunucu çıktısıyla uyuşmazlık olmasın diye açılışta bir kez uygulanır
+    durumUygula(baglantiCoz(window.location.search));
+    setUrlHazir(true);
+    const geri = () => durumUygula(baglantiCoz(window.location.search));
+    window.addEventListener("popstate", geri); // geri/ileri tuşları
+    return () => window.removeEventListener("popstate", geri);
+  }, [durumUygula]);
+
+  useEffect(() => {
+    if (!urlHazir || !bas.nokta || !bit.nokta) return; // yalnızca tamamlanmış aramalar URL'ye yazılır (yazarken geçmişte ara kayıt oluşmasın)
+    const yerOf = (y: Yer): UrlYer | null => (y.nokta ? { lat: y.nokta.lat, lng: y.nokta.lng, ad: y.metin.trim() } : null);
+    const q = baglantiOlustur({
+      bas: yerOf(bas), bit: yerOf(bit), zaman, tercih,
+      modlar: modlar.size === MODLAR.length ? null : [...modlar], maxYurume,
+    });
+    if (q === window.location.search) return;
+    const yerAnahtari = (a: string) => { const p = new URLSearchParams(a); return `${p.get("from")}|${p.get("to")}`; };
+    const url = `${window.location.pathname}${q}`;
+    // Yeni bir nereden/nereye: geçmişe yeni kayıt (geri tuşu önceki aramaya döner); seçenek değişiklikleri aynı kaydı günceller
+    if (yerAnahtari(q) !== yerAnahtari(window.location.search)) window.history.pushState(null, "", url);
+    else window.history.replaceState(null, "", url);
+  }, [bas, bit, zaman, tercih, modlar, maxYurume, urlHazir]);
 
   const konumum = useCallback(() => {
     setKonumHatasi(null);
@@ -375,9 +414,10 @@ export default function RotaPlanla() {
 
             {sonucVar && sonuc && (
               <div className={`mt-5 transition-opacity ${yukleniyor ? "opacity-60" : ""}`}>
-                <h2 className="px-5 pb-2 text-sm font-semibold text-murekkep-2">
-                  {sonuc.itineraries.length} seçenek
-                </h2>
+                <div className="flex items-center justify-between gap-3 px-5 pb-2">
+                  <h2 className="text-sm font-semibold text-murekkep-2">{sonuc.itineraries.length} seçenek</h2>
+                  <PaylasDugmesi baslik={`Rota: ${bas.metin.trim()} → ${bit.metin.trim()}`} konumumGizli={bas.metin.trim() === "Konumum"} />
+                </div>
                 <div className="border-y border-cizgi bg-yuzey">
                   <SecenekListesi
                     secenekler={sonuc.itineraries}

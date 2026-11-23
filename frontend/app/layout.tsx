@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
 import "./globals.css";
+import PwaKayit from "@/components/rota/PwaKayit";
 
 // Başlıklar, büyük süreler ve marka: değişken ağırlık/genişlik eksenli, karakterli bir grotesk.
 const baslik = Bricolage_Grotesque({
@@ -18,6 +19,8 @@ const govde = Instrument_Sans({
 export const metadata: Metadata = {
   title: "SmartTransit: İstanbul'da aktarmalı rota",
   description: "Metro, tramvay, Marmaray, vapur, metrobüs ve otobüsü birleştiren İstanbul rota planlayıcı.",
+  applicationName: "smarttransit",
+  appleWebApp: { capable: true, title: "smarttransit", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
@@ -38,7 +41,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <script dangerouslySetInnerHTML={{ __html: ERKEN_TEMA }} />
       </head>
-      <body className="h-full">{children}</body>
+      <body className="h-full">
+        {children}
+        <PwaKayit />
+      </body>
     </html>
   );
 }

@@ -176,3 +176,9 @@ export const Yerimi = (p: P) => (
     <path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.8L6 20V5.5a1 1 0 0 1 1-1Z" />
   </Taban>
 );
+
+export const Paylas = (p: P) => (
+  <Taban {...p}>
+    <path d="M12 3.8v11M8.2 7.6 12 3.8l3.8 3.8M6 11.5v6.7a1.6 1.6 0 0 0 1.6 1.6h8.8a1.6 1.6 0 0 0 1.6-1.6v-6.7" />
+  </Taban>
+);
