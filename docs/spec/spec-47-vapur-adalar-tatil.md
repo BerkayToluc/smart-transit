@@ -16,7 +16,7 @@ bitmaskesine dayanır: bayram/resmî tatil günlerinde tarife (pazar tarifesi) u
 - Tuzla–Pendik–Büyükada seferleri `data/vapur.json`'a (kural ya da açık sefer); iskele koordinatları doğrulanmış.
   - Kabul: Pendik → Büyükada `rota` komutunda vapur bacağı; sefer saatleri kaynakla birebir.
 - Tatil takvimi: `data/tatiller.json` (yıl bazlı resmî tatil/bayram günleri); planlayıcı `gun` yerine takvim günü tipini (hafta içi/cumartesi/pazar/tatil) kullanır.
-  - Kabul: bayram günü sorgusunda pazar tarifesi seçilir; test (örn. 2026-05-27 Kurban Bayramı için doğrulanmış tarih).
+  - Kabul: bayram günü sorgusunda pazar tarifesi seçilir; test (bir bayram günü; tarih resmî takvimden doğrulanacak).
 **P1**
 - Yıllık tatil verisini güncelleme betiği ve belgesi; kış/yaz tarife dönemi.
 **P2**

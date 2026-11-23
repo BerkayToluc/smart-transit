@@ -19,7 +19,7 @@ yolları var (ya da hiç rota yok). Havalimanı yolcuları en yüksek değerli k
 - Kaynak ve veri tarihi `docs/veri-kaynaklari.md`'de.
 **P1**
 - T5 (kural tabanlı), M5 Çekmeköy–Sultanbeyli, M4 Tavşantepe–Sabiha Gökçen (beslemede yoksa).
-- Hat geometrisi (#15) ve hat rengi (M11 gri-mor `HAT_RENKLERI` var, T5 var).
+- Hat geometrisi (#15) ve hat rengi (M11 ve T5 için `HAT_RENKLERI` girdisi var).
 **P2**
 - Gelecekte açılan hatlar için "yeni hat ekleme" kılavuzu.
 
