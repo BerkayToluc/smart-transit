@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.live import (
     ETKIN_HIZ_MAX_KMH, ETKIN_HIZ_MIN_KMH, GECTI_TOLERANS_KM, MAKS_MAKUL_HIZ_KMH, ROTADAN_MAKS_SAPMA_KM,
-    VARSAYILAN_HIZ_KMH, _gecmis_al, _gecmis_yaz, _otobus_rota_konumu, _rota_kumulatif_mesafe, iett_verisi_cek,
+    VARSAYILAN_HIZ_KMH, _gecmis_al, _gecmis_yaz, _otobus_rota_konumu, _rota_kumulatif_mesafe, iett_durum,
 )
 from app.routing import servis
 from app.routing.graph import Graf
@@ -87,7 +87,8 @@ def hat_araclari(g: Graf, hat: str, bilgi: dict, simdi: datetime) -> dict:
     yolcu_s = kum[sira_a]
     hedef_metin, ters_metin = _yon_kumeleri(g, p)
 
-    araclar = iett_verisi_cek(hat) or []
+    durum = iett_durum(hat)
+    araclar = durum["araclar"] or []
     kesin_hedef, kesin_ters = set(), set()
     for a in araclar:
         yon = str(a.get("yon", "")).upper()
@@ -147,6 +148,7 @@ def hat_araclari(g: Graf, hat: str, bilgi: dict, simdi: datetime) -> dict:
     return {
         "hat": hat, "mod": p.mod, "yon": g.durak_ad[p.duraklar[-1]], "sure_dk": _sure_dk(p, sira_a, bilgi["b"]),
         "araclar": yaklasan, "tum_araclar": tum, "planli": _planli(g, p, sira_a, gun, simdi_sn),
+        "canli_erisilemiyor": durum["erisilemiyor"],
     }
 
 

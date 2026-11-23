@@ -47,6 +47,7 @@ export default function YaklasanPanel({ veri, yukleniyor, hata, secilenHatlar, h
     .sort((a, b) => a.dakika - b.dakika)
     .slice(0, 12);
   const araciOlmayanlar = gorunen.filter((h) => h.araclar.length === 0);
+  const servisYok = gorunen.some((h) => h.canli_erisilemiyor);
 
   return (
     <div className="mt-1 rounded-2xl bg-yuzey-2 p-3.5" aria-live="polite" aria-busy={yukleniyor}>
@@ -105,7 +106,12 @@ export default function YaklasanPanel({ veri, yukleniyor, hata, secilenHatlar, h
         </ul>
       )}
 
-      {veri && gorunen.length > 0 && satirlar.length === 0 && (
+      {veri && servisYok && (
+        <p role="status" className="mt-3 text-sm text-hata">
+          Canlı araç verisi (İETT) şu an alınamıyor; aşağıda yalnızca planlı seferler görünür. Biraz sonra tekrar denenir.
+        </p>
+      )}
+      {veri && gorunen.length > 0 && satirlar.length === 0 && !servisYok && (
         <p className="mt-3 text-sm text-murekkep">Seçili hatlarda şu an durağınıza yaklaşan canlı araç yok.</p>
       )}
       {araciOlmayanlar.map((h) => (
