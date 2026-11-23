@@ -330,6 +330,13 @@ export default function RotaPlanla() {
                 )}
               </div>
             )}
+            {((bas.nokta && !bit.nokta && !bit.metin.trim()) || (bit.nokta && !bas.nokta && !bas.metin.trim())) && (
+              <p className="mt-2 text-[13px] text-murekkep-2" role="status">
+                {bit.nokta
+                  ? "Nereden alanını da seçin ya da konum düğmesine basın; rota iki yer de seçilince kendiliğinden çıkar."
+                  : "Nereye alanını da seçin; rota iki yer de seçilince kendiliğinden çıkar."}
+              </p>
+            )}
             {((bas.metin.trim() && !bas.nokta) || (bit.metin.trim() && !bit.nokta)) && (
               <p className="mt-2 text-[13px] text-murekkep-2">Yazdığınız yeri listeden seçin ya da Enter&apos;a basın; ilk öneri seçilir.</p>
             )}
