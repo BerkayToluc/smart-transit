@@ -46,17 +46,22 @@ export function hatRengi(mod: string, kisaAd?: string | null): string {
   return `var(--mod-${mod})`;
 }
 
-/** Rozet üzerindeki yazı rengi: açık renklerde koyu, koyularda beyaz. */
+/** Rozet üzerindeki yazı rengi. Mod belirteçleri (`var(--mod-x)`) temaya göre ayarlı `--mod-x-on` rengini alır; sabit hex
+ *  renklerde (Metro İstanbul hat renkleri, harita işaretçileri) beyaz ya da koyu mürekkepten kontrastı yüksek olan seçilir. */
 export function yaziRengi(renk: string): string {
+  const v = /^var\((--mod-[a-z_]+)\)$/.exec(renk);
+  if (v) return `var(${v[1]}-on)`;
   const m = /^#([0-9a-f]{6})$/i.exec(renk);
   if (!m) return "#ffffff";
   const n = parseInt(m[1], 16);
   const lin = (c: number) => {
-    const v = c / 255;
-    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    const x = c / 255;
+    return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
   };
   const l = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
-  return l > 0.4 ? "#0c2a38" : "#ffffff";
+  const beyazKontrast = 1.05 / (l + 0.05);
+  const murekkepKontrast = (l + 0.05) / (0.02 + 0.05);       // #0c2a38 ≈ 0,02 göreli parlaklık
+  return beyazKontrast >= murekkepKontrast ? "#ffffff" : "#0c2a38";
 }
 
 /** Google Maps çizgisi CSS değişkenini çözemez; gerçek renk değerine çevirir. */

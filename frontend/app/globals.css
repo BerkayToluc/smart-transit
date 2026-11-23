@@ -1,61 +1,120 @@
 @import "tailwindcss";
 
 /* ---------- Renk ve tür belirteçleri ----------
-   Sis: sabah Boğaz'ı; Mürekkep: metin; Boğaz: ana vurgu; İskele: Şehir Hatları turuncusu
-   (tarife kitapçığından ölçüldü), yalnızca "şimdi / seçili" için. */
+   Gündüz = "Sis" (sabah Boğaz'ı), gece = "Liman" (gece limanı: derin mavi-yeşil zemin, iskele fenerinin kehribarı).
+   Mürekkep: metin; Boğaz: ana vurgu; İskele: Şehir Hatları turuncusu (tarife kitapçığından ölçüldü), yalnızca
+   "şimdi / seçili" için. Tüm metin çiftleri WCAG AA (≥4.5:1); rozet yazıları `--mod-*-on` ile her temada ≥4.5:1.
+   Temalar: varsayılan sistem tercihi; `data-theme="light|dark"` (uygulama içi seçim) sistemi geçersiz kılar. */
 :root {
-  --sis: #eaf0f2;
+  color-scheme: light;
+  --sis: #e8eff1;
   --yuzey: #ffffff;
-  --yuzey-2: #f4f7f8;
-  --murekkep: #0c2a38;
-  --murekkep-2: #4a6572;
-  --murekkep-3: #7d929d;
-  --cizgi: #d5e0e5;
-  --bogaz: #14657f;
-  --bogaz-koyu: #0e4c60;
+  --yuzey-2: #f2f6f7;
+  --murekkep: #0b2836;
+  --murekkep-2: #40606e;
+  --murekkep-3: #56717f;
+  --cizgi: #d3dfe4;
+  --bogaz: #0f6682;
+  --bogaz-koyu: #0b4b60;
   --iskele: #f59f0f;
-  --iskele-zemin: #fff3dc;
+  --iskele-zemin: #fff1d6;
   --hata: #b3261e;
   --hata-zemin: #fdecea;
-  --gol: 0 1px 0 rgb(12 42 56 / 0.04), 0 12px 32px -12px rgb(12 42 56 / 0.35);
+  --gol: 0 1px 0 rgb(11 40 54 / 0.04), 0 14px 34px -14px rgb(11 40 54 / 0.38);
 
-  /* mod renkleri */
-  --mod-bus: #2f7d57;
-  --mod-metrobus: #d6293e;
+  /* mod renkleri ve üzerlerindeki yazı */
+  --mod-bus: #2a7550;
+  --mod-metrobus: #cf2338;
   --mod-metro: #14657f;
   --mod-tram: #2563b8;
   --mod-funicular: #8a5a2b;
   --mod-cable_car: #8a5a2b;
   --mod-rail: #1c4fa3;
-  --mod-ferry: #0f9bb3;
-  --mod-walk: #7d929d;
+  --mod-ferry: #0a7d92;
+  --mod-walk: #56717f;
+  --mod-bus-on: #ffffff;
+  --mod-metrobus-on: #ffffff;
+  --mod-metro-on: #ffffff;
+  --mod-tram-on: #ffffff;
+  --mod-funicular-on: #ffffff;
+  --mod-cable_car-on: #ffffff;
+  --mod-rail-on: #ffffff;
+  --mod-ferry-on: #ffffff;
+  --mod-walk-on: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --sis: #08141b;
-    --yuzey: #0f2430;
-    --yuzey-2: #133040;
-    --murekkep: #e6eef1;
-    --murekkep-2: #a8bbc4;
-    --murekkep-3: #7691a0;
-    --cizgi: #1f3a49;
-    --bogaz: #4fb3d1;
-    --bogaz-koyu: #7cc7de;
-    --iskele: #ffb02e;
-    --iskele-zemin: #3a2a0a;
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --sis: #06121a;
+    --yuzey: #0d2029;
+    --yuzey-2: #132b37;
+    --murekkep: #e8f0f3;
+    --murekkep-2: #a9bfc9;
+    --murekkep-3: #86a0ad;
+    --cizgi: #1e3946;
+    --bogaz: #55bcd9;
+    --bogaz-koyu: #86d0e5;
+    --iskele: #ffb52e;
+    --iskele-zemin: #3a2b0d;
     --hata: #ffb4ab;
     --hata-zemin: #3b1a17;
-    --gol: 0 1px 0 rgb(0 0 0 / 0.3), 0 12px 32px -12px rgb(0 0 0 / 0.7);
+    --gol: 0 1px 0 rgb(0 0 0 / 0.35), 0 14px 34px -14px rgb(0 0 0 / 0.75);
     --mod-bus: #4cae80;
+    --mod-metrobus: #ff6b7d;
     --mod-metro: #4fb3d1;
     --mod-tram: #6b9df0;
-    --mod-rail: #6c95e6;
     --mod-funicular: #c08a52;
     --mod-cable_car: #c08a52;
+    --mod-rail: #6c95e6;
     --mod-ferry: #36c3dc;
-    --mod-walk: #7691a0;
+    --mod-walk: #86a0ad;
+    --mod-bus-on: #06121a;
+    --mod-metrobus-on: #06121a;
+    --mod-metro-on: #06121a;
+    --mod-tram-on: #06121a;
+    --mod-funicular-on: #06121a;
+    --mod-cable_car-on: #06121a;
+    --mod-rail-on: #06121a;
+    --mod-ferry-on: #06121a;
+    --mod-walk-on: #06121a;
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --sis: #06121a;
+  --yuzey: #0d2029;
+  --yuzey-2: #132b37;
+  --murekkep: #e8f0f3;
+  --murekkep-2: #a9bfc9;
+  --murekkep-3: #86a0ad;
+  --cizgi: #1e3946;
+  --bogaz: #55bcd9;
+  --bogaz-koyu: #86d0e5;
+  --iskele: #ffb52e;
+  --iskele-zemin: #3a2b0d;
+  --hata: #ffb4ab;
+  --hata-zemin: #3b1a17;
+  --gol: 0 1px 0 rgb(0 0 0 / 0.35), 0 14px 34px -14px rgb(0 0 0 / 0.75);
+  --mod-bus: #4cae80;
+  --mod-metrobus: #ff6b7d;
+  --mod-metro: #4fb3d1;
+  --mod-tram: #6b9df0;
+  --mod-funicular: #c08a52;
+  --mod-cable_car: #c08a52;
+  --mod-rail: #6c95e6;
+  --mod-ferry: #36c3dc;
+  --mod-walk: #86a0ad;
+  --mod-bus-on: #06121a;
+  --mod-metrobus-on: #06121a;
+  --mod-metro-on: #06121a;
+  --mod-tram-on: #06121a;
+  --mod-funicular-on: #06121a;
+  --mod-cable_car-on: #06121a;
+  --mod-rail-on: #06121a;
+  --mod-ferry-on: #06121a;
+  --mod-walk-on: #06121a;
 }
 
 @theme inline {
@@ -116,6 +175,14 @@ body {
 /* Şerit: seçilince süresine göre uzayan çubuk bölümleri */
 .serit-parca {
   transition: flex-grow 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Tema değişince renkler kısa süre yumuşakça geçer (yalnızca kullanıcı seçince; sayfa açılışında yok) */
+html.tema-gecis,
+html.tema-gecis *,
+html.tema-gecis *::before,
+html.tema-gecis *::after {
+  transition: background-color 220ms ease, border-color 220ms ease, color 220ms ease, fill 220ms ease, stroke 220ms ease !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

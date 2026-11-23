@@ -135,3 +135,22 @@ export function ModIkonu({ mod, ...p }: { mod: string } & P) {
   const Ikon = MOD_IKON[mod] ?? Otobus;
   return <Ikon {...p} />;
 }
+
+export const Gunes = (p: P) => (
+  <Taban {...p}>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7" />
+  </Taban>
+);
+export const Ay = (p: P) => (
+  <Taban {...p}>
+    <path d="M20 14.2A8 8 0 0 1 9.8 4a8 8 0 1 0 10.2 10.2Z" />
+  </Taban>
+);
+export const Otomatik = (p: P) => (
+  <Taban {...p}>
+    <circle cx="12" cy="12" r="8.2" />
+    <path d="M12 3.8v16.4" />
+    <path d="M12 3.8a8.2 8.2 0 0 1 0 16.4Z" fill="currentColor" stroke="none" />
+  </Taban>
+);

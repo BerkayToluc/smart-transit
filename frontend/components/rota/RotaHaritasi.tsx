@@ -1,27 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { useMedya } from "@/lib/hooks";
+import { GECE_STILI, GUNDUZ_STILI } from "@/lib/haritaStili";
+import { useTema } from "@/lib/tema";
 import { GoogleMap } from "@react-google-maps/api";
 import { hatRengi, renkCoz, yaziRengi } from "@/lib/modes";
 import { ISTANBUL_MERKEZ, type HaritaDurumu } from "@/lib/google";
 import type { Etap, Nokta, Yolculuk } from "@/lib/plan";
 import type { Olcu } from "@/components/rota/Cekmece";
-
-const GECE_STILI: google.maps.MapTypeStyle[] = [
-  { elementType: "geometry", stylers: [{ color: "#0f2430" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#9db4be" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#0f2430" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#08141b" }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#1d3a4a" }] },
-  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#7691a0" }] },
-  { featureType: "poi", stylers: [{ visibility: "off" }] },
-  { featureType: "transit", stylers: [{ visibility: "off" }] },
-];
-const GUNDUZ_STILI: google.maps.MapTypeStyle[] = [
-  { featureType: "poi.business", stylers: [{ visibility: "off" }] },
-  { featureType: "transit.station.bus", stylers: [{ visibility: "off" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#bfd9e3" }] },
-];
 
 const yolOnbellek = new Map<string, google.maps.LatLngLiteral[]>();
 
@@ -140,7 +125,8 @@ interface Props {
 
 export default function RotaHaritasi({ araclar, odak, durum, yolculuk, baslangic, varis, olcu }: Props) {
   const [harita, setHarita] = useState<google.maps.Map | null>(null);
-  const karanlik = useMedya("(prefers-color-scheme: dark)");
+  const { etkin: tema } = useTema();
+  const karanlik = tema === "koyu";
 
   // Seçili yolculuk (ya da yalnızca iki uç nokta) ekrana sığdırılır; çekmece/panel kadar boşluk bırakılır.
   useEffect(() => {
@@ -219,7 +205,7 @@ export default function RotaHaritasi({ araclar, odak, durum, yolculuk, baslangic
       isaret(e.from, nokta, e.from.name, 5);
       isaret(e.to, nokta, e.to.name, 5);
     });
-    if (baslangic) isaret(baslangic, daire("#0c2a38", "#ffffff", 8, 3), "Başlangıç", 10);
+    if (baslangic) isaret(baslangic, karanlik ? daire("#e8f0f3", "#06121a", 8, 3) : daire("#0c2a38", "#ffffff", 8, 3), "Başlangıç", 10);
     if (varis) isaret(varis, daire("#f59f0f", "#0c2a38", 9, 3), "Varış", 10);
 
     return () => {
@@ -251,7 +237,7 @@ export default function RotaHaritasi({ araclar, odak, durum, yolculuk, baslangic
       });
     });
     return () => isaretler.forEach((m) => m.setMap(null));
-  }, [harita, araclar]);
+  }, [harita, araclar, tema]);
 
   // "Otobüsleri gör" açılınca biniş durağı ve en yakın araçlar ekrana sığdırılır (yalnızca bir kez; 10 sn'lik yenilemede değil)
   const sonOdak = useRef("");
