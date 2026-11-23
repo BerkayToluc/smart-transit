@@ -21,6 +21,7 @@ def yurume_sn(mesafe: float) -> int:
 AKTARMA_CEZASI_SN = 480       # her aktarma, süreye eşdeğer ~8 dk "zahmet" ekler
 YURUME_EK_KATSAYI = 0.5       # yürüme süresi 1,5 kat sayılır (süre + 0,5 × yürüme)
 DEGER_ESIGI_SN = 300          # fazladan aktarma, varışı en az 5 dk öne çekmiyorsa seçenek elenir
+GEREKSIZ_FAZLA_SN = 5400          # en iyiden bu kadar uzun VE en az 2 katı süren seçenek (ör. akşam tek seferini bekleyen) listelenmez
 BAN_SAYISI = 2                # çeşitlilik: en iyi rotanın ilk bu kadar hattı sırayla yasaklanıp yeniden aranır
 OTOBUS_TUR_SINIRI = 2         # çeşitlilik: otobüs yalnızca ilk bu kadar araç turunda kullanılabilen ek arama
 KUMULATIF_TEKRAR = 2           # çeşitlilik: bulunan seçeneklerin ortak olmayan hatları birlikte yasaklanarak en çok bu kadar ek arama
@@ -159,6 +160,10 @@ def planla(g: Graf, bas: tuple, bit: tuple, gun: int, saat_sn: int, *, izinli_mo
     anahtar = {"hizli": lambda x: (x.maliyet, x.varis),
                "az_aktarma": lambda x: (x.aktarma, x.maliyet),
                "az_yuruyus": lambda x: (x.yuruyus_m, x.maliyet)}[tercih]
+    if kalan:
+        toplam = lambda x: x.varis - saat_sn            # sorgu anından varışa (bekleme dahil; kaydırılmış kalkışlı aramalarda da doğru)
+        en_kisa = min(toplam(x) for x in kalan)
+        kalan = [x for x in kalan if not (toplam(x) > en_kisa + GEREKSIZ_FAZLA_SN and toplam(x) > 2 * en_kisa)]
     kalan.sort(key=anahtar)
     return kalan[:en_cok]
 
