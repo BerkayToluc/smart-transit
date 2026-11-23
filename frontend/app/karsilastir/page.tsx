@@ -60,6 +60,14 @@ const ortak = (a: string[], b: string[]) => a.filter((x) => b.includes(x)).lengt
 export default function Karsilastir() {
   const { isLoaded, durum } = useGoogleHarita();
   const [onay, setOnay] = useState(false);
+  // Varsayılan: yarın 10:00 (yerel). İki tarafta da planlı tarife kullanılır; gerçek zamanlı trafik/gecikme farkı karışmaz.
+  const [saat, setSaat] = useState(() => {
+    const y = new Date();
+    y.setDate(y.getDate() + 1);
+    y.setHours(10, 0, 0, 0);
+    const p2 = (n: number) => String(n).padStart(2, "0");
+    return `${y.getFullYear()}-${p2(y.getMonth() + 1)}-${p2(y.getDate())}T${p2(y.getHours())}:${p2(y.getMinutes())}`;
+  });
   const [calisiyor, setCalisiyor] = useState(false);
   const [satirlar, setSatirlar] = useState<Satir[]>([]);
   const gelistirme = process.env.NODE_ENV !== "production";
@@ -71,12 +79,13 @@ export default function Karsilastir() {
   const calistir = async () => {
     setCalisiyor(true);
     setSatirlar([]);
-    const simdi = new Date();
+    const simdi = saat ? new Date(saat) : new Date();
+    if (simdi.getTime() < Date.now()) simdi.setTime(Date.now());
     const hizmet = new google.maps.DirectionsService();
     for (const c of CIFTLER) {
       const s: Satir = { ad: c.ad, bizim: null, google: null };
       try {
-        const y = await planBekle({ origin: c.bas, dest: c.bit, max_results: 5 });
+        const y = await planBekle({ origin: c.bas, dest: c.bit, depart_at: simdi.toISOString(), max_results: 5 });
         if (y.itineraries.length) {
           const en = y.itineraries[0];
           s.bizim = {
@@ -135,6 +144,11 @@ export default function Karsilastir() {
         sınırın binde birkaçını kullanır. Bu sayfa yalnızca geliştirme sürümünde açılır.
       </p>
       <label className="mt-4 flex items-center gap-2 text-sm">
+        Kalkış zamanı
+        <input type="datetime-local" value={saat} onChange={(e) => setSaat(e.target.value)} className="rounded-lg border border-cizgi bg-yuzey px-2 py-1" />
+        <button type="button" className="underline" onClick={() => setSaat("")}>şimdi</button>
+      </label>
+      <label className="mt-3 flex items-center gap-2 text-sm">
         <input type="checkbox" checked={onay} onChange={(e) => setOnay(e.target.checked)} />
         {CIFTLER.length} Google Directions isteği yapılmasını onaylıyorum
       </label>
