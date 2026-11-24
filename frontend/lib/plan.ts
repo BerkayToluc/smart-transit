@@ -180,3 +180,65 @@ export async function yaklasanIste(
   }
   return (await yanit.json()) as YaklasanYaniti;
 }
+
+// ---------------------------------------------------------------- durak sayfası (GET /api/stops/{id}/departures, /api/stops/nearby)
+export interface DurakKalkis {
+  hat: string;
+  mod: string;
+  yon: string; // hattın bu yöndeki son durağı
+  planli: { saat: string; dk: number }[]; // sıradaki planlı kalkışlar ("14:20", şimdiden dakika)
+  canli: { dakika: number; kapi_no: string; mesafe_km: number }[]; // yalnızca otobüs: durağa yaklaşan canlı araçlar
+  canli_denendi: boolean;
+  canli_erisilemiyor: boolean;
+}
+
+export interface DurakBilgisi {
+  stop_id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  stop_ids: string[];
+  modes: string[];
+}
+
+export interface DurakYaniti {
+  stop: DurakBilgisi;
+  departures: DurakKalkis[];
+  toplam_hat: number;
+  canli_erisilemiyor: boolean;
+}
+
+export interface YakinDurak {
+  name: string;
+  lat: number;
+  lng: number;
+  stop_id: string;
+  stop_ids: string[];
+  modes: string[];
+  routes: string[];
+  distance_m: number;
+}
+
+async function getir<T>(yol: string, hata: string, signal?: AbortSignal): Promise<T> {
+  let yanit: Response;
+  try {
+    yanit = await fetch(apiUrl(yol), { signal });
+  } catch (e) {
+    if ((e as Error).name === "AbortError") throw e;
+    throw new PlanHatasi("Sunucuya ulaşılamıyor. İnternet bağlantınızı kontrol edip tekrar deneyin.");
+  }
+  if (yanit.ok) return (await yanit.json()) as T;
+  let detay: unknown = null;
+  try {
+    detay = (await yanit.json()).detail;
+  } catch {
+    /* gövde yok */
+  }
+  throw new PlanHatasi(typeof detay === "string" && detay ? detay : hata, yanit.status);
+}
+
+export const durakKalkislariIste = (stopId: string, limit: number, signal?: AbortSignal) =>
+  getir<DurakYaniti>(`/api/stops/${encodeURIComponent(stopId)}/departures?limit=${limit}`, "Durak bilgisi alınamadı.", signal);
+
+export const yakinDuraklarIste = (lat: number, lng: number, signal?: AbortSignal) =>
+  getir<{ stops: YakinDurak[] }>(`/api/stops/nearby?lat=${lat}&lng=${lng}&radius_m=600&limit=8`, "Yakındaki duraklar alınamadı.", signal);

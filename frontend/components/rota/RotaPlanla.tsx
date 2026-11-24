@@ -17,6 +17,7 @@ import PaylasDugmesi from "@/components/rota/PaylasDugmesi";
 import TemaSecici from "@/components/rota/TemaSecici";
 import { baglantiCoz, baglantiOlustur, type UrlDurum, type UrlYer } from "@/lib/baglanti";
 import { useYerler, yerOlustur } from "@/lib/yerler";
+import YakinDuraklar from "@/components/rota/YakinDuraklar";
 import YerAlani from "@/components/rota/YerAlani";
 
 interface Yer {
@@ -361,7 +362,9 @@ export default function RotaPlanla() {
               </p>
             )}
 
-            {istek && yukleniyor && !sonuc && <YuklemeIskeleti />}
+            {!istek && <YakinDuraklar />}
+
+                        {istek && yukleniyor && !sonuc && <YuklemeIskeleti />}
 
             {hata && (
               <div role="alert" className="mx-5 flex gap-3 rounded-2xl bg-hata-zemin p-4 text-hata">

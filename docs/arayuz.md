@@ -100,3 +100,16 @@ kalkışlar gösterilir. Uç nokta: `GET /api/yaklasan` (docs/schema.md).
   (`PwaKayit`): uygulama kabuğu ve `_next/static` önbelleği, ağ yoksa kabuk ya da `public/cevrimdisi.html`. **API istekleri asla
   önbelleğe alınmaz** (rota ve canlı veri sunucuda; bayat veri gösterilmesin). `next.config.ts` `sw.js` için önbelleksiz başlık verir.
 - Yayın adresi (A2) belli olunca `start_url`/`scope` ve (isteğe bağlı) paylaşım önizlemesi (OG görseli, P2) ayarlanır.
+
+
+## Durak sayfası ve "Yakınımdaki duraklar" (#23)
+
+- **Sayfa:** `/durak/<stop_id>` (kimlik adres çubuğunda kodlu). Başlık (durak adı, ulaşım türleri), favori yıldızı (#24), "Buradan git" / "Buraya git"
+  (plan formunu doldurur), duraktan kalkan hatlar: rozet, yön ("X yönü"), büyük sayı = canlı kalan dakika (otobüs, "canlı" noktasıyla) ya da
+  sıradaki planlı kalkış; altta sonraki tarife saatleri. 15 sn'de bir yenilenir (görünür sekmede). İETT erişilemiyorsa not düşer ve
+  planlı kalkışlar gösterilir. "N hat daha göster" ile liste 12'den 30'a kadar genişler.
+- **Arka uç:** `GET /api/stops/{stop_id}/departures?limit=` (`app/durak_api.py`). Aynı istasyonun kardeş durakları (aynı ad, ≤400 m) birleşir; (hat, yön)
+  başına en çok seferli örüntü; bugünkü seferi bitmiş hatlar listelenmez; sıralama canlı ya da planlı kalan dakikaya göre. Canlı veri yalnızca
+  otobüste ve kalkışı en yakın ilk 6 hat için aranır (İETT SOAP çağrı sayısı sınırlı; 15 sn önbellek). Hız sınırı dakikada 30.
+- **Yakınımdaki duraklar:** ana ekranda (rota yokken) düğme; konum yalnızca düğmeye basınca istenir. `GET /api/stops/nearby` (600 m, 8 durak) →
+  durak sayfalarına bağlantı.
