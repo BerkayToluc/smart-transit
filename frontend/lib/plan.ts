@@ -240,5 +240,12 @@ async function getir<T>(yol: string, hata: string, signal?: AbortSignal): Promis
 export const durakKalkislariIste = (stopId: string, limit: number, signal?: AbortSignal) =>
   getir<DurakYaniti>(`/api/stops/${encodeURIComponent(stopId)}/departures?limit=${limit}`, "Durak bilgisi alınamadı.", signal);
 
-export const yakinDuraklarIste = (lat: number, lng: number, signal?: AbortSignal) =>
-  getir<{ stops: YakinDurak[] }>(`/api/stops/nearby?lat=${lat}&lng=${lng}&radius_m=600&limit=8`, "Yakındaki duraklar alınamadı.", signal);
+export const yakinDuraklarIste = (lat: number, lng: number, yaricap: number, signal?: AbortSignal) =>
+  getir<{ stops: YakinDurak[] }>(`/api/stops/nearby?lat=${lat}&lng=${lng}&radius_m=${yaricap}&limit=12`, "Yakındaki duraklar alınamadı.", signal);
+
+/** Haritada "Yakınımdaki duraklar" katmanı: arama merkezi (konumunuz), yarıçap ve duraklar. */
+export interface YakinKatmanVeri {
+  konum: { lat: number; lng: number; dogruluk: number | null };
+  yaricap: number;
+  duraklar: YakinDurak[];
+}

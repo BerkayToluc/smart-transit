@@ -111,5 +111,10 @@ kalkışlar gösterilir. Uç nokta: `GET /api/yaklasan` (docs/schema.md).
 - **Arka uç:** `GET /api/stops/{stop_id}/departures?limit=` (`app/durak_api.py`). Aynı istasyonun kardeş durakları (aynı ad, ≤400 m) birleşir; (hat, yön)
   başına en çok seferli örüntü; bugünkü seferi bitmiş hatlar listelenmez; sıralama canlı ya da planlı kalan dakikaya göre. Canlı veri yalnızca
   otobüste ve kalkışı en yakın ilk 6 hat için aranır (İETT SOAP çağrı sayısı sınırlı; 15 sn önbellek). Hız sınırı dakikada 30.
-- **Yakınımdaki duraklar:** ana ekranda (rota yokken) düğme; konum yalnızca düğmeye basınca istenir. `GET /api/stops/nearby` (600 m, 8 durak) →
-  durak sayfalarına bağlantı.
+- **Yakınımdaki duraklar:** ana ekranda (rota yokken) düğme; konum yalnızca düğmeye basınca istenir. `GET /api/stops/nearby` (varsayılan **600 m**,
+  seçenekler 300 m / 600 m / 1 km, en çok 12 durak). **Haritada** (`YakinKatman`): konumunuz Google Haritalar'daki gibi beyaz halkalı mavi nokta
+  (konum doğruluğu 25-400 m ise açık mavi doğruluk çemberiyle), arama yarıçapı kesikli daire (kapsama alanı), duraklar ulaşım türü renginde
+  noktalar ve adlarıyla (22 karakterden uzun adlar kısaltılır; etiket `.harita-etiket`, zemin rengiyle halkalı). Listeden bir durağı ya da haritada
+  işaretçisini seçince konumunuzdan o durağa **noktalı yürüyüş yolu** çizilir (Google yürüyüş rotası; alınamazsa düz noktalı çizgi), durak
+  turuncu halkayla vurgulanır, satır açılır: "Kalkışlar ve canlı otobüsler" (durak sayfası) ve "Buraya git". Satırlarda mesafe ve yaklaşık yürüyüş süresi
+  (kuş uçuşu × 1,3 / 4,8 km/s). "Haritadan kaldır" katmanı temizler; rota arayınca katman gizlenir.
