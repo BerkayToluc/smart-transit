@@ -66,8 +66,11 @@ export default function YerAlani({ secili, nokta, id, etiket, yerTutucu, deger, 
     onDeger(y.ad);
     onSecim({ lat: y.lat, lng: y.lng, name: y.ad });
     setOneriAcik(false);
-    (document.activeElement as HTMLElement | null)?.blur();
   };
+  const kapatZamanlayici = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (kapatZamanlayici.current) clearTimeout(kapatZamanlayici.current);
+  }, []);
   const kaydedilecek: KayitliYer | null =
     yerler.kullanilabilir && nokta && deger.trim() ? yerOlustur(deger.trim() || nokta.name || "Seçilen nokta", nokta.lat, nokta.lng) : null;
 
@@ -116,8 +119,12 @@ export default function YerAlani({ secili, nokta, id, etiket, yerTutucu, deger, 
       autoComplete="off"
       placeholder={yerTutucu}
       aria-label={etiket}
-      onFocus={() => setOneriAcik(true)}
+      onFocus={() => {
+        if (kapatZamanlayici.current) clearTimeout(kapatZamanlayici.current);
+        setOneriAcik(true);
+      }}
       onChange={(e) => {
+        if (e.target.value === deger) return; // değer aslında değişmedi (örn. Google bileşeni olayı yeniden yaydı): seçimi bozma
         onDeger(e.target.value);
         onSecim(null); // metin değişti: önceki seçim geçersiz
       }}
@@ -139,7 +146,14 @@ export default function YerAlani({ secili, nokta, id, etiket, yerTutucu, deger, 
     <div
       className="flex min-w-0 flex-1 items-center"
       onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOneriAcik(false); // odak bu alanın dışına çıktı
+        // Odak alanın dışına çıktıysa listeyi kapat; ama dokunmatik ekranda dokunma, odak kaybından SONRA gelir: kısa bekle ki satıra
+        // dokunma (click) listeyle birlikte yok olmasın.
+        const kap = e.currentTarget;
+        if (kap.contains(e.relatedTarget as Node | null)) return;
+        if (kapatZamanlayici.current) clearTimeout(kapatZamanlayici.current);
+        kapatZamanlayici.current = setTimeout(() => {
+          if (!kap.contains(document.activeElement)) setOneriAcik(false);
+        }, 300);
       }}
     >
       {googleHazir ? (
