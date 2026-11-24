@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGoogleHarita } from "@/lib/google";
 import { MODLAR } from "@/lib/modes";
 import {
-  PlanHatasi, planIste, yaklasanIste, type Etap, type Mod, type Nokta, type PlanYaniti, type Tercih, type YaklasanYaniti,
+  PlanHatasi, planIste, yaklasanIste, type Etap, type Mod, type Nokta, type PlanYaniti, type Tercih, type YakinKatmanVeri, type YaklasanYaniti,
 } from "@/lib/plan";
 import HaritaHataSiniri from "@/components/rota/HaritaHataSiniri";
 import Cekmece, { type Olcu } from "@/components/rota/Cekmece";
@@ -43,6 +43,9 @@ export default function RotaPlanla() {
   const [detayAcik, setDetayAcik] = useState(true);
   const [olcu, setOlcu] = useState<Olcu>({ sol: 416, alt: 0 });
   const [konumHatasi, setKonumHatasi] = useState<string | null>(null);
+  // "Yakınımdaki duraklar" haritası (yalnızca rota yokken görünür)
+  const [yakin, setYakin] = useState<YakinKatmanVeri | null>(null);
+  const [yakinSecili, setYakinSecili] = useState<string | null>(null);
   const yerler = useYerler();
   const [urlHazir, setUrlHazir] = useState(false);
 
@@ -254,7 +257,10 @@ export default function RotaPlanla() {
   return (
     <>
       <HaritaHataSiniri>
-        <RotaHaritasi durum={durum} yolculuk={yolculuk} baslangic={bas.nokta} varis={bit.nokta} olcu={olcu} araclar={araclar} odak={odak} />
+        <RotaHaritasi
+          durum={durum} yolculuk={yolculuk} baslangic={bas.nokta} varis={bit.nokta} olcu={olcu} araclar={araclar} odak={odak}
+          yakin={istek ? null : yakin} yakinSecili={yakinSecili} onYakinSec={setYakinSecili}
+        />
       </HaritaHataSiniri>
       <Cekmece onOlcu={setOlcu}>
         <div className="kaydir flex-1 overflow-y-auto pb-6" >
@@ -362,7 +368,7 @@ export default function RotaPlanla() {
               </p>
             )}
 
-            {!istek && <YakinDuraklar />}
+            {!istek && <YakinDuraklar onVeri={setYakin} secili={yakinSecili} onSec={setYakinSecili} />}
 
                         {istek && yukleniyor && !sonuc && <YuklemeIskeleti />}
 

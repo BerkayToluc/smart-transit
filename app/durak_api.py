@@ -107,6 +107,16 @@ def durak_kalkislari(stop_id: str = Path(..., min_length=3, max_length=60), limi
             "planli": [{"saat": _saat(t), "dk": max(0, (t - simdi_sn) // 60)} for t in s["kalkis"]],
             "canli": canli, "canli_denendi": canli_denendi, "canli_erisilemiyor": erisilemiyor,
         })
+    # Aynı hattın iki yönü aynı yolu paylaşır; yönü belirsiz bir araç iki satırda birden görünmesin: kapı no'su yalnızca durağa EN YAKIN
+    # olduğu satırda kalır (eşitlikte ilk satır).
+    en_yakin: Dict[Tuple[str, str], Tuple[float, int]] = {}
+    for n, r in enumerate(sonuc):
+        for a in r["canli"]:
+            k = (r["hat"], a["kapi_no"])
+            if k not in en_yakin or a["mesafe_km"] < en_yakin[k][0]:
+                en_yakin[k] = (a["mesafe_km"], n)
+    for n, r in enumerate(sonuc):
+        r["canli"] = [a for a in r["canli"] if en_yakin[(r["hat"], a["kapi_no"])][1] == n]
     # canlı aracı olanlar, canlı dakikaya göre önde; sonra planlı kalkışa göre (zaten sıralı)
     sonuc.sort(key=lambda r: (r["canli"][0]["dakika"] if r["canli"] else r["planli"][0]["dk"], r["hat"]))
     return {

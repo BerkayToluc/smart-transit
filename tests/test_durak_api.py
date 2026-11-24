@@ -111,3 +111,22 @@ def test_son_durak_ve_binilmeyen_dislanir_limit_ve_hatalar(client, agi):
     assert al(client, limit=0).status_code == 422
     servis.graf_ayarla(None)
     assert al(client).status_code == 503
+
+
+def test_ayni_arac_iki_yon_satirinda_birden_listelenmez(client, ag, monkeypatch):  # noqa: F811
+    # Aynı hattın iki varyantı (R10'a ve R08'e giden) ortak gövdeden geçer; yönü belirsiz (yon metni hiçbir sona uymayan) araç yalnızca
+    # bir satırda görünmeli, iki satırda birden değil.
+    iett_cache.clear()
+    _otobus_gecmisi.clear()
+    IETT_COKUK["acik"] = False
+    monkeypatch.setattr(durak_api, "_simdi", lambda: PAZARTESI_0800)
+    for i in range(11):
+        ag.durak(f"R{i:02d}", i * 200, 0)
+    ag.sefer("CIFT", "bus", [(f"R{i:02d}", f"08:{10 + i:02d}") for i in range(11)], kimlik="c1", baslik="R10")
+    ag.sefer("CIFT", "bus", [(f"R{i:02d}", f"08:{15 + i:02d}") for i in range(9)], kimlik="c2", baslik="R08")
+    servis.graf_ayarla(ag.graf())
+    IETT_ARACLARI["CIFT"] = [arac("K-1", 600, "BILINMEYEN YON")]
+    d = client.get("/api/stops/t:R05/departures").json()["departures"]
+    assert {x["yon"] for x in d if x["hat"] == "CIFT"} == {"R10", "R08"}          # iki varyant satırı var
+    assert sum(len(x["canli"]) for x in d if x["hat"] == "CIFT") == 1             # K-1 yalnızca birinde
+    servis.graf_ayarla(None)

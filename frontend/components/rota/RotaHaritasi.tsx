@@ -5,7 +5,8 @@ import { useTema } from "@/lib/tema";
 import { GoogleMap } from "@react-google-maps/api";
 import { hatRengi, renkCoz, yaziRengi } from "@/lib/modes";
 import { ISTANBUL_MERKEZ, type HaritaDurumu } from "@/lib/google";
-import type { Etap, Nokta, Yolculuk } from "@/lib/plan";
+import YakinKatman from "@/components/rota/YakinKatman";
+import type { Etap, Nokta, YakinKatmanVeri, Yolculuk } from "@/lib/plan";
 import type { Olcu } from "@/components/rota/Cekmece";
 
 const yolOnbellek = new Map<string, google.maps.LatLngLiteral[]>();
@@ -121,9 +122,13 @@ interface Props {
   baslangic: Nokta | null;
   varis: Nokta | null;
   olcu: Olcu;
+  /** "Yakınımdaki duraklar" katmanı (rota yokken) */
+  yakin?: YakinKatmanVeri | null;
+  yakinSecili?: string | null;
+  onYakinSec?: (id: string) => void;
 }
 
-export default function RotaHaritasi({ araclar, odak, durum, yolculuk, baslangic, varis, olcu }: Props) {
+export default function RotaHaritasi({ araclar, odak, durum, yolculuk, baslangic, varis, olcu, yakin = null, yakinSecili = null, onYakinSec }: Props) {
   const [harita, setHarita] = useState<google.maps.Map | null>(null);
   const { etkin: tema } = useTema();
   const karanlik = tema === "koyu";
@@ -284,6 +289,8 @@ export default function RotaHaritasi({ araclar, odak, durum, yolculuk, baslangic
         gestureHandling: "greedy",
         styles: karanlik ? GECE_STILI : GUNDUZ_STILI,
       }}
-    />
+    >
+      <YakinKatman veri={yakin} secili={yakinSecili} onSec={(id) => onYakinSec?.(id)} olcu={olcu} />
+    </GoogleMap>
   );
 }
