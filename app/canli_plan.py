@@ -42,14 +42,18 @@ def hesapla(g: Graf, yolculuk: dict, araclar_dk: List[Tuple[float, str]], simdi_
     durağa_varis = _dk(yolculuk["legs"][i - 1]["to"]["time"]) if i > 0 else _dk(yolculuk["departure_time"])
     durağa_dk = durağa_varis - simdi_dk                      # kullanıcı durağa şimdiden kaç dk sonra varır
     bilgi = {"source": "tarife", "route": e["route_short_name"], "stop": e["from"]["name"], "stop_id": e["from"]["stop_id"],
-             "planned_departure": e["from"]["time"], "service_down": hizmet_yok}
+             "planned_departure": e["from"]["time"], "service_down": hizmet_yok, "reach_min": max(0, round(durağa_dk))}
     if hizmet_yok or durağa_dk > EN_FAZLA_ILERI_DK:
         return bilgi
     # Yetişilebilecek ilk araç: durağa kullanıcıdan (yaklaşık) önce ya da onunla birlikte varmayan
     uygun = [(d, k) for d, k in sorted(araclar_dk) if d >= durağa_dk - 0.5]
     bilgi["vehicles"] = [{"minutes": d, "gate": k} for d, k in sorted(araclar_dk)[:3]]
     if not uygun:
-        bilgi["no_vehicle"] = True                           # canlı araç bulunamadı: tarifeye göre
+        if araclar_dk:
+            bilgi["missed"] = True                           # araçlar var ama siz durağa varmadan geçecek: sonraki sefer tarifeye göre
+            bilgi["nearest_min"] = round(min(d for d, _ in araclar_dk))
+        else:
+            bilgi["no_vehicle"] = True                       # yaklaşan canlı araç görünmüyor: tarifeye göre
         return bilgi
     d, k = uygun[0]
     gercek_binis = simdi_dk + d

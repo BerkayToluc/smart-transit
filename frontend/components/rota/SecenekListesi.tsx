@@ -42,7 +42,13 @@ export function CanliSatiri({ l, guncelVaris }: { l: CanliBilgi; guncelVaris?: s
   }
   return (
     <p className="mt-2 text-[12px] text-murekkep-3">
-      {l.service_down ? "Canlı veri (İETT) şu an alınamıyor; tarifeye göre" : l.no_vehicle ? `${l.route} için yaklaşan canlı araç görünmüyor; tarifeye göre` : "Tarifeye göre"}
+      {l.service_down
+        ? "Canlı veri (İETT) şu an alınamıyor; tarifeye göre"
+        : l.missed
+          ? `Yaklaşan ${l.route} ${l.nearest_min} dk sonra durakta olacak; siz ${l.reach_min} dk sonra varırsınız, o araç geçmiş olur. Sonraki sefer tarifeye göre ${saatMetni(l.planned_departure)}`
+          : l.no_vehicle
+            ? `${l.route} için yaklaşan canlı araç görünmüyor; tarifeye göre ${saatMetni(l.planned_departure)}`
+            : "Tarifeye göre"}
     </p>
   );
 }

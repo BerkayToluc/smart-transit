@@ -55,7 +55,10 @@ export interface CanliBilgi {
   stop_id: string;
   planned_departure: string;
   service_down?: boolean; // İETT canlı veri servisi yanıt vermedi
-  no_vehicle?: boolean; // canlı veri var ama yetişilecek araç bulunamadı
+  no_vehicle?: boolean; // yaklaşan canlı araç görünmüyor
+  missed?: boolean; // yaklaşan araçlar var ama siz durağa varmadan geçecek
+  nearest_min?: number; // (missed) en yakın aracın durağa kalan dakikası
+  reach_min?: number; // durağa şimdiden kaç dk sonra varırsınız
   gate?: string;
   arrives_in_min?: number; // araç durağa şimdiden kaç dk sonra gelir
   wait_min?: number; // durağa vardığınızda bekleyeceğiniz süre
