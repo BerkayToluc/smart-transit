@@ -89,7 +89,10 @@ class CanliBilgi(BaseModel):
     stop_id: str
     planned_departure: str
     service_down: bool = False                  # İETT canlı veri servisi yanıt vermedi
-    no_vehicle: Optional[bool] = None           # canlı veri var ama yetişilecek araç bulunamadı
+    no_vehicle: Optional[bool] = None           # yaklaşan canlı araç görünmüyor
+    missed: Optional[bool] = None               # yaklaşan araçlar var ama durağa varmadan geçecek
+    nearest_min: Optional[int] = None           # (missed) en yakın aracın durağa kalan dakikası
+    reach_min: Optional[int] = None             # durağa şimdiden kaç dk sonra varırsınız
     gate: Optional[str] = None                  # gelecek aracın kapı numarası
     arrives_in_min: Optional[int] = None        # araç durağa şimdiden kaç dk sonra gelir
     wait_min: Optional[int] = None              # durağa vardığınızda bekleyeceğiniz süre

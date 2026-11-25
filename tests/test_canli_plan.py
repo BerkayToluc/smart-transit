@@ -151,3 +151,13 @@ def test_iett_hizli_mod_tek_deneme(monkeypatch):
     cagri.clear()
     live.iett_durum("HZ2")
     assert len(cagri) == live.SOAP_DENEME                            # normal mod: yeniden denemeli
+
+
+def test_arac_var_ama_yetisilemez_missed_ve_durağa_varis(client, agi):
+    # Kullanıcı durağa ~5 dk yürüyerek varır; tek araç 2 dk'da gelip geçecek: "araç yok" DEĞİL, "siz varmadan geçer"
+    la, lo = yer(4000, 300)
+    IETT_ARACLARI["YK1"] = [arac("A-1", 3000, "D30 SON")]
+    y = next(x for x in plan(client, origin={"lat": la, "lng": lo}) if yolculuk_hat(x) == "YK1")
+    l = y["live"]
+    assert l["source"] == "tarife" and l["missed"] is True and l["nearest_min"] in (2, 3) and 4 <= l["reach_min"] <= 6
+    assert "no_vehicle" not in l or l["no_vehicle"] is None
