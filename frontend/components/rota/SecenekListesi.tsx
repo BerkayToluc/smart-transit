@@ -1,7 +1,7 @@
 "use client";
 import { mesafeMetni, saatMetni, sureMetni } from "@/lib/format";
 import { MODLAR, hatRengi, yaziRengi } from "@/lib/modes";
-import type { Etap, Yolculuk } from "@/lib/plan";
+import type { CanliBilgi, Etap, Yolculuk } from "@/lib/plan";
 import AdimAdim, { type CanliKancasi } from "@/components/rota/AdimAdim";
 import { Asagi, ModIkonu, Yurume } from "@/components/rota/Ikonlar";
 
@@ -11,6 +11,40 @@ function sureParcalari(sn: number): { n: number; birim: string }[] {
   const s = Math.floor(dk / 60);
   const k = dk % 60;
   return k ? [{ n: s, birim: "sa" }, { n: k, birim: "dk" }] : [{ n: s, birim: "sa" }];
+}
+
+
+/** İlk otobüs bacağının canlı durumu: canlı araç (yeşil nokta), tarifeye göre (canlı veri yok) ve "daha iyi alternatif" uyarısı. */
+export function CanliSatiri({ l, guncelVaris }: { l: CanliBilgi; guncelVaris?: string }) {
+  if (l.source === "canli") {
+    const sapma = l.delay_min ?? 0;
+    return (
+      <div className="mt-2 text-[13px] leading-snug">
+        <p className="flex flex-wrap items-center gap-x-1.5 text-murekkep">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--mod-bus)] motion-safe:animate-pulse" aria-hidden="true" />
+          <span className="font-semibold">Canlı:</span>
+          <span>
+            {l.route}, {l.stop} durağına yaklaşık {l.arrives_in_min} dk sonra gelir
+            {(l.wait_min ?? 0) > 0 ? `; ${l.wait_min} dk beklersiniz` : ""}
+          </span>
+        </p>
+        <p className={`mt-0.5 ${sapma >= 3 ? "text-hata" : "text-murekkep-2"}`}>
+          {sapma >= 3 ? `Tarifeden ${sapma} dk geç` : sapma <= -3 ? `Tarifeden ${-sapma} dk erken` : "Tarifeye uygun"}
+          {guncelVaris ? `. Güncel varış ${saatMetni(guncelVaris)}` : ""}
+        </p>
+        {l.better_option !== undefined && (
+          <p className="mt-1 rounded-lg bg-iskele-zemin px-2 py-1 font-semibold text-murekkep">
+            {l.better_option + 1}. seçenek yaklaşık {l.better_gain_min} dk daha erken varır
+          </p>
+        )}
+      </div>
+    );
+  }
+  return (
+    <p className="mt-2 text-[12px] text-murekkep-3">
+      {l.service_down ? "Canlı veri (İETT) şu an alınamıyor; tarifeye göre" : l.no_vehicle ? `${l.route} için yaklaşan canlı araç görünmüyor; tarifeye göre` : "Tarifeye göre"}
+    </p>
+  );
 }
 
 /** Şeritte bölüm etiketi: kısa hat adı (M2, T1, 500T, Marmaray) olduğu gibi; uzun/anlaşılmaz kodlar
@@ -138,6 +172,7 @@ export default function SecenekListesi({ secenekler, secili, detayAcik, onSec, c
               <div className="mt-3">
                 <ZamanSeridi y={y} olcek={y.total_duration / enUzun} />
               </div>
+              {y.live && <CanliSatiri l={y.live} guncelVaris={y.adjusted_arrival_time} />}
               <div className="mt-2.5 flex items-center justify-between text-[13px] text-murekkep-2">
                 <span className="flex gap-4">
                   <span>{y.transfers === 0 ? "Aktarmasız" : `${y.transfers} aktarma`}</span>

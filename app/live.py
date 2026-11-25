@@ -125,6 +125,7 @@ def _otobus_rota_konumu(arac_lat, arac_lon, duraklar, kum, onceki, gecen_sn):
 SOAP_URL = "https://api.ibb.gov.tr/iett/FiloDurum/SeferGerceklesme.asmx"
 SOAP_ZAMAN_ASIMI = (3.05, 8)         # (bağlanma, okuma) sn: servis yanıt vermezse istek sonsuz beklemez
 SOAP_DENEME = 3                      # toplam deneme sayısı (üstel geri çekilmeyle: 0,3 sn, 0,6 sn)
+HIZLI_ZAMAN_ASIMI = (2, 2.5)         # rota planındaki canlı arama: servis yavaşsa plan beklemez
 HATA_ONBELLEK_SN = 5                 # başarısız çağrı bu kadar sn tekrarlanmaz (fırtına etkisi)
 _iett_kilit = threading.Lock()
 iett_son = {"ok": None, "an": None}          # son canlı veri denemesinin sonucu (/health gösterir)
@@ -134,7 +135,7 @@ class IettHatasi(Exception):
     """İETT SOAP servisine ulaşılamadı ya da yanıt çözülemedi."""
 
 
-def _iett_istegi(hat_kodu: str) -> list:
+def _iett_istegi(hat_kodu: str, deneme: int = SOAP_DENEME, zaman_asimi=SOAP_ZAMAN_ASIMI) -> list:
     soap_body = f"""<?xml version="1.0" encoding="utf-8"?>
     <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
       <soap:Body>
@@ -148,11 +149,11 @@ def _iett_istegi(hat_kodu: str) -> list:
         'SOAPAction': '"http://tempuri.org/GetHatOtoKonum_json"'
     }
     son_hata = None
-    for deneme in range(SOAP_DENEME):
-        if deneme:
-            time.sleep(0.3 * 2 ** (deneme - 1))
+    for sira in range(deneme):
+        if sira:
+            time.sleep(0.3 * 2 ** (sira - 1))
         try:
-            response = requests.post(SOAP_URL, data=soap_body, headers=headers, timeout=SOAP_ZAMAN_ASIMI)
+            response = requests.post(SOAP_URL, data=soap_body, headers=headers, timeout=zaman_asimi)
             response.raise_for_status()
             root = ET.fromstring(response.text)
             result = root.find('.//ns:GetHatOtoKonum_jsonResult', {'ns': 'http://tempuri.org/'})
@@ -161,18 +162,20 @@ def _iett_istegi(hat_kodu: str) -> list:
             return json.loads(result.text)
         except (requests.RequestException, ConnectionError, TimeoutError, ET.ParseError, ValueError) as e:
             son_hata = e
-            logger.warning("İETT SOAP hatası (hat %s, deneme %d/%d): %r", hat_kodu, deneme + 1, SOAP_DENEME, e)
+            logger.warning("İETT SOAP hatası (hat %s, deneme %d/%d): %r", hat_kodu, sira + 1, deneme, e)
     raise IettHatasi(str(son_hata))
 
 
-def iett_durum(hat_kodu: str) -> dict:
-    """{"araclar": [...], "erisilemiyor": bool}. Başarılı yanıt 15 sn, hata yalnızca HATA_ONBELLEK_SN sn önbelleklenir."""
+def iett_durum(hat_kodu: str, hizli: bool = False) -> dict:
+    """{"araclar": [...], "erisilemiyor": bool}. Başarılı yanıt 15 sn, hata yalnızca HATA_ONBELLEK_SN sn önbelleklenir.
+    `hizli`: tek deneme, kısa zaman aşımı (kullanıcıyı bekleten yollar için: rota planı); önbellek aynıdır."""
     with _iett_kilit:
         kayit = iett_cache.get(hat_kodu)
     if kayit is not None and (not kayit["erisilemiyor"] or time.monotonic() - kayit["an"] < HATA_ONBELLEK_SN):
         return kayit
     try:
-        kayit = {"araclar": _iett_istegi(hat_kodu), "erisilemiyor": False, "an": time.monotonic()}
+        araclar = _iett_istegi(hat_kodu, 1, HIZLI_ZAMAN_ASIMI) if hizli else _iett_istegi(hat_kodu)
+        kayit = {"araclar": araclar, "erisilemiyor": False, "an": time.monotonic()}
     except IettHatasi:
         kayit = {"araclar": [], "erisilemiyor": True, "an": time.monotonic()}
     iett_son.update(ok=not kayit["erisilemiyor"], an=kayit["an"])

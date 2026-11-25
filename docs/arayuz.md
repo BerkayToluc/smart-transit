@@ -129,3 +129,10 @@ kalkışlar gösterilir. Uç nokta: `GET /api/yaklasan` (docs/schema.md).
 - Adım listesinde yürüyüş etabının altında "Sokaklardan yaklaşık 300 m, 4 dk" görünür; gerçek süre planlananın %30 ve 1 dk'dan fazla üstündeyse kırmızı ve
   "(planlanandan uzun, erken çıkın)" uyarısı. **Bu yalnızca bilgidir**: rota hesabı ve saatler sunucuda hâlâ kuş uçuşu × 1,3 varsayımıyla yapılır. Planlayıcının
   gerçek yaya ağını kullanması (OpenStreetMap + yaya yönlendirme motoru) ayrı, büyük bir iştir.
+
+
+## Rota kartında canlı bilgi (#22)
+- "Şimdi" sorgularında ilk otobüs bacağı için kartta bir satır: **Canlı:** "401, Durak A durağına yaklaşık 12 dk sonra gelir; 7 dk beklersiniz", altında
+  "Tarifeden 8 dk geç (kırmızı) / erken / uygun" ve gecikme varsa "Güncel varış 19:33". Canlı araç yoksa ya da İETT alınamıyorsa soluk "tarifeye göre" notu.
+- Başka seçenek canlı gecikmeye rağmen ≥ 5 dk erken varıyorsa kartta "2. seçenek yaklaşık 6 dk daha erken varır" uyarısı. Sıralama değişmez.
+- Sonuç başlığında "Canlı bilgi 19:14 itibarıyla · Yenile" (planı yeniden ister, canlı bilgi güncellenir).

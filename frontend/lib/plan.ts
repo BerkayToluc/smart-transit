@@ -47,6 +47,23 @@ export interface Etap {
   geometry?: "resmi" | "durak"; // transit: resmî İETT güzergâh çizgisinden mi (resmi), durak sırasından mı (durak)
 }
 
+/** İlk otobüs bacağı için canlı bilgi (#22). source=canli: canlı araç bulundu; tarife: planlı tarifeye göre. */
+export interface CanliBilgi {
+  source: "canli" | "tarife";
+  route: string;
+  stop: string;
+  stop_id: string;
+  planned_departure: string;
+  service_down?: boolean; // İETT canlı veri servisi yanıt vermedi
+  no_vehicle?: boolean; // canlı veri var ama yetişilecek araç bulunamadı
+  gate?: string;
+  arrives_in_min?: number; // araç durağa şimdiden kaç dk sonra gelir
+  wait_min?: number; // durağa vardığınızda bekleyeceğiniz süre
+  delay_min?: number; // tarifeye göre sapma (+: geç)
+  better_option?: number; // daha iyi alternatifin indeksi
+  better_gain_min?: number;
+}
+
 export interface Yolculuk {
   departure_time: string;
   arrival_time: string;
@@ -54,6 +71,8 @@ export interface Yolculuk {
   transfers: number;
   walk_distance: number;
   legs: Etap[];
+  live?: CanliBilgi;
+  adjusted_arrival_time?: string; // canlı gecikme eklenmiş güncel varış (yalnızca gecikme varsa)
 }
 
 export interface PlanYaniti {
