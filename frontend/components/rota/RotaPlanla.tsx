@@ -25,6 +25,8 @@ interface Yer {
   nokta: Nokta | null;
 }
 const BOS: Yer = { metin: "", nokta: null };
+/** Anı İstanbul saatiyle "19:08" olarak yazar (tarayıcı saat diliminden bağımsız). */
+const saatDk = (ms: number) => new Date(ms + 3 * 3600 * 1000).toISOString().slice(11, 16);
 
 export default function RotaPlanla() {
   const { isLoaded, durum } = useGoogleHarita();
@@ -38,7 +40,7 @@ export default function RotaPlanla() {
   const sonucRef = useRef<HTMLElement>(null);
   const canliSeritRef = useRef<HTMLDivElement>(null);
   // Son tamamlanan istek ve sonucu; `istek` ile eşleşmiyorsa hesaplama sürüyor demektir (türetilmiş durum).
-  const [veri, setVeri] = useState<{ istek: object; sonuc: PlanYaniti | null; hata: string | null } | null>(null);
+  const [veri, setVeri] = useState<{ istek: object; sonuc: PlanYaniti | null; hata: string | null; zaman?: number } | null>(null);
   const [secili, setSecili] = useState(0);
   const [detayAcik, setDetayAcik] = useState(true);
   const [olcu, setOlcu] = useState<Olcu>({ sol: 416, alt: 0 });
@@ -79,7 +81,7 @@ export default function RotaPlanla() {
     const zamanlayici = setTimeout(async () => {
       try {
         const yanit = await planIste(istek, ac.signal);
-        setVeri({ istek, sonuc: yanit, hata: null });
+        setVeri({ istek, sonuc: yanit, hata: null, zaman: Date.now() });
         setSecili(0);
         setDetayAcik(true);
         setCanli(null);
@@ -263,6 +265,7 @@ export default function RotaPlanla() {
   );
   const gercekSecili = gercekYurume.anahtar === yolculukAnahtari ? gercekYurume.veri : undefined;
   const sonucVar = !!sonuc && sonuc.itineraries.length > 0;
+  const canliVar = !!sonuc && sonuc.itineraries.some((y) => y.live);
 
   return (
     <>
@@ -445,6 +448,18 @@ export default function RotaPlanla() {
                   <h2 className="text-sm font-semibold text-murekkep-2">{sonuc.itineraries.length} seçenek</h2>
                   <PaylasDugmesi baslik={`Rota: ${bas.metin.trim()} → ${bit.metin.trim()}`} konumumGizli={bas.metin.trim() === "Konumum"} />
                 </div>
+                {canliVar && (
+                  <p className="flex flex-wrap items-center gap-x-2 px-5 pb-2 text-[12px] text-murekkep-3">
+                    <span>Canlı bilgi {veri?.zaman ? saatDk(veri.zaman) : ""} itibarıyla</span>
+                    <button
+                      type="button"
+                      onClick={() => setTekrar((t) => t + 1)}
+                      className="rounded-md px-1.5 py-0.5 font-semibold text-bogaz hover:underline"
+                    >
+                      Yenile
+                    </button>
+                  </p>
+                )}
                 <div className="border-y border-cizgi bg-yuzey">
                   <SecenekListesi
                     secenekler={sonuc.itineraries}

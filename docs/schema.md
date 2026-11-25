@@ -220,6 +220,17 @@ olarak `route_short_name`, `route_long_name`, `route_id`, `trip_id`, `headsign`,
 Rota bulunamazsa 200 ve `itineraries: []` + `neden` (`baslangicta_durak_yok` | `varista_durak_yok` | `baglanti_yok`)
 ve Türkçe `mesaj`. Mevcut `/api/en-yakin-durak` ve `/api/moovit` değişmedi.
 
+## Canlı bilgi (`live`, #22)
+
+"Şimdi" sorgularında (`depart_at` ve `arrive_by` yok) her yolculuğun **ilk otobüs bacağı** için `/api/plan` yanıtına `live` eklenir (`app/canli_plan.py`;
+ilk bacak metro/vapur ise ya da zamanlı sorguda alan yoktur). Planlı sonuç 30 sn önbelleklenir, canlı bilgi her istekte güncel eklenir.
+
+- `source`: `canli` (yetişilebilecek canlı araç bulundu) ya da `tarife` (canlı araç yok: `no_vehicle`; İETT yanıt vermedi: `service_down`).
+- `canli`: `gate` (kapı no), `arrives_in_min` (araç durağa şimdiden kaç dk sonra gelir), `wait_min` (durağa vardıktan sonra bekleme),
+  `delay_min` (tarifeye göre sapma, + geç). Yetişilemeyen (siz durağa varmadan geçecek) araçlar atlanır. Gecikme varsa `adjusted_arrival_time` (güncel varış).
+- `better_option` / `better_gain_min`: gecikme ≥ 5 dk ya da bekleme ≥ 10 dk ise ve başka seçenek güncel varışla ≥ 5 dk erkense onun indeksi.
+- **Sıralama canlıya göre değişmez** (sonuç "zıplamasın"). İETT aramaları paralel ve tek denemeli, toplam 4 sn bütçeli: servis yavaşsa plan beklemez, `tarife`ye döner.
+
 ## `GET /api/stops/search` ve `GET /api/stops/nearby` (#14)
 
 Rota grafı bellekten; veritabanına gitmez. Aynı fiziksel istasyonun durakları (aynı Türkçe karakterden bağımsız ad, ≤400 m) tek satırda gruplanır.

@@ -1,4 +1,6 @@
 """POST /api/plan: koordinattan koordinata aktarmalı rota (RAPTOR, bkz. app/routing/)."""
+import copy
+import logging
 import threading
 import time
 from datetime import datetime, timedelta, timezone
@@ -8,13 +10,14 @@ from cachetools import TTLCache
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, model_validator
 
-from app import saglik
+from app import canli_plan, saglik
 from app.routing import plan, servis
 from app.routing.graph import mesafe_m
 
 from app.guvenlik import hiz_siniri  # noqa: E402
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 _plan_onbellek = TTLCache(maxsize=256, ttl=30)
 _plan_kilit = threading.Lock()
 
@@ -78,6 +81,24 @@ class Etap(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class CanliBilgi(BaseModel):
+    """İlk otobüs bacağı için canlı bilgi (#22). `source`: canli (canlı araç bulundu) | tarife (planlı tarifeye göre)."""
+    source: Literal["canli", "tarife"]
+    route: str
+    stop: str
+    stop_id: str
+    planned_departure: str
+    service_down: bool = False                  # İETT canlı veri servisi yanıt vermedi
+    no_vehicle: Optional[bool] = None           # canlı veri var ama yetişilecek araç bulunamadı
+    gate: Optional[str] = None                  # gelecek aracın kapı numarası
+    arrives_in_min: Optional[int] = None        # araç durağa şimdiden kaç dk sonra gelir
+    wait_min: Optional[int] = None              # durağa vardığınızda bekleyeceğiniz süre
+    delay_min: Optional[int] = None             # tarifeye göre sapma (+: geç)
+    vehicles: Optional[List[dict]] = None
+    better_option: Optional[int] = None         # daha iyi alternatifin indeksi
+    better_gain_min: Optional[int] = None
+
+
 class Yolculuk(BaseModel):
     departure_time: str
     arrival_time: str
@@ -85,6 +106,8 @@ class Yolculuk(BaseModel):
     transfers: int
     walk_distance: float
     legs: List[Etap]
+    live: Optional[CanliBilgi] = None
+    adjusted_arrival_time: Optional[str] = Field(None, description="canlı gecikme eklenmiş güncel varış (yalnızca gecikme varsa)")
 
 
 class PlanYaniti(BaseModel):
@@ -165,6 +188,19 @@ def plan_durum():
 @router.post("/api/plan", response_model=PlanYaniti, response_model_exclude_none=True,
              dependencies=[Depends(hiz_siniri("plan", 60))])
 def plan_et(istek: PlanIstegi):
+    sonuc = _plan_onbellekli(istek)
+    if istek.depart_at is None and istek.arrive_by is None and sonuc.get("itineraries"):
+        # "şimdi" sorguları: önbellekteki planın kopyasına her istekte güncel canlı bilgi eklenir (canlı bilgi 30 sn bayatlamasın)
+        g = servis.graf_al()
+        if g is not None:
+            try:
+                return canli_plan.uygula(g, copy.deepcopy(sonuc), _yerel(None))
+            except Exception:  # noqa: BLE001 - canlı bilgi isteğe bağlıdır
+                logger.exception("canlı plan bilgisi eklenemedi")
+    return sonuc
+
+
+def _plan_onbellekli(istek: PlanIstegi):
     # Kısa TTL önbellek (aynı graf sürümü + aynı istek; "şimdi" istekleri dakikaya göre ayrılır). Hata yanıtları önbelleklenmez.
     anahtar = (servis.surum(), istek.model_dump_json(),
                int(time.time() // 60) if istek.depart_at is None and istek.arrive_by is None else None)
