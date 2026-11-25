@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Konum, ModIkonu } from "@/components/rota/Ikonlar";
 import { baglantiOlustur } from "@/lib/baglanti";
-import { mesafeMetni } from "@/lib/format";
+import { mesafeMetni, sureMetni } from "@/lib/format";
 import { modAdi } from "@/lib/modes";
 import { PlanHatasi, yakinDuraklarIste, type YakinDurak, type YakinKatmanVeri } from "@/lib/plan";
 
@@ -18,11 +18,13 @@ interface Props {
   onVeri: (v: YakinKatmanVeri | null) => void;
   secili: string | null;
   onSec: (id: string | null) => void;
+  /** Seçili durağa sokaklardan gerçek yürüyüş mesafesi/süresi (durak kimliği -> bilgi) */
+  yurume?: Record<string, { metre: number; saniye: number }>;
 }
 
 /** "Yakınımdaki duraklar": konum yalnızca düğmeye basınca istenir. Duraklar haritada adlı noktalar olarak, konumunuz ve arama yarıçapıyla görünür;
  * bir durağı seçince haritada konumunuzdan o durağa noktalı yürüyüş yolu çizilir. */
-export default function YakinDuraklar({ onVeri, secili, onSec }: Props) {
+export default function YakinDuraklar({ onVeri, secili, onSec, yurume = {} }: Props) {
   const [durum, setDurum] = useState<"bos" | "araniyor" | "tamam" | "hata">("bos");
   const [duraklar, setDuraklar] = useState<YakinDurak[]>([]);
   const [konum, setKonum] = useState<YakinKatmanVeri["konum"] | null>(null);
@@ -143,6 +145,11 @@ export default function YakinDuraklar({ onVeri, secili, onSec }: Props) {
                     </button>
                     {acik && (
                       <div className="flex flex-wrap gap-2 bg-yuzey-2 px-3.5 pb-3">
+                        {yurume[d.stop_id] && (
+                          <p className="w-full text-[12px] text-murekkep-2">
+                            Sokaklardan yaklaşık {mesafeMetni(yurume[d.stop_id].metre)}, {sureMetni(yurume[d.stop_id].saniye)} yürüyüş
+                          </p>
+                        )}
                         <Link
                           href={`/durak/${encodeURIComponent(d.stop_id)}`}
                           className="rounded-full bg-iskele px-3.5 py-1.5 text-[13px] font-semibold text-[#2a1a00]"

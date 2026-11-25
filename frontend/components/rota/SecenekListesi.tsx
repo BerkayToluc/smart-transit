@@ -85,9 +85,11 @@ interface Props {
   detayAcik: boolean;   // seçili seçeneğin adım adım listesi açık mı
   onSec: (i: number) => void; // seçili karta tekrar basınca üst bileşen aç/kapa yapar
   canli?: CanliKancasi;
+  /** Seçili seçeneğin yürüyüş etaplarının sokaklardan gerçek mesafe/süresi (etap indeksi -> bilgi) */
+  gercekYurume?: Record<number, { metre: number; saniye: number }>;
 }
 
-export default function SecenekListesi({ secenekler, secili, detayAcik, onSec, canli }: Props) {
+export default function SecenekListesi({ secenekler, secili, detayAcik, onSec, canli, gercekYurume }: Props) {
   const enUzun = Math.max(...secenekler.map((s) => s.total_duration));
   const enHizli = secenekler.reduce((a, s, i) => (s.total_duration < secenekler[a].total_duration ? i : a), 0);
   const azAktarma = secenekler.reduce((a, s, i) => (s.transfers < secenekler[a].transfers ? i : a), 0);
@@ -146,7 +148,7 @@ export default function SecenekListesi({ secenekler, secili, detayAcik, onSec, c
             </button>
             {acik && (
               <div className="px-5 pb-5 pt-1">
-                <AdimAdim yolculuk={y} canli={canli} />
+                <AdimAdim yolculuk={y} canli={canli} gercekYurume={i === secili ? gercekYurume : undefined} />
               </div>
             )}
           </li>

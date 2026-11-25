@@ -6,6 +6,7 @@ import { GoogleMap } from "@react-google-maps/api";
 import { hatRengi, renkCoz, yaziRengi } from "@/lib/modes";
 import { ISTANBUL_MERKEZ, type HaritaDurumu } from "@/lib/google";
 import YakinKatman from "@/components/rota/YakinKatman";
+import { yurumeYolu, type YurumeSonucu } from "@/lib/yurume";
 import type { Etap, Nokta, YakinKatmanVeri, Yolculuk } from "@/lib/plan";
 import type { Olcu } from "@/components/rota/Cekmece";
 
@@ -126,12 +127,19 @@ interface Props {
   yakin?: YakinKatmanVeri | null;
   yakinSecili?: string | null;
   onYakinSec?: (id: string) => void;
+  onYakinYurume?: (id: string, y: YurumeSonucu) => void;
+  /** Seçili yolculuğun yürüyüş etapları sokaklara oturunca (etap indeksi, gerçek mesafe/süre) */
+  onYurume?: (etap: number, y: YurumeSonucu) => void;
 }
 
-export default function RotaHaritasi({ araclar, odak, durum, yolculuk, baslangic, varis, olcu, yakin = null, yakinSecili = null, onYakinSec }: Props) {
+export default function RotaHaritasi({ araclar, odak, durum, yolculuk, baslangic, varis, olcu, yakin = null, yakinSecili = null, onYakinSec, onYakinYurume, onYurume }: Props) {
   const [harita, setHarita] = useState<google.maps.Map | null>(null);
   const { etkin: tema } = useTema();
   const karanlik = tema === "koyu";
+  const onYurumeRef = useRef(onYurume);
+  useEffect(() => {
+    onYurumeRef.current = onYurume;
+  });
 
   // Seçili yolculuk (ya da yalnızca iki uç nokta) ekrana sığdırılır; çekmece/panel kadar boşluk bırakılır.
   useEffect(() => {
@@ -177,10 +185,10 @@ export default function RotaHaritasi({ araclar, odak, durum, yolculuk, baslangic
     const isaret = (konum: google.maps.LatLngLiteral, ikon: google.maps.Symbol, baslik: string, z: number) =>
       ekle(new google.maps.Marker({ map: harita, position: konum, icon: ikon, title: baslik, zIndex: z, clickable: false }));
 
-    yolculuk?.legs.forEach((e) => {
+    yolculuk?.legs.forEach((e, etapNo) => {
       const yol = e.polyline.map(([lat, lng]) => ({ lat, lng }));
       if (e.type === "walk") {
-        ekle(
+        const yurume = ekle(
           new google.maps.Polyline({
             map: harita,
             path: yol,
@@ -189,6 +197,12 @@ export default function RotaHaritasi({ araclar, odak, durum, yolculuk, baslangic
             icons: [{ icon: { path: "M 0,-1 0,1", strokeOpacity: 0.95, strokeColor: karanlik ? "#a8bbc4" : "#4a6572", scale: 3 }, offset: "0", repeat: "11px" }],
           }),
         );
+        // Düz çizgi binaların içinden geçer: Google yürüyüş rotasıyla sokaklara/kaldırımlara oturt (alınamazsa düz çizgi kalır)
+        yurumeYolu({ lat: e.from.lat, lng: e.from.lng }, { lat: e.to.lat, lng: e.to.lng }).then((y) => {
+          if (iptal || !y) return;
+          yurume.setPath(y.path);
+          onYurumeRef.current?.(etapNo, y);
+        });
         return;
       }
       const renk = renkCoz(hatRengi(e.mode, e.route_short_name));
@@ -290,7 +304,7 @@ export default function RotaHaritasi({ araclar, odak, durum, yolculuk, baslangic
         styles: karanlik ? GECE_STILI : GUNDUZ_STILI,
       }}
     >
-      <YakinKatman veri={yakin} secili={yakinSecili} onSec={(id) => onYakinSec?.(id)} olcu={olcu} />
+      <YakinKatman veri={yakin} secili={yakinSecili} onSec={(id) => onYakinSec?.(id)} olcu={olcu} onYurume={onYakinYurume} />
     </GoogleMap>
   );
 }

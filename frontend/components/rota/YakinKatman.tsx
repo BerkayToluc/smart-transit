@@ -1,8 +1,9 @@
 "use client";
 import { useGoogleMap } from "@react-google-maps/api";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { Olcu } from "@/components/rota/Cekmece";
 import { hatRengi, renkCoz } from "@/lib/modes";
+import { yurumeYolu, type YurumeSonucu } from "@/lib/yurume";
 import type { YakinKatmanVeri } from "@/lib/plan";
 import { useTema } from "@/lib/tema";
 
@@ -16,12 +17,18 @@ interface Props {
   secili: string | null;
   onSec: (id: string) => void;
   olcu: Olcu;
+  /** Seçili durağa gerçek yürüyüş yolu bulununca (mesafe/süre) */
+  onYurume?: (id: string, y: YurumeSonucu) => void;
 }
 
 /** Haritada konumunuz (mavi nokta), arama yarıçapı (kesikli daire), adlı durak işaretçileri ve seçili durağa noktalı yürüyüş yolu. */
-export default function YakinKatman({ veri, secili, onSec, olcu }: Props) {
+export default function YakinKatman({ veri, secili, onSec, olcu, onYurume }: Props) {
   const harita = useGoogleMap();
   const { etkin: tema } = useTema();
+  const onYurumeRef = useRef(onYurume);
+  useEffect(() => {
+    onYurumeRef.current = onYurume;
+  });
 
   // Konum, yarıçap ve duraklar; seçim değişince yalnızca vurgu güncellensin diye `secili` bağımlılıkta DEĞİL (aşağıda ayrı katman)
   useEffect(() => {
@@ -85,15 +92,11 @@ export default function YakinKatman({ veri, secili, onSec, olcu }: Props) {
       map: harita, path: [merkez, hedef], strokeOpacity: 0, zIndex: 10,
       icons: [{ icon: { path: google.maps.SymbolPath.CIRCLE, scale: 3, fillColor: bogaz, fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 1 }, offset: "0", repeat: "11px" }],
     });
-    new google.maps.DirectionsService()
-      .route({ origin: merkez, destination: hedef, travelMode: google.maps.TravelMode.WALKING, region: "tr" })
-      .then((r) => {
-        const p = r.routes[0]?.overview_path;
-        if (!iptal && p && p.length > 1) yol.setPath(p);
-      })
-      .catch(() => {
-        /* yürüyüş rotası alınamadı: düz noktalı çizgi kalır */
-      });
+    yurumeYolu(merkez, hedef).then((y) => {
+      if (iptal || !y) return; // alınamadıysa düz noktalı çizgi kalır
+      yol.setPath(y.path);
+      onYurumeRef.current?.(d.stop_id, y);
+    });
     const sinir = new google.maps.LatLngBounds();
     sinir.extend(merkez);
     sinir.extend(hedef);

@@ -118,3 +118,14 @@ kalkışlar gösterilir. Uç nokta: `GET /api/yaklasan` (docs/schema.md).
   işaretçisini seçince konumunuzdan o durağa **noktalı yürüyüş yolu** çizilir (Google yürüyüş rotası; alınamazsa düz noktalı çizgi), durak
   turuncu halkayla vurgulanır, satır açılır: "Kalkışlar ve canlı otobüsler" (durak sayfası) ve "Buraya git". Satırlarda mesafe ve yaklaşık yürüyüş süresi
   (kuş uçuşu × 1,3 / 4,8 km/s). "Haritadan kaldır" katmanı temizler; rota arayınca katman gizlenir.
+
+
+## Yürüyüş yollarının sokaklara oturtulması
+- Planlayıcı yürüyüş etaplarını düz çizgiyle verir (kuş uçuşu × 1,3 ile süre/mesafe tahmini); düz çizgi binaların içinden geçer. Haritada **yürüyüş
+  etapları** (başlangıç→durak, aktarma, durak→varış) ve **"Yakınımdaki duraklar"daki yürüyüş yolu** Google Haritalar yürüyüş rotasıyla
+  (`DirectionsService`, `WALKING`) sokak/kaldırım üzerine oturtulur (`lib/yurume.ts`); noktalı çizgi stili aynı kalır. Alınamazsa düz çizgi kalır.
+- Güvenlik süzgeci (`lib/yurumeMantik.ts`, node testli): 40 m'den kısa yürüyüşler (istasyon içi aktarma) için yol aranmaz; Google yolu kuş uçuşundan
+  kısa (<%80) ya da 3 katı + 300 m'den uzunsa güvenilmez sayılır ve uygulanmaz. Sonuç (uç noktaya göre) önbelleklenir, hata da önbelleklenir (kota).
+- Adım listesinde yürüyüş etabının altında "Sokaklardan yaklaşık 300 m, 4 dk" görünür; gerçek süre planlananın %30 ve 1 dk'dan fazla üstündeyse kırmızı ve
+  "(planlanandan uzun, erken çıkın)" uyarısı. **Bu yalnızca bilgidir**: rota hesabı ve saatler sunucuda hâlâ kuş uçuşu × 1,3 varsayımıyla yapılır. Planlayıcının
+  gerçek yaya ağını kullanması (OpenStreetMap + yaya yönlendirme motoru) ayrı, büyük bir iştir.
