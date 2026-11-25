@@ -46,6 +46,9 @@ export default function RotaPlanla() {
   // "Yakınımdaki duraklar" haritası (yalnızca rota yokken görünür)
   const [yakin, setYakin] = useState<YakinKatmanVeri | null>(null);
   const [yakinSecili, setYakinSecili] = useState<string | null>(null);
+  const [yakinYurume, setYakinYurume] = useState<Record<string, { metre: number; saniye: number }>>({});
+  // Seçili yolculuğun yürüyüş etapları sokaklara oturunca gelen gerçek mesafe/süre (yolculuk değişince eskisi geçersiz)
+  const [gercekYurume, setGercekYurume] = useState<{ anahtar: string; veri: Record<number, { metre: number; saniye: number }> }>({ anahtar: "", veri: {} });
   const yerler = useYerler();
   const [urlHazir, setUrlHazir] = useState(false);
 
@@ -252,6 +255,13 @@ export default function RotaPlanla() {
   }, [veri]);
 
   const yolculuk = sonuc?.itineraries[secili] ?? null;
+  const yolculukAnahtari = yolculuk ? `${yolculuk.departure_time}|${yolculuk.arrival_time}|${secili}` : "";
+  const yurumeBildir = useCallback(
+    (etap: number, y: { metre: number; saniye: number }) =>
+      setGercekYurume((o) => ({ anahtar: yolculukAnahtari, veri: o.anahtar === yolculukAnahtari ? { ...o.veri, [etap]: { metre: y.metre, saniye: y.saniye } } : { [etap]: { metre: y.metre, saniye: y.saniye } } })),
+    [yolculukAnahtari],
+  );
+  const gercekSecili = gercekYurume.anahtar === yolculukAnahtari ? gercekYurume.veri : undefined;
   const sonucVar = !!sonuc && sonuc.itineraries.length > 0;
 
   return (
@@ -260,6 +270,7 @@ export default function RotaPlanla() {
         <RotaHaritasi
           durum={durum} yolculuk={yolculuk} baslangic={bas.nokta} varis={bit.nokta} olcu={olcu} araclar={araclar} odak={odak}
           yakin={istek ? null : yakin} yakinSecili={yakinSecili} onYakinSec={setYakinSecili}
+          onYakinYurume={(id, y) => setYakinYurume((o) => ({ ...o, [id]: { metre: y.metre, saniye: y.saniye } }))} onYurume={yurumeBildir}
         />
       </HaritaHataSiniri>
       <Cekmece onOlcu={setOlcu}>
@@ -368,7 +379,7 @@ export default function RotaPlanla() {
               </p>
             )}
 
-            {!istek && <YakinDuraklar onVeri={setYakin} secili={yakinSecili} onSec={setYakinSecili} />}
+            {!istek && <YakinDuraklar onVeri={(v) => { setYakin(v); setYakinYurume({}); }} secili={yakinSecili} onSec={setYakinSecili} yurume={yakinYurume} />}
 
                         {istek && yukleniyor && !sonuc && <YuklemeIskeleti />}
 
@@ -440,6 +451,7 @@ export default function RotaPlanla() {
                     secili={secili}
                     detayAcik={detayAcik}
                     canli={{ acikAnahtar: canli?.anahtar ?? null, onToggle: canliAc }}
+                    gercekYurume={gercekSecili}
                     onSec={(i) => {
                       if (i === secili) setDetayAcik((a) => !a); // seçili karta tekrar basınca aç/kapa
                       else {

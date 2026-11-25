@@ -4,6 +4,7 @@ import { dakika, mesafeMetni, saatMetni, sureMetni } from "@/lib/format";
 import { hatRengi, modAdi, yaziRengi } from "@/lib/modes";
 import type { Etap, Yolculuk } from "@/lib/plan";
 import { Otobus, ModIkonu, Saat, Yurume } from "@/components/rota/Ikonlar";
+import { planlandanUzun } from "@/lib/yurumeMantik";
 
 export function HatRozeti({ etap, buyuk }: { etap: Etap; buyuk?: boolean }) {
   const renk = hatRengi(etap.mode, etap.route_short_name);
@@ -79,7 +80,7 @@ export interface CanliKancasi {
   onToggle: (anahtar: string, etap: Etap) => void;
 }
 
-export default function AdimAdim({ yolculuk, canli }: { yolculuk: Yolculuk; canli?: CanliKancasi }) {
+export default function AdimAdim({ yolculuk, canli, gercekYurume }: { yolculuk: Yolculuk; canli?: CanliKancasi; gercekYurume?: Record<number, { metre: number; saniye: number }> }) {
   const { legs } = yolculuk;
   return (
     <ol className="m-0 list-none p-0" aria-label="Adım adım yolculuk">
@@ -96,6 +97,12 @@ export default function AdimAdim({ yolculuk, canli }: { yolculuk: Yolculuk; canl
                   {e.distance_m != null && <span className="text-murekkep-2">{mesafeMetni(e.distance_m)}</span>}
                 </p>
                 <p className="mt-0.5 truncate text-[13px] text-murekkep-2">{yurumeYonu(e)}</p>
+                {gercekYurume?.[i] && (
+                  <p className={`mt-0.5 text-[12px] ${planlandanUzun(e.duration, gercekYurume[i].saniye) ? "text-hata" : "text-murekkep-3"}`}>
+                    Sokaklardan yaklaşık {mesafeMetni(gercekYurume[i].metre)}, {sureMetni(gercekYurume[i].saniye)}
+                    {planlandanUzun(e.duration, gercekYurume[i].saniye) ? " (planlanandan uzun, erken çıkın)" : ""}
+                  </p>
+                )}
               </Satir>
             ) : (
               <>
